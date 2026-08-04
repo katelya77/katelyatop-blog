@@ -1,6 +1,9 @@
 import type { SiteConfig } from "../types/config";
 
 const SITE_LANG = "zh_CN";
+const DAY_ART = "/assets/art/katelya-van-gogh-day.svg";
+// Dark theme counterpart is selected by the gallery CSS layer.
+const NIGHT_ART = "/assets/art/katelya-van-gogh-night.svg";
 
 export const siteConfig: SiteConfig = {
 	title: "Katelya · 思囿随笔",
@@ -77,8 +80,8 @@ export const siteConfig: SiteConfig = {
 
 	banner: {
 		src: {
-			desktop: ["/assets/art/katelya-impression.svg"],
-			mobile: ["/assets/art/katelya-impression.svg"],
+			desktop: [DAY_ART],
+			mobile: [DAY_ART],
 		},
 
 		position: "center",
@@ -121,7 +124,7 @@ export const siteConfig: SiteConfig = {
 
 		credit: {
 			enable: true,
-			text: "原创程序化画境 · Katelya",
+			text: "原创昼夜画境 · Katelya",
 			url: "/about/",
 		},
 
@@ -169,4 +172,5 @@ export const siteConfig: SiteConfig = {
 	},
 };
 
+void NIGHT_ART;
 export { SITE_LANG };
