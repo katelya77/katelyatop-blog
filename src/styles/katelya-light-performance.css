@@ -1,0 +1,255 @@
+html.katelya-art-theme {
+	--katelya-theme-transition: 180ms;
+	--katelya-hero-light-ink: #153f40;
+	--katelya-hero-light-muted: rgba(21, 63, 64, 0.82);
+	--katelya-hero-light-canvas: rgba(249, 246, 218, 0.58);
+	--katelya-hero-light-canvas-strong: rgba(250, 247, 221, 0.82);
+}
+
+/* Localized reading protection: preserve the painting outside the copy area. */
+html.katelya-art-theme:not(.dark) .katelya-hero-copy {
+	isolation: isolate;
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-copy::before {
+	position: absolute;
+	inset: -3.1rem -5.8rem -2.5rem;
+	z-index: -1;
+	pointer-events: none;
+	content: "";
+	border-radius: 50%;
+	background: radial-gradient(
+		ellipse at center,
+		var(--katelya-hero-light-canvas-strong) 0%,
+		var(--katelya-hero-light-canvas) 42%,
+		rgba(226, 239, 224, 0.24) 63%,
+		transparent 78%
+	);
+	filter: blur(1.5px);
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-title {
+	color: #fff9df !important;
+	-webkit-text-stroke: 0.45px rgba(19, 61, 61, 0.46);
+	text-shadow:
+		0 1px 0 rgba(18, 57, 58, 0.7),
+		0 3px 8px rgba(20, 69, 68, 0.32),
+		0 15px 32px rgba(19, 67, 65, 0.24) !important;
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-eyebrow {
+	color: color-mix(in srgb, var(--katelya-gold) 54%, var(--katelya-hero-light-ink)) !important;
+	text-shadow: 0 1px 8px rgba(248, 243, 211, 0.88);
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-subtitle {
+	color: var(--katelya-hero-light-ink) !important;
+	text-shadow: 0 1px 10px rgba(248, 245, 218, 0.9) !important;
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-subtitle__line {
+	display: inline-flex;
+	min-height: 2.35rem;
+	align-items: center;
+	padding: 0.34rem 0.9rem;
+	border: 1px solid rgba(55, 108, 103, 0.17);
+	border-radius: 999px;
+	background: linear-gradient(110deg, rgba(251, 248, 222, 0.7), rgba(225, 239, 224, 0.54));
+	box-shadow: 0 10px 28px rgba(27, 80, 75, 0.1);
+	backdrop-filter: blur(6px);
+}
+
+html.katelya-art-theme:not(.dark) .katelya-hero-links a {
+	color: var(--katelya-hero-light-ink) !important;
+	border-color: rgba(65, 107, 102, 0.23) !important;
+	background: linear-gradient(120deg, rgba(255, 251, 226, 0.9), rgba(226, 239, 225, 0.8)) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.72),
+		0 8px 20px rgba(28, 74, 70, 0.13) !important;
+}
+
+html.katelya-art-theme:not(.dark) .katelya-orbit-card {
+	color: var(--katelya-hero-light-ink) !important;
+	border-color: rgba(70, 111, 105, 0.22) !important;
+	background: linear-gradient(130deg, rgba(251, 247, 220, 0.84), rgba(224, 238, 223, 0.74)) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.72),
+		0 18px 36px rgba(28, 72, 68, 0.14) !important;
+}
+
+html.katelya-art-theme:not(.dark) .katelya-orbit-card__copy small {
+	color: var(--katelya-hero-light-muted);
+	opacity: 0.76;
+}
+
+/* Search trigger never participates in navbar width changes. */
+html.katelya-art-theme .katelya-search-desktop {
+	position: relative;
+	width: 2.5rem;
+	height: 2.5rem;
+	flex: 0 0 2.5rem;
+}
+
+html.katelya-art-theme .katelya-search-trigger {
+	position: relative !important;
+	inset: auto !important;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem !important;
+	height: 2.5rem;
+	padding: 0;
+	color: var(--katelya-text);
+	border: 1px solid transparent;
+	border-radius: 0.9rem;
+	background: transparent;
+	cursor: pointer;
+	transition:
+		color var(--katelya-theme-transition) ease,
+		background-color var(--katelya-theme-transition) ease,
+		border-color var(--katelya-theme-transition) ease,
+		transform 120ms ease;
+}
+
+html.katelya-art-theme .katelya-search-trigger:hover,
+html.katelya-art-theme .katelya-search-trigger[aria-expanded="true"] {
+	color: var(--primary);
+	border-color: var(--katelya-border);
+	background: var(--katelya-surface-soft);
+}
+
+html.katelya-art-theme .katelya-search-trigger:active {
+	transform: scale(0.92);
+}
+
+html.katelya-art-theme .katelya-search-icon {
+	position: static !important;
+	font-size: 1.2rem;
+}
+
+html.katelya-art-theme .katelya-search-desktop-panel {
+	position: fixed !important;
+	top: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 0.5rem) !important;
+	right: max(1rem, calc((100vw - var(--page-width)) / 2 + 1rem)) !important;
+	left: auto !important;
+	z-index: 92;
+	width: min(28rem, calc(100vw - 2rem));
+	max-height: min(32rem, calc(100dvh - 7rem));
+	padding: 0.65rem;
+	overflow: hidden auto;
+	transform: translateY(0) scale(1);
+	transform-origin: top right;
+	transition:
+		opacity 140ms ease,
+		transform 160ms ease,
+		visibility 0s linear 0s;
+}
+
+html.katelya-art-theme .katelya-search-desktop-panel.float-panel-closed {
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	transform: translateY(-0.5rem) scale(0.98);
+	transition:
+		opacity 120ms ease,
+		transform 140ms ease,
+		visibility 0s linear 140ms;
+}
+
+html.katelya-art-theme .katelya-search-input-row {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	min-height: 3rem;
+	padding: 0 0.78rem;
+	border: 1px solid var(--katelya-border);
+	border-radius: 0.95rem;
+	background: var(--katelya-surface-soft);
+}
+
+html.katelya-art-theme .katelya-search-clear {
+	display: inline-grid;
+	place-items: center;
+	width: 2rem;
+	height: 2rem;
+	color: var(--katelya-muted);
+	border: 0;
+	border-radius: 0.7rem;
+	background: transparent;
+	cursor: pointer;
+}
+
+html.katelya-art-theme .katelya-search-clear:hover {
+	color: var(--primary);
+	background: color-mix(in srgb, var(--katelya-surface-strong) 74%, transparent);
+}
+
+html.katelya-art-theme .katelya-search-results {
+	display: grid;
+	gap: 0.2rem;
+	margin-top: 0.45rem;
+}
+
+html.katelya-art-theme .katelya-search-empty {
+	margin: 0;
+	padding: 0.85rem;
+	color: var(--katelya-muted);
+	font-size: 0.85rem;
+	text-align: center;
+}
+
+/* One bounded, lightweight theme transition path. */
+html.katelya-art-theme body,
+html.katelya-art-theme .impasto-backdrop,
+html.katelya-art-theme .katelya-navbar-shell,
+html.katelya-art-theme .card-base,
+html.katelya-art-theme .card-base-transparent,
+html.katelya-art-theme .float-panel,
+html.katelya-art-theme .music-player,
+html.katelya-art-theme .katelya-orbit-card,
+html.katelya-art-theme .katelya-hero-links a {
+	transition-duration: var(--katelya-theme-transition) !important;
+	transition-timing-function: ease-out !important;
+}
+
+html.katelya-art-theme.is-theme-transitioning body,
+html.katelya-art-theme.is-theme-transitioning .impasto-backdrop,
+html.katelya-art-theme.is-theme-transitioning .katelya-navbar-shell,
+html.katelya-art-theme.is-theme-transitioning .card-base,
+html.katelya-art-theme.is-theme-transitioning .card-base-transparent,
+html.katelya-art-theme.is-theme-transitioning .float-panel,
+html.katelya-art-theme.is-theme-transitioning .music-player,
+html.katelya-art-theme.is-theme-transitioning .katelya-orbit-card,
+html.katelya-art-theme.is-theme-transitioning .katelya-hero-links a {
+	transition-property: color, background-color, border-color, box-shadow, opacity !important;
+	transition-duration: var(--katelya-theme-transition) !important;
+	animation: none !important;
+}
+
+html.katelya-art-theme.is-theme-transitioning .impasto-backdrop {
+	opacity: 0.93;
+}
+
+html.katelya-art-theme.is-theme-transitioning .katelya-paint-aura,
+html.katelya-art-theme.is-theme-transitioning .katelya-orbit-stage,
+html.katelya-art-theme.is-theme-transitioning .waves {
+	animation-play-state: paused !important;
+}
+
+@media (max-width: 767px) {
+	html.katelya-art-theme:not(.dark) .katelya-hero-copy::before {
+		inset: -2.4rem -1.2rem -2rem;
+	}
+
+	html.katelya-art-theme .katelya-search-desktop-panel {
+		top: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 0.35rem) !important;
+		right: 0.6rem !important;
+		width: calc(100vw - 1.2rem);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.katelya-art-theme {
+		--katelya-theme-transition: 0ms;
+	}
+}
