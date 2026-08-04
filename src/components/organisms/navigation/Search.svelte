@@ -15,6 +15,7 @@ let pagefindLoaded = false;
 let initialized = $state(false);
 let isOpen = $state(false);
 let debounceTimer: ReturnType<typeof setTimeout>;
+let panelPositionFrame = 0;
 
 const fakeResult: SearchResult[] = [
 	{
@@ -26,10 +27,58 @@ const fakeResult: SearchResult[] = [
 
 const panel = () => document.getElementById("search-panel");
 const input = () => document.getElementById("search-input") as HTMLInputElement | null;
+const visibleTrigger = (): HTMLElement | null => {
+	const triggers = Array.from(
+		document.querySelectorAll<HTMLElement>("[data-search-trigger]"),
+	);
+	return triggers.find((trigger) => trigger.getClientRects().length > 0) ?? triggers[0] ?? null;
+};
+
+const positionSearchPanel = (): void => {
+	const target = panel();
+	const trigger = visibleTrigger();
+	if (!target || !trigger) return;
+
+	const triggerRect = trigger.getBoundingClientRect();
+	const viewportWidth = document.documentElement.clientWidth;
+	const viewportHeight = window.innerHeight;
+	const viewportMargin = viewportWidth < 768 ? 12 : 16;
+	const panelGap = viewportWidth < 768 ? 10 : 12;
+	const preferredWidth = 448;
+	const minimumWidth = Math.min(288, viewportWidth - viewportMargin * 2);
+	const panelWidth = Math.max(
+		minimumWidth,
+		Math.min(preferredWidth, viewportWidth - viewportMargin * 2),
+	);
+	const unclampedLeft = triggerRect.right - panelWidth;
+	const panelLeft = Math.min(
+		Math.max(unclampedLeft, viewportMargin),
+		viewportWidth - panelWidth - viewportMargin,
+	);
+	const panelTop = Math.max(viewportMargin, triggerRect.bottom + panelGap);
+	const panelMaxHeight = Math.max(220, viewportHeight - panelTop - viewportMargin);
+
+	target.style.setProperty("--katelya-search-panel-top", `${Math.round(panelTop)}px`);
+	target.style.setProperty("--katelya-search-panel-left", `${Math.round(panelLeft)}px`);
+	target.style.setProperty("--katelya-search-panel-width", `${Math.round(panelWidth)}px`);
+	target.style.setProperty(
+		"--katelya-search-panel-max-height",
+		`${Math.round(panelMaxHeight)}px`,
+	);
+};
+
+const scheduleSearchPanelPosition = (): void => {
+	if (!isOpen || panelPositionFrame) return;
+	panelPositionFrame = requestAnimationFrame(() => {
+		panelPositionFrame = 0;
+		positionSearchPanel();
+	});
+};
 
 const syncPanel = (): void => {
 	const target = panel();
 	if (!target) return;
+	if (isOpen) positionSearchPanel();
 	target.classList.toggle("float-panel-closed", !isOpen);
 	target.classList.toggle("is-open", isOpen);
 	target.setAttribute("aria-hidden", isOpen ? "false" : "true");
@@ -43,20 +92,24 @@ const openSearch = (): void => {
 	isOpen = true;
 	syncPanel();
 	ensurePagefind();
-	requestAnimationFrame(() => input()?.focus({ preventScroll: true }));
+	requestAnimationFrame(() => {
+		positionSearchPanel();
+		input()?.focus({ preventScroll: true });
+	});
 };
 
-const closeSearch = (clear = false): void => {
+const closeSearch = (clear = false, restoreFocus = false): void => {
 	isOpen = false;
 	if (clear) {
 		keyword = "";
 		result = [];
 	}
 	syncPanel();
+	if (restoreFocus) requestAnimationFrame(() => visibleTrigger()?.focus());
 };
 
 const toggleSearch = (): void => {
-	if (isOpen) closeSearch();
+	if (isOpen) closeSearch(false, true);
 	else openSearch();
 };
 
@@ -110,7 +163,7 @@ onMount(() => {
 	const onDocumentKeydown = (event: KeyboardEvent) => {
 		if (event.key === "Escape" && isOpen) {
 			event.preventDefault();
-			closeSearch();
+			closeSearch(false, true);
 		}
 	};
 	const onPageView = () => closeSearch(true);
@@ -127,6 +180,8 @@ onMount(() => {
 	document.addEventListener("pointerdown", onOutsidePointer);
 	document.addEventListener("keydown", onDocumentKeydown);
 	document.addEventListener("swup:page:view", onPageView);
+	window.addEventListener("resize", scheduleSearchPanelPosition, { passive: true });
+	window.addEventListener("scroll", scheduleSearchPanelPosition, { passive: true });
 	syncPanel();
 
 	return () => {
@@ -135,6 +190,8 @@ onMount(() => {
 		document.removeEventListener("pointerdown", onOutsidePointer);
 		document.removeEventListener("keydown", onDocumentKeydown);
 		document.removeEventListener("swup:page:view", onPageView);
+		window.removeEventListener("resize", scheduleSearchPanelPosition);
+		window.removeEventListener("scroll", scheduleSearchPanelPosition);
 	};
 });
 
@@ -151,6 +208,7 @@ $effect(() => {
 
 onDestroy(() => {
 	clearTimeout(debounceTimer);
+	if (panelPositionFrame) cancelAnimationFrame(panelPositionFrame);
 	panel()?.classList.add("float-panel-closed");
 });
 </script>
@@ -161,7 +219,9 @@ onDestroy(() => {
 		type="button"
 		class="katelya-search-trigger"
 		data-search-trigger
-		aria-label="打开搜索"
+		aria-label="打开站内搜索"
+		aria-controls="search-panel"
+		aria-haspopup="dialog"
 		aria-expanded={isOpen}
 		onclick={toggleSearch}
 		onkeydown={handleDesktopKeydown}
@@ -173,7 +233,9 @@ onDestroy(() => {
 <button
 	onclick={toggleSearch}
 	onkeydown={handleDesktopKeydown}
-	aria-label="打开搜索"
+	aria-label="打开站内搜索"
+	aria-controls="search-panel"
+	aria-haspopup="dialog"
 	aria-expanded={isOpen}
 	id="search-switch"
 	data-search-trigger
@@ -190,28 +252,69 @@ onDestroy(() => {
 	aria-hidden="true"
 	class="float-panel float-panel-closed katelya-search-panel katelya-search-desktop-panel search-panel"
 >
+	<div class="katelya-search-panel-header">
+		<div class="katelya-search-panel-heading">
+			<span class="katelya-search-panel-mark" aria-hidden="true">
+				<Icon icon="material-symbols:travel-explore-rounded" />
+			</span>
+			<span>
+				<strong>站内搜索</strong>
+				<small>探索文章、标签与项目记录</small>
+			</span>
+		</div>
+		<div class="katelya-search-panel-actions">
+			<kbd>Esc</kbd>
+			<button
+				type="button"
+				class="katelya-search-panel-close"
+				data-search-close
+				aria-label="关闭搜索"
+				onclick={() => closeSearch(false, true)}
+			>
+				<Icon icon="material-symbols:close-rounded" />
+			</button>
+		</div>
+	</div>
+
 	<div class="katelya-search-input-row">
-		<Icon icon="material-symbols:search" class="text-[1.2rem] opacity-55" />
+		<Icon icon="material-symbols:search" class="katelya-search-field-icon" />
 		<input
 			id="search-input"
 			placeholder={i18n(I18nKey.search)}
 			bind:value={keyword}
+			autocomplete="off"
+			spellcheck="false"
 			class="min-w-0 flex-1 bg-transparent outline-0 text-sm"
 		/>
 		{#if keyword}
-			<button type="button" class="katelya-search-clear" aria-label="清空搜索" onclick={() => {
-				keyword = "";
-				result = [];
-				input()?.focus();
-			}}>
-				<Icon icon="material-symbols:close-rounded" />
+			<button
+				type="button"
+				class="katelya-search-clear"
+				aria-label="清空搜索"
+				onclick={() => {
+					keyword = "";
+					result = [];
+					input()?.focus();
+				}}
+			>
+				<Icon icon="material-symbols:backspace-outline-rounded" />
 			</button>
 		{/if}
 	</div>
 
 	<div class="katelya-search-results" aria-live="polite">
-		{#if keyword && result.length === 0}
-			<p class="katelya-search-empty">没有找到匹配内容</p>
+		{#if !keyword}
+			<div class="katelya-search-empty katelya-search-empty--idle">
+				<Icon icon="material-symbols:ink-pen-outline-rounded" />
+				<strong>从一段关键词开始</strong>
+				<span>可搜索标题、正文内容与标签</span>
+			</div>
+		{:else if result.length === 0}
+			<div class="katelya-search-empty">
+				<Icon icon="material-symbols:search-off-rounded" />
+				<strong>暂未找到匹配内容</strong>
+				<span>换一个更简短的关键词再试试</span>
+			</div>
 		{/if}
 		{#each result as item}
 			<a
@@ -219,11 +322,14 @@ onDestroy(() => {
 				onclick={(event) => handleResultClick(event, item.url)}
 				class="katelya-search-result"
 			>
-				<div class="font-bold text-90 flex items-center gap-1">
-					{item.meta.title}
-					<Icon icon="fa7-solid:chevron-right" class="text-xs text-(--primary)" />
-				</div>
-				<div class="text-sm text-50">{@html item.excerpt}</div>
+				<span class="katelya-search-result-icon" aria-hidden="true">
+					<Icon icon="material-symbols:article-outline-rounded" />
+				</span>
+				<span class="katelya-search-result-copy">
+					<strong>{item.meta.title}</strong>
+					<span>{@html item.excerpt}</span>
+				</span>
+				<Icon icon="material-symbols:arrow-forward-rounded" class="katelya-search-result-arrow" />
 			</a>
 		{/each}
 	</div>
