@@ -1,5 +1,5 @@
 {
-  "name": "mizuki",
+  "name": "katelya-digital-garden",
   "type": "module",
   "version": "9.0",
   "scripts": {
@@ -18,7 +18,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "tsc --noEmit",
-    "test": "node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs",
+    "test": "node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs && node --test tests/katelya-branding.test.mjs",
     "new-post": "node scripts/new-post.js",
     "format": "biome format --write ./src",
     "lint": "biome check --write ./src",
@@ -76,7 +76,7 @@
     "svelte": "^5.56.7",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^1.0.0"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.10",
