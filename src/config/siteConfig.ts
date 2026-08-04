@@ -4,6 +4,7 @@ const SITE_LANG = "zh_CN";
 const DAY_ART = "/assets/art/katelya-van-gogh-day.svg";
 // Dark theme counterpart is selected by the gallery CSS layer.
 const NIGHT_ART = "/assets/art/katelya-van-gogh-night.svg";
+const BRAND_SEAL = "assets/brand/katelya-starry-cypress-seal.svg";
 
 export const siteConfig: SiteConfig = {
 	title: "Katelya · 思囿随笔",
@@ -33,8 +34,8 @@ export const siteConfig: SiteConfig = {
 	navbarTitle: {
 		mode: "text-icon",
 		text: "Katelya · 思囿随笔",
-		icon: "assets/brand/katelya-k.svg",
-		logo: "assets/brand/katelya-k.svg",
+		icon: BRAND_SEAL,
+		logo: BRAND_SEAL,
 	},
 
 	pageScaling: {
@@ -145,7 +146,7 @@ export const siteConfig: SiteConfig = {
 	generateOgImages: false,
 	favicon: [
 		{
-			src: "/assets/brand/katelya-k.svg",
+			src: `/${BRAND_SEAL}`,
 			sizes: "any",
 		},
 	],
