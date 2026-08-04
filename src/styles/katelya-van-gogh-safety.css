@@ -1,0 +1,44 @@
+/* Targeted containment rules kept separate from the visual system. */
+
+html.katelya-art-theme .card-base,
+html.katelya-art-theme .card-base-transparent {
+	position: relative;
+	isolation: isolate;
+}
+
+html.katelya-art-theme .card-base::after {
+	content: none !important;
+}
+
+html.katelya-art-theme #left-sidebar > #left-sidebar-sticky,
+html.katelya-art-theme #right-sidebar > #right-sidebar-sticky,
+html.katelya-art-theme .right-sidebar-container > #right-sidebar {
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+html.katelya-art-theme #left-sidebar,
+html.katelya-art-theme #right-sidebar,
+html.katelya-art-theme #content-wrapper,
+html.katelya-art-theme #swup-container,
+html.katelya-art-theme .katelya-main-shell,
+html.katelya-art-theme #main-grid {
+	min-width: 0;
+	max-width: 100%;
+}
+
+html.katelya-art-theme img,
+html.katelya-art-theme video,
+html.katelya-art-theme iframe:not(#l2d-iframe) {
+	max-width: 100%;
+}
+
+@media (max-width: 1800px) {
+	html.katelya-art-theme #l2d-iframe {
+		display: none !important;
+	}
+}
