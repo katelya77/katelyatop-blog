@@ -6,21 +6,14 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		{
-			name: "探索",
-			url: "#",
-			icon: "material-symbols:explore-outline-rounded",
-			children: [
-				{
-					name: "项目实验室",
-					url: "/projects/",
-					icon: "material-symbols:deployed-code-outline",
-				},
-				{
-					name: "成长时间线",
-					url: "/timeline/",
-					icon: "material-symbols:timeline-rounded",
-				},
-			],
+			name: "项目",
+			url: "/projects/",
+			icon: "material-symbols:deployed-code-outline",
+		},
+		{
+			name: "时间线",
+			url: "/timeline/",
+			icon: "material-symbols:timeline-rounded",
 		},
 		{
 			name: "关于",
