@@ -88,8 +88,14 @@ test("gallery reserves banner height exactly once", async () => {
 
 	assert.doesNotMatch(safety, /\.katelya-main-shell::before/);
 	assert.doesNotMatch(safety, /\.katelya-main-shell\.is-home-layout::before/);
-	assert.match(geometry, /\.katelya-main-shell\s*\{[\s\S]*?padding-top:\s*var\(--impasto-article-space\)\s*!important/);
-	assert.match(geometry, /\.katelya-main-shell\.is-home-layout\s*\{[\s\S]*?padding-top:\s*var\(--impasto-home-space\)\s*!important/);
+	assert.equal(
+		(geometry.match(/padding-top:\s*var\(--impasto-article-space\)\s*!important/g) || []).length,
+		1,
+	);
+	assert.equal(
+		(geometry.match(/padding-top:\s*var\(--impasto-home-space\)\s*!important/g) || []).length,
+		1,
+	);
 	assert.match(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*?padding-top:\s*100dvh\s*!important/);
 });
 
