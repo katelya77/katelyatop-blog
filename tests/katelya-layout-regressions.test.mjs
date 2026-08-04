@@ -88,15 +88,10 @@ test("gallery reserves banner height exactly once", async () => {
 
 	assert.doesNotMatch(safety, /\.katelya-main-shell::before/);
 	assert.doesNotMatch(safety, /\.katelya-main-shell\.is-home-layout::before/);
-	assert.equal(
-		(geometry.match(/padding-top:\s*var\(--impasto-article-space\)\s*!important/g) || []).length,
-		1,
-	);
-	assert.equal(
-		(geometry.match(/padding-top:\s*var\(--impasto-home-space\)\s*!important/g) || []).length,
-		1,
-	);
-	assert.match(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*?padding-top:\s*100dvh\s*!important/);
+	assert.match(geometry, /--katelya-active-hero-height:\s*var\(--impasto-article-space\)/);
+	assert.match(geometry, /body\.fullscreen-banner\s*\{[\s\S]*?--katelya-active-hero-height:\s*100svh/);
+	assert.match(geometry, /body\.fullscreen-banner #banner-wrapper[\s\S]*?top:\s*0\s*!important/);
+	assert.match(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*?padding-top:\s*var\(--katelya-active-hero-height\)\s*!important/);
 });
 
 test("navbar panel and content use one DOM grid", async () => {
@@ -123,7 +118,7 @@ test("settings button resolves the hydrated panel when clicked", async () => {
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
 
 	assert.match(navbar, /const getSettingsPanel = \(\) => document\.getElementById\("display-setting"\)/);
-	assert.match(navbar, /const onSettingsClick = \(\) => togglePanel\(getSettingsPanel\(\)\)/);
+	assert.match(navbar, /const onSettingsClick/);
 	assert.doesNotMatch(navbar, /const settingsPanel = document\.getElementById\("display-setting"\)/);
 });
 
@@ -139,4 +134,41 @@ test("only the current gallery theme stylesheet is loaded", async () => {
 
 	assert.doesNotMatch(layout, /katelya-impressionist\.css/);
 	assert.match(grid, /katelya-van-gogh-gallery\.css/);
+});
+
+test("closed search leaves no composited rectangle and overlays are exclusive", async () => {
+	const search = await read("src/components/organisms/navigation/Search.svelte");
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	const geometry = await read("src/styles/impasto-geometry.css");
+
+	assert.match(search, /hidden=\{!isOpen\}/);
+	assert.match(search, /target\.hidden = !isOpen/);
+	assert.match(search, /clearSearchPanelGeometry/);
+	assert.match(search, /katelya:overlay-open/);
+	assert.match(navbar, /katelya:overlay-open/);
+	assert.match(geometry, /\.katelya-search-desktop-panel\[hidden\][\s\S]*?display:\s*none\s*!important/);
+});
+
+test("navbar tools keep search away from More at every desktop width", async () => {
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	const geometry = await read("src/styles/impasto-geometry.css");
+	const toolsStart = navbar.indexOf('<div class="katelya-navbar-tools">');
+	const toolsEnd = navbar.indexOf("</div>\n</nav>", toolsStart);
+	const tools = navbar.slice(toolsStart, toolsEnd);
+
+	assert.ok(tools.indexOf("display-settings-switch") < tools.indexOf("ThemeSwitch"));
+	assert.ok(tools.indexOf("ThemeSwitch") < tools.indexOf("search-container"));
+	assert.match(geometry, /\.katelya-navbar-links[\s\S]*?max-width:\s*100%/);
+	assert.match(geometry, /\.katelya-navbar-tools[\s\S]*?margin-left:\s*clamp\(/);
+});
+
+test("abstract starry cypress seal replaces the plain K mark", async () => {
+	const config = await read("src/config/siteConfig.ts");
+	const seal = await read("public/assets/brand/katelya-starry-cypress-seal.svg");
+
+	assert.match(config, /katelya-starry-cypress-seal\.svg/g);
+	assert.match(seal, /data-motif="cypress"/);
+	assert.match(seal, /data-motif="star-track"/);
+	assert.match(seal, /id="k-negative"/);
+	assert.doesNotMatch(seal, /<feTurbulence|<animate/);
 });
