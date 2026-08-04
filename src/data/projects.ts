@@ -1,6 +1,3 @@
-// Project data configuration file
-// Used to manage data for the project display page
-
 export interface Project {
 	id: string;
 	title: string;
@@ -21,85 +18,70 @@ export interface Project {
 
 export const projectsData: Project[] = [
 	{
-		id: "mizuki",
-		title: "Mizuki",
+		id: "katelya-digital-garden",
+		title: "Katelya · 思囿随笔",
 		description:
-			"A next-gen Material Design 3 blog theme built with Astro, featuring i18n, dark mode, and responsive design.",
-		image: "/assets/projects/mizuki.webp",
+			"我的个人数字花园与成长档案。基于 Astro 和 Mizuki 持续二创，用来记录技术折腾、大学生活、项目实践与日常思考。",
+		image: "",
 		category: "web",
-		techStack: ["Astro", "TypeScript", "Tailwind CSS", "Svelte"],
-		status: "completed",
-		sourceCode: "https://github.com/LyraVoid/Mizuki",
-		visitUrl: "https://mizuki.mysqil.com",
-		startDate: "2024-01-01",
-		endDate: "2024-06-01",
-		featured: true,
-		tags: ["Blog", "Theme", "Open Source"],
-	},
-	{
-		id: "folkpatch",
-		title: "FolkPatch",
-		description:
-			"A kernel-level ROOT solution based on KernelPatch, with polished UI, APM module system, and KPM kernel module support.",
-		image: "/assets/projects/folkpatch.webp",
-		category: "mobile",
-		techStack: ["Kotlin", "Rust", "C++", "Java"],
+		techStack: ["Astro", "TypeScript", "Tailwind CSS", "Cloudflare Pages"],
 		status: "in-progress",
-		sourceCode: "https://github.com/LyraVoid/FolkPatch",
-		visitUrl: "https://fp.mysqil.com",
-		startDate: "2024-03-01",
+		visitUrl: "https://blog.katelya.top/",
+		startDate: "2026-05-23",
 		featured: true,
-		tags: ["Android", "Root", "Kernel"],
-	},
-	{
-		id: "folktool",
-		title: "FolkTool",
-		description:
-			"A fast ROOT flashing tool for FolkPatch with a graphical interface and automated operations, simplifying the complex flashing process.",
-		image: "",
-		category: "desktop",
-		techStack: ["Flutter", "Dart", "C++", "CMake"],
-		status: "completed",
-		sourceCode: "https://github.com/LyraVoid/FolkTool",
-		startDate: "2026-02-01",
-		endDate: "2026-02-28",
-		tags: ["Android", "Tool", "Desktop"],
+		tags: ["Digital Garden", "Blog", "Astro"],
 		showImage: false,
 	},
 	{
-		id: "folkadb",
-		title: "FolkADB",
+		id: "decotv",
+		title: "DecoTV",
 		description:
-			"A portable ADB/Fastboot tool written in C, featuring interactive CLI, Tab completion, drag-and-drop module installation, and Shizuku activation.",
-		image: "",
-		category: "desktop",
-		techStack: ["C"],
-		status: "completed",
-		sourceCode: "https://github.com/LyraVoid/FolkADB",
-		startDate: "2025-06-01",
-		endDate: "2026-01-01",
-		tags: ["Android", "ADB", "CLI"],
-		showImage: false,
-	},
-	{
-		id: "folksplash",
-		title: "FolkSplash",
-		description:
-			"A web-based splash.img visualizer for OPPO/Realme/OnePlus devices, supporting unpack, preview, replace, and repack.",
+			"开箱即用的跨平台影视聚合播放器，支持多资源搜索、在线播放、收藏同步、播放记录与自托管部署。",
 		image: "",
 		category: "web",
-		techStack: ["React", "TypeScript", "Vite", "Material-UI", "Zustand"],
+		techStack: ["Next.js", "TypeScript", "Tailwind CSS", "Docker"],
+		status: "in-progress",
+		sourceCode: "https://github.com/Decohererk/DecoTV",
+		visitUrl: "https://decotv.katelya.eu.org/",
+		startDate: "2025-01-01",
+		featured: true,
+		tags: ["Self-hosted", "Streaming", "Docker"],
+		showImage: false,
+	},
+	{
+		id: "katelyatv",
+		title: "KatelyaTV",
+		description:
+			"面向个人影音体验的前端二创项目，用于探索聚合检索、界面设计、跨端适配与部署优化。",
+		image: "",
+		category: "web",
+		techStack: ["Next.js", "TypeScript", "Tailwind CSS", "Cloudflare"],
 		status: "completed",
-		sourceCode: "https://github.com/LyraVoid/FolkSplash",
-		visitUrl: "https://splash.mysqil.com",
-		startDate: "2025-09-01",
-		endDate: "2025-10-01",
-		tags: ["Android", "Tool", "Frontend"],
+		sourceCode: "https://github.com/katelya77/KatelyaTV",
+		visitUrl: "https://tv.katelya.eu.org/",
+		startDate: "2025-01-01",
+		featured: true,
+		tags: ["Frontend", "Streaming", "Archive"],
+		showImage: false,
+	},
+	{
+		id: "k-vault",
+		title: "K-Vault",
+		description:
+			"基于 Cloudflare 的零成本 Serverless 聚合云盘，支持 Telegram、R2、S3 兼容存储等多种后端与自定义域名。",
+		image: "",
+		category: "web",
+		techStack: ["Cloudflare Pages", "Workers", "Telegram", "R2"],
+		status: "in-progress",
+		sourceCode: "https://github.com/katelya77/K-Vault",
+		visitUrl: "https://pan.katelya.eu.org/",
+		startDate: "2026-02-01",
+		featured: true,
+		tags: ["Cloud Storage", "Serverless", "Open Source"],
 		showImage: false,
 	},
 ];
 
-// Get project statistics
 export const getProjectStats = () => {
 	const total = projectsData.length;
 	const completed = projectsData.filter((p) => p.status === "completed").length;
@@ -118,7 +100,6 @@ export const getProjectStats = () => {
 	};
 };
 
-// Get projects by category
 export const getProjectsByCategory = (category?: string) => {
 	if (!category || category === "all") {
 		return projectsData;
@@ -126,12 +107,10 @@ export const getProjectsByCategory = (category?: string) => {
 	return projectsData.filter((p) => p.category === category);
 };
 
-// Get featured projects
 export const getFeaturedProjects = () => {
 	return projectsData.filter((p) => p.featured);
 };
 
-// Get all tech stacks
 export const getAllTechStack = () => {
 	const techSet = new Set<string>();
 	projectsData.forEach((project) => {
