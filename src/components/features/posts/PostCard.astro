@@ -14,7 +14,6 @@ import type { PostCardProps } from "./types";
 
 const { entry, style }: PostCardProps = Astro.props as PostCardProps;
 const className = Astro.props.class;
-
 const {
 	title,
 	published,
@@ -29,10 +28,9 @@ const {
 	password,
 } = entry.data;
 
-const url = getPostUrl(entry);
-const hasCover = image !== undefined && image !== null && image !== "";
+const postUrl = getPostUrl(entry);
+const hasCover = Boolean(image);
 const coverWidth = "28%";
-
 const { remarkPluginFrontmatter } = await render(entry);
 const homeContent = getPostHomeContent(
 	{ description, hideHomeContent, password },
@@ -40,31 +38,26 @@ const homeContent = getPostHomeContent(
 );
 ---
 
-<div
+<article
 	class:list={[
-		"card-base flex flex-col-reverse md:flex-col w-full rounded-(--radius-large) overflow-hidden relative",
+		"katelya-post-card card-base flex flex-col-reverse md:flex-col w-full rounded-(--radius-large) overflow-hidden relative",
 		className,
 	]}
 	style={style}
 >
 	<div
 		class:list={[
-			"pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative",
+			"katelya-post-card-content pl-6 md:pl-9 pr-6 pt-6 md:pt-7 pb-7 relative",
 			{
-				"w-full md:w-[calc(100%-3.25rem-0.75rem)]": !hasCover,
-				"w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)]":
+				"w-full md:pr-18": !hasCover,
+				"w-full md:w-[calc(100%-var(--coverWidth)-0.75rem)] md:pr-4":
 					hasCover,
 			},
 		]}
 	>
 		<a
-			href={url}
-			class="transition group w-full block font-bold mb-3 text-3xl text-90
-        hover:text-(--primary) dark:hover:text-(--primary)
-        active:text-(--title-active) dark:active:text-(--title-active)
-        before:w-1 before:h-5 before:rounded-md before:bg-(--primary)
-        before:absolute
-        before:top-8.75 before:left-4.5 before:hidden md:before:block"
+			href={postUrl}
+			class="katelya-post-card-title transition group w-full block font-bold mb-3 text-3xl text-90 hover:text-(--primary) active:text-(--title-active) before:w-1 before:h-5 before:rounded-md before:bg-(--primary) before:absolute before:top-8.75 before:left-4.5 before:hidden md:before:block"
 		>
 			{
 				pinned && (
@@ -83,14 +76,6 @@ const homeContent = getPostHomeContent(
 					/>
 				)
 			}
-			<Icon
-				class="inline text-[2rem] text-(--primary) md:hidden translate-y-0.5 absolute"
-				name="material-symbols:chevron-right-rounded"
-			/>
-			<Icon
-				class="text-(--primary) text-[2rem] transition hidden md:inline absolute translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
-				name="material-symbols:chevron-right-rounded"
-			/>
 		</a>
 
 		<PostMetadata
@@ -108,7 +93,7 @@ const homeContent = getPostHomeContent(
 
 		<div
 			class:list={[
-				"transition text-75 mb-3.5 pr-4",
+				"transition text-75 mb-3.5 pr-2",
 				{ "line-clamp-2 md:line-clamp-1": !description },
 			]}
 		>
@@ -123,10 +108,10 @@ const homeContent = getPostHomeContent(
 							href={getTagUrl(tag)}
 							class:list={[
 								siteConfig.tagStyle?.useNewStyle
-									? "link-lg transition text-50 text-xs font-medium px-2 py-1 rounded-lg hover:text-(--primary) dark:hover:text-(--primary) active:text-(--primary) dark:active:text-(--primary) group/tag whitespace-nowrap"
+									? "link-lg transition text-50 text-xs font-medium px-2 py-1 rounded-lg hover:text-(--primary) active:text-(--primary) group/tag whitespace-nowrap"
 									: "btn-regular h-6 text-xs px-2 rounded-lg",
 							]}
-							aria-label={`View all posts tagged with ${tag.trim()}`}
+							aria-label={`查看标签 ${tag.trim()}`}
 						>
 							<span class="transition-transform group-hover/tag:translate-x-0.5">
 								# {tag.trim()}
@@ -138,30 +123,38 @@ const homeContent = getPostHomeContent(
 				)
 			}
 		</div>
+
+		{
+			!hasCover && (
+				<a
+					href={postUrl}
+					aria-label={`阅读全文：${title}`}
+					class="katelya-post-card-arrow"
+				>
+					<Icon name="material-symbols:arrow-forward-rounded" />
+				</a>
+			)
+		}
 	</div>
 
 	{
-		hasCover && (
+		hasCover && image && (
 			<a
-				href={url}
-				aria-label={title}
-				class:list={[
-					"group",
-					"max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0",
-					"md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden active:scale-95",
-				]}
+				href={postUrl}
+				aria-label={`阅读全文：${title}`}
+				class="katelya-post-cover group max-h-[20vh] md:max-h-none mx-4 mt-4 -mb-2 md:mb-0 md:mx-0 md:mt-0 md:w-(--coverWidth) relative md:absolute md:top-3 md:bottom-3 md:right-3 rounded-xl overflow-hidden active:scale-95"
 			>
-				<div class="absolute pointer-events-none z-10 w-full h-full group-hover:bg-black/30 group-active:bg-black/50 transition" />
-				<div class="absolute pointer-events-none z-20 w-full h-full flex items-center justify-center ">
+				<div class="absolute pointer-events-none z-10 w-full h-full group-hover:bg-black/20 group-active:bg-black/40 transition" />
+				<div class="absolute pointer-events-none z-20 w-full h-full flex items-center justify-center">
 					<Icon
-						name="material-symbols:chevron-right-rounded"
-						class="transition opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 text-white text-5xl"
+						name="material-symbols:arrow-forward-rounded"
+						class="transition opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 text-white text-4xl"
 					/>
 				</div>
 				<Image
 					src={image}
 					basePath={getFileDirFromPath(entry.filePath || "")}
-					alt="Cover Image of the Post"
+					alt={`文章封面：${title}`}
 					class="w-full h-full"
 					widths={[200, 400, 800]}
 					sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -169,28 +162,7 @@ const homeContent = getPostHomeContent(
 			</a>
 		)
 	}
-
-	{
-		!hasCover && (
-			<a
-				href={url}
-				aria-label={title}
-				class="hidden! md:flex! btn-regular w-13
-         absolute right-3 top-3 bottom-3 rounded-xl bg-(--enter-btn-bg)
-         hover:bg-(--enter-btn-bg-hover) active:bg-(--enter-btn-bg-active) active:scale-95
-        "
-			>
-				<Icon
-					name="material-symbols:chevron-right-rounded"
-					class="transition text-(--primary) text-4xl mx-auto"
-				/>
-			</a>
-		)
-	}
-</div>
-<div
-	class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 md:hidden"
->
-</div>
+</article>
+<div class="transition border-t border-dashed mx-6 border-black/10 dark:border-white/15 last:border-t-0 md:hidden" />
 
 <style define:vars={{ coverWidth }}></style>
