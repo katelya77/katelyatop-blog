@@ -12,7 +12,7 @@ export const siteConfig: SiteConfig = {
 
 	themeColor: {
 		hue: 188,
-		fixed: false,
+		fixed: true,
 	},
 
 	featurePages: {
@@ -35,7 +35,7 @@ export const siteConfig: SiteConfig = {
 	},
 
 	pageScaling: {
-		enable: true,
+		enable: false,
 		targetWidth: 2000,
 	},
 
