@@ -12,9 +12,10 @@ interface Props {
 	title?: string;
 	subtitle?: string | string[];
 	typewriterConfig?: TypewriterConfig;
+	active?: boolean;
 }
 
-const { title, subtitle, typewriterConfig } = Astro.props;
+const { title, subtitle, typewriterConfig, active = false } = Astro.props;
 
 const orbitItems = [
 	{
@@ -45,8 +46,9 @@ const orbitItems = [
 ---
 
 <section
-	class="katelya-orbit-hero"
+	class:list={["katelya-orbit-hero", { "is-home-active": active }]}
 	aria-labelledby="katelya-hero-title"
+	aria-hidden={active ? "false" : "true"}
 	data-katelya-orbit
 >
 	<div class="katelya-paint-aura" aria-hidden="true">
@@ -145,6 +147,7 @@ const orbitItems = [
 		}
 
 		function onPointerMove(event) {
+			if (!hero.classList.contains("is-home-active")) return;
 			var rect = hero.getBoundingClientRect();
 			var x = (event.clientX - rect.left) / rect.width - 0.5;
 			var y = (event.clientY - rect.top) / rect.height - 0.5;
