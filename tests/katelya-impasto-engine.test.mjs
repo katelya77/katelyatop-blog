@@ -22,12 +22,15 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /getContext\("webgl2"/);
 	assert.match(renderer, /document\.visibilityState/);
 	assert.match(renderer, /prefers-reduced-motion/);
-	assert.match(renderer, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.5\)/);
+	assert.match(renderer, /const MAX_DPR = 1\.4/);
 	assert.match(renderer, /connection\?\.saveData/);
 	assert.match(renderer, /cancelAnimationFrame/);
 	assert.match(renderer, /swup:page:view/);
-	assert.match(renderer, /1000 \/ 45/);
-	assert.match(renderer, /1000 \/ 18/);
+	assert.match(renderer, /const POINTER_FPS = 40/);
+	assert.match(renderer, /const THEME_FPS = 30/);
+	assert.match(renderer, /const IDLE_FPS = 10/);
+	assert.match(renderer, /katelya-theme-change/);
+	assert.doesNotMatch(renderer, /MutationObserver/);
 	assert.doesNotMatch(packageJson, /["']three["']/);
 });
 

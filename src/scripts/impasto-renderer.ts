@@ -12,6 +12,17 @@ type NavigatorWithConnection = Navigator & {
 	connection?: NetworkInformationLike;
 };
 
+type ThemeChangeDetail = {
+	dark?: boolean;
+};
+
+const THEME_BURST_MS = 220;
+const POINTER_BURST_MS = 650;
+const MAX_DPR = 1.4;
+const POINTER_FPS = 40;
+const THEME_FPS = 30;
+const IDLE_FPS = 10;
+
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
 out vec2 vUv;
@@ -51,25 +62,25 @@ float noise(vec2 point) {
 
 float fbm(vec2 point) {
 	float value = 0.0;
-	float amplitude = 0.55;
+	float amplitude = 0.56;
 	mat2 rotation = mat2(0.80, -0.60, 0.60, 0.80);
-	for (int octave = 0; octave < 4; octave++) {
+	for (int octave = 0; octave < 3; octave++) {
 		value += noise(point) * amplitude;
-		point = rotation * point * 2.02 + 13.7;
+		point = rotation * point * 2.03 + 13.7;
 		amplitude *= 0.48;
 	}
 	return value;
 }
 
 vec3 dayPalette(float value, float accent) {
-	vec3 deep = vec3(0.075, 0.29, 0.31);
-	vec3 teal = vec3(0.22, 0.58, 0.55);
+	vec3 deep = vec3(0.07, 0.28, 0.30);
+	vec3 teal = vec3(0.20, 0.57, 0.54);
 	vec3 mint = vec3(0.58, 0.80, 0.72);
-	vec3 cream = vec3(0.94, 0.92, 0.78);
+	vec3 cream = vec3(0.95, 0.93, 0.80);
 	vec3 colour = mix(deep, teal, smoothstep(0.10, 0.48, value));
 	colour = mix(colour, mint, smoothstep(0.42, 0.75, value));
 	colour = mix(colour, cream, smoothstep(0.73, 1.0, value));
-	return mix(colour, vec3(0.43, 0.31, 0.67), accent * 0.26);
+	return mix(colour, vec3(0.43, 0.31, 0.67), accent * 0.24);
 }
 
 vec3 nightPalette(float value, float accent) {
@@ -78,47 +89,45 @@ vec3 nightPalette(float value, float accent) {
 	vec3 cyan = vec3(0.10, 0.48, 0.56);
 	vec3 colour = mix(navy, cobalt, smoothstep(0.08, 0.58, value));
 	colour = mix(colour, cyan, smoothstep(0.52, 0.92, value));
-	return mix(colour, vec3(0.94, 0.72, 0.22), accent * 0.30);
+	return mix(colour, vec3(0.94, 0.72, 0.22), accent * 0.28);
 }
 
 void main() {
 	vec2 uv = vUv;
 	float aspect = uResolution.x / max(uResolution.y, 1.0);
-	vec2 fieldUv = vec2(uv.x, uv.y);
-	vec4 tensor = texture(uField, fieldUv);
+	vec4 tensor = texture(uField, uv);
 	vec2 direction = normalize(tensor.rg * 2.0 - 1.0 + vec2(0.0001));
 	float coherence = tensor.b;
 	float energy = tensor.a;
 	vec2 tangent = vec2(-direction.y, direction.x);
 	float time = uTime * uMotion;
-	vec2 drift = direction * sin(time * 0.18 + energy * 5.0) * 0.0024;
-	vec2 paintedUv = uv + drift;
-	vec2 scaled = vec2(paintedUv.x * aspect, paintedUv.y);
+	vec2 drift = direction * sin(time * 0.16 + energy * 5.0) * 0.0020;
+	vec2 scaled = vec2((uv.x + drift.x) * aspect, uv.y + drift.y);
 	float broad = fbm(scaled * 2.7 + direction * 1.9);
-	float strokeWave = sin(dot(scaled * vec2(32.0, 24.0), tangent) + broad * 8.0 + time * 0.20);
+	float strokeWave = sin(dot(scaled * vec2(31.0, 23.0), tangent) + broad * 8.0 + time * 0.18);
 	float shortStroke = smoothstep(-0.55, 0.92, strokeWave) * coherence;
-	float ridges = fbm(scaled * 11.0 + tangent * broad * 2.0);
+	float ridges = fbm(scaled * 10.5 + tangent * broad * 2.0);
 	float pigment = clamp(0.18 + broad * 0.52 + energy * 0.32 + shortStroke * 0.12, 0.0, 1.0);
 	float accent = smoothstep(0.76, 0.98, energy * 0.72 + ridges * 0.38) * coherence;
 	vec3 base = mix(dayPalette(pigment, accent), nightPalette(pigment, accent), uDark);
 
 	float height = broad * 0.45 + ridges * 0.28 + shortStroke * 0.27;
-	vec3 normal = normalize(vec3(-dFdx(height) * 26.0, -dFdy(height) * 26.0, 1.0));
-	vec3 lightDirection = normalize(vec3((uPointer.x - 0.5) * 1.15, (0.5 - uPointer.y) * 0.95, 0.88));
+	vec3 normal = normalize(vec3(-dFdx(height) * 24.0, -dFdy(height) * 24.0, 1.0));
+	vec3 lightDirection = normalize(vec3((uPointer.x - 0.5) * 1.1, (0.5 - uPointer.y) * 0.9, 0.9));
 	float diffuse = max(dot(normal, lightDirection), 0.0);
-	float roughness = mix(0.78, 0.34, coherence * energy);
+	float roughness = mix(0.78, 0.36, coherence * energy);
 	vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
-	float specular = pow(max(dot(normal, halfVector), 0.0), mix(10.0, 38.0, 1.0 - roughness));
+	float specular = pow(max(dot(normal, halfVector), 0.0), mix(10.0, 34.0, 1.0 - roughness));
 	vec3 lightColour = mix(vec3(1.0, 0.94, 0.78), vec3(1.0, 0.78, 0.30), uDark);
-	base *= 0.76 + diffuse * 0.34;
-	base += lightColour * specular * (0.10 + energy * 0.15);
+	base *= 0.77 + diffuse * 0.33;
+	base += lightColour * specular * (0.09 + energy * 0.14);
 
 	vec2 center = vec2((uv.x - 0.5) / 0.36, (uv.y - 0.43) / 0.28);
 	float protection = exp(-dot(center, center) * 1.65);
 	vec3 calm = mix(vec3(0.84, 0.91, 0.87), vec3(0.055, 0.14, 0.25), uDark);
 	base = mix(base, calm, protection * mix(0.30, 0.22, uDark));
-	float grain = hash21(gl_FragCoord.xy + floor(uTime * 8.0)) - 0.5;
-	base += grain * 0.018;
+	float grain = hash21(gl_FragCoord.xy + floor(uTime * 4.0)) - 0.5;
+	base += grain * 0.015;
 	float vignette = smoothstep(1.05, 0.24, length((uv - 0.5) * vec2(1.0, 0.78)));
 	base *= 0.84 + vignette * 0.16;
 	outColor = vec4(base, 1.0);
@@ -169,13 +178,9 @@ function createProgram(gl: WebGL2RenderingContext): WebGLProgram {
 }
 
 function shouldUseStaticMode(): boolean {
-	const reducedMotion = window.matchMedia(
-		"(prefers-reduced-motion: reduce)",
-	).matches;
+	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 	const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
-	const saveData = Boolean(
-		(navigator as NavigatorWithConnection).connection?.saveData,
-	);
+	const saveData = Boolean((navigator as NavigatorWithConnection).connection?.saveData);
 	return reducedMotion || saveData || (coarsePointer && window.innerWidth < 900);
 }
 
@@ -183,9 +188,7 @@ export function initImpastoRenderer(): void {
 	const impastoWindow = window as ImpastoWindow;
 	impastoWindow.__katelyaImpastoCleanup?.();
 
-	const canvas = document.querySelector<HTMLCanvasElement>(
-		"[data-impasto-canvas]",
-	);
+	const canvas = document.querySelector<HTMLCanvasElement>("[data-impasto-canvas]");
 	if (!canvas) return;
 
 	const root = document.documentElement;
@@ -226,6 +229,7 @@ export function initImpastoRenderer(): void {
 		setStatic();
 		return;
 	}
+
 	gl.bindVertexArray(vao);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -254,89 +258,118 @@ export function initImpastoRenderer(): void {
 		dark: gl.getUniformLocation(program, "uDark"),
 		motion: gl.getUniformLocation(program, "uMotion"),
 	};
+
 	let pointerX = 0.5;
 	let pointerY = 0.34;
 	let targetX = pointerX;
 	let targetY = pointerY;
-	let frame = 0;
-	let lastFrame = 0;
-	let activeUntil = performance.now() + 1200;
+	let pointerActiveUntil = performance.now() + 500;
+	let themeBurstUntil = 0;
+	let isDark = root.classList.contains("dark");
 	let visible = document.visibilityState === "visible";
+	let frameId = 0;
+	let timerId = 0;
+	let resizeFrame = 0;
 	const startedAt = performance.now();
 
 	const resize = () => {
-		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+		resizeFrame = 0;
+		const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
 		const width = Math.max(1, Math.round(window.innerWidth * dpr));
 		const height = Math.max(1, Math.round(window.innerHeight * dpr));
-		if (canvas.width !== width || canvas.height !== height) {
-			canvas.width = width;
-			canvas.height = height;
-			gl.viewport(0, 0, width, height);
-		}
+		if (canvas.width === width && canvas.height === height) return;
+		canvas.width = width;
+		canvas.height = height;
+		gl.viewport(0, 0, width, height);
+	};
+
+	const queueResize = () => {
+		if (!resizeFrame) resizeFrame = requestAnimationFrame(resize);
+	};
+
+	const clearSchedule = () => {
+		if (frameId) cancelAnimationFrame(frameId);
+		if (timerId) window.clearTimeout(timerId);
+		frameId = 0;
+		timerId = 0;
+	};
+
+	const schedule = (delay = 0) => {
+		if (!visible || frameId || timerId) return;
+		timerId = window.setTimeout(() => {
+			timerId = 0;
+			frameId = requestAnimationFrame(draw);
+		}, delay);
 	};
 
 	const draw = (now: number) => {
-		frame = 0;
+		frameId = 0;
 		if (!visible) return;
-		const active = now < activeUntil;
-		const interval = active ? 1000 / 45 : 1000 / 18;
-		if (now - lastFrame >= interval) {
-			lastFrame = now;
-			pointerX += (targetX - pointerX) * 0.075;
-			pointerY += (targetY - pointerY) * 0.075;
-			resize();
-			gl.useProgram(program);
-			gl.bindVertexArray(vao);
-			gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-			gl.uniform2f(uniforms.pointer, pointerX, pointerY);
-			gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
-			gl.uniform1f(
-				uniforms.dark,
-				root.classList.contains("dark") ? 1 : 0,
-			);
-			gl.uniform1f(uniforms.motion, active ? 1 : 0.28);
-			gl.drawArrays(gl.TRIANGLES, 0, 3);
-		}
-		frame = requestAnimationFrame(draw);
+
+		const pointerActive = now < pointerActiveUntil;
+		const themeActive = now < themeBurstUntil;
+		const fps = pointerActive ? POINTER_FPS : themeActive ? THEME_FPS : IDLE_FPS;
+		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.045);
+		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.045);
+
+		gl.useProgram(program);
+		gl.bindVertexArray(vao);
+		gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+		gl.uniform2f(uniforms.pointer, pointerX, pointerY);
+		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
+		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
+		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.5 : 0.18);
+		gl.drawArrays(gl.TRIANGLES, 0, 3);
+		schedule(1000 / fps);
 	};
 
-	const wake = () => {
-		activeUntil = performance.now() + 1500;
-		if (!frame && visible) frame = requestAnimationFrame(draw);
-	};
 	const onPointerMove = (event: PointerEvent) => {
 		targetX = event.clientX / Math.max(window.innerWidth, 1);
 		targetY = event.clientY / Math.max(window.innerHeight, 1);
-		wake();
+		pointerActiveUntil = performance.now() + POINTER_BURST_MS;
+		clearSchedule();
+		schedule();
 	};
+
+	const onThemeChange = (event: Event) => {
+		const customEvent = event as CustomEvent<ThemeChangeDetail>;
+		isDark = customEvent.detail?.dark ?? root.classList.contains("dark");
+		themeBurstUntil = performance.now() + THEME_BURST_MS;
+		clearSchedule();
+		schedule();
+	};
+
 	const onVisibilityChange = () => {
 		visible = document.visibilityState === "visible";
-		if (!visible && frame) {
-			cancelAnimationFrame(frame);
-			frame = 0;
-		} else if (visible) {
-			wake();
-		}
+		if (!visible) clearSchedule();
+		else schedule();
 	};
-	const onThemeMutation = () => wake();
-	const themeObserver = new MutationObserver(onThemeMutation);
-	themeObserver.observe(root, { attributes: true, attributeFilter: ["class"] });
+
+	const onPageView = () => {
+		isDark = root.classList.contains("dark");
+		themeBurstUntil = performance.now() + THEME_BURST_MS;
+		clearSchedule();
+		schedule();
+	};
 
 	window.addEventListener("pointermove", onPointerMove, { passive: true });
-	window.addEventListener("resize", wake, { passive: true });
+	window.addEventListener("resize", queueResize, { passive: true });
+	window.addEventListener("katelya-theme-change", onThemeChange);
 	document.addEventListener("visibilitychange", onVisibilityChange);
-	document.addEventListener("swup:page:view", wake);
+	document.addEventListener("swup:page:view", onPageView);
 	root.classList.remove("impasto-static");
 	root.classList.add("impasto-ready");
-	wake();
+	resize();
+	schedule();
 
 	impastoWindow.__katelyaImpastoCleanup = () => {
-		if (frame) cancelAnimationFrame(frame);
-		themeObserver.disconnect();
+		clearSchedule();
+		if (resizeFrame) cancelAnimationFrame(resizeFrame);
 		window.removeEventListener("pointermove", onPointerMove);
-		window.removeEventListener("resize", wake);
+		window.removeEventListener("resize", queueResize);
+		window.removeEventListener("katelya-theme-change", onThemeChange);
 		document.removeEventListener("visibilitychange", onVisibilityChange);
-		document.removeEventListener("swup:page:view", wake);
+		document.removeEventListener("swup:page:view", onPageView);
 		gl.deleteTexture(texture);
 		gl.deleteVertexArray(vao);
 		gl.deleteProgram(program);
