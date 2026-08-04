@@ -141,7 +141,7 @@ html.katelya-art-theme .katelya-search-icon {
 	font-size: 1.2rem;
 }
 
-/* The panel is portaled to #overlay-root and positioned from the live trigger rect. */
+/* The panel lives in the browser top layer and is positioned from the live trigger rect. */
 html.katelya-art-theme .katelya-search-desktop-panel {
 	position: fixed !important;
 	top: var(--katelya-search-panel-top) !important;

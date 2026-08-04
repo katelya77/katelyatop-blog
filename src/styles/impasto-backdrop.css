@@ -62,13 +62,9 @@ html.katelya-art-theme #banner-wrapper {
 	left: 0 !important;
 	z-index: 1 !important;
 	width: 100% !important;
-	height: var(--impasto-article-space) !important;
+	height: 100% !important;
 	background: transparent !important;
 	transform: none !important;
-}
-
-html.katelya-art-theme:has(.katelya-main-shell.is-home-layout) #banner-wrapper {
-	height: var(--impasto-home-space) !important;
 }
 
 html.katelya-art-theme #banner-wrapper img { opacity: 0 !important; }

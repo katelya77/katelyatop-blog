@@ -61,25 +61,8 @@ html.katelya-art-theme ::selection {
 	background: var(--selection-bg);
 }
 
-/* Inline values written by the legacy wallpaper runtime cannot move this shell. */
-html.katelya-art-theme .katelya-main-shell {
-	position: relative !important;
-	inset: auto !important;
-	width: 100%;
-}
-
-html.katelya-art-theme body.fullscreen-banner #banner-wrapper,
-html.katelya-art-theme body.fullscreen-banner .katelya-orbit-hero {
-	height: 100dvh !important;
-}
-
 html.katelya-art-theme body.no-banner-mode .katelya-orbit-hero {
 	display: none !important;
-}
-
-html.katelya-art-theme #main-grid {
-	position: relative;
-	z-index: 30;
 }
 
 html.katelya-art-theme .card-base,

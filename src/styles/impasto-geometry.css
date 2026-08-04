@@ -5,21 +5,8 @@ html.katelya-art-theme {
 	--impasto-article-space: clamp(20rem, 39vh, 28rem);
 	--impasto-page-gutter: clamp(0.5rem, 1.4vw, 1.25rem);
 	--katelya-active-hero-height: var(--impasto-article-space);
+	--katelya-fullscreen-content-overlap: clamp(6rem, 14svh, 10rem);
 	isolation: isolate;
-}
-
-html.katelya-art-theme body.katelya-home-page {
-	--katelya-active-hero-height: var(--impasto-home-space);
-}
-
-html.katelya-art-theme body.fullscreen-banner {
-	--katelya-active-hero-height: 100svh;
-}
-
-html.katelya-art-theme body.no-banner-mode {
-	--katelya-active-hero-height: calc(
-		var(--impasto-header-height) + var(--impasto-header-top) * 2 + 1rem
-	);
 }
 
 html.katelya-art-theme .katelya-header-stage {
@@ -141,6 +128,7 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 	min-width: 0 !important;
 	max-width: 100% !important;
 	gap: 0.08rem !important;
+	padding-inline-end: clamp(0.65rem, 1vw, 1rem) !important;
 	white-space: nowrap !important;
 	opacity: 1 !important;
 }
@@ -151,8 +139,9 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 	align-items: center !important;
 	justify-self: end !important;
 	gap: 0.16rem !important;
+	column-gap: 0.32rem !important;
 	min-width: 8.2rem !important;
-	margin-left: clamp(0.7rem, 1.35vw, 1.25rem) !important;
+	margin-inline-start: clamp(1rem, 1.8vw, 1.65rem) !important;
 	padding: 0 !important;
 	background: transparent !important;
 	border: 0 !important;
@@ -166,7 +155,7 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools::before {
 	width: 1px;
 	height: 1.45rem;
-	margin: 0 0.24rem 0 0.1rem;
+	margin: 0 0.34rem 0 0.1rem;
 	content: "";
 	background: linear-gradient(
 		to bottom,
@@ -208,45 +197,100 @@ html.katelya-art-theme .katelya-search-desktop-panel[hidden] {
 	content-visibility: hidden !important;
 }
 
-html.katelya-art-theme .katelya-main-shell,
-html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
-	position: relative !important;
-	top: auto !important;
-	bottom: auto !important;
-	left: auto !important;
-	right: auto !important;
-	z-index: 30 !important;
-	width: 100% !important;
-	margin-top: 0 !important;
-	padding-top: var(--katelya-active-hero-height) !important;
-	transform: none !important;
+/*
+ * Hero geometry: the hero stage sits in normal document flow and owns the
+ * banner/hero height; Banner and KatelyaOrbitHero overlay it absolutely.
+ * The main shell simply follows the stage — no 100svh padding placeholder.
+ */
+html.katelya-art-theme .katelya-hero-stage {
+	position: relative;
+	z-index: 10;
+	width: 100%;
+	height: var(--katelya-active-hero-height);
 }
 
-html.katelya-art-theme .katelya-main-shell.is-home-layout {
+html.katelya-art-theme .katelya-hero-stage.is-home-hero {
 	--katelya-active-hero-height: var(--impasto-home-space);
-	padding-top: var(--katelya-active-hero-height) !important;
 }
 
-html.katelya-art-theme body.fullscreen-banner #banner-wrapper {
-	top: 0 !important;
-	height: var(--katelya-active-hero-height) !important;
-}
-
-html.katelya-art-theme body.fullscreen-banner .katelya-orbit-hero {
-	top: 0 !important;
-	height: var(--katelya-active-hero-height) !important;
-}
-
-html.katelya-art-theme body.fullscreen-banner .katelya-main-shell,
-html.katelya-art-theme body.fullscreen-banner .katelya-main-shell.no-banner-layout {
+html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
 	--katelya-active-hero-height: 100svh;
-	margin-top: 0 !important;
-	padding-top: var(--katelya-active-hero-height) !important;
 }
 
-html.katelya-art-theme .katelya-main-shell.no-banner-layout,
-html.katelya-art-theme body.no-banner-mode .katelya-main-shell {
-	padding-top: var(--katelya-active-hero-height) !important;
+html.katelya-art-theme body.no-banner-mode .katelya-hero-stage {
+	--katelya-active-hero-height: calc(
+		var(--impasto-header-height) + var(--impasto-header-top) * 2 + 1rem
+	);
+}
+
+html.katelya-art-theme .katelya-main-shell {
+	position: relative;
+	z-index: 30;
+	width: 100%;
+}
+
+html.katelya-art-theme #main-grid {
+	position: relative;
+	z-index: 30;
+}
+
+/* Fullscreen wallpaper: content slides up over the hero's closing edge. */
+html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
+	margin-top: calc(-1 * var(--katelya-fullscreen-content-overlap));
+}
+
+html.katelya-art-theme body.fullscreen-banner #main-grid {
+	padding-top: clamp(0.35rem, 1.4vw, 1rem);
+}
+
+html.katelya-art-theme body.fullscreen-banner #main-grid::before {
+	position: absolute;
+	inset: -1.5rem 0 auto;
+	z-index: -1;
+	height: clamp(4rem, 10svh, 7rem);
+	pointer-events: none;
+	content: "";
+	background: linear-gradient(
+		to bottom,
+		transparent,
+		color-mix(in srgb, var(--page-bg) 34%, transparent) 54%,
+		color-mix(in srgb, var(--page-bg) 72%, transparent)
+	);
+	filter: blur(12px);
+}
+
+/* Mobile non-home pages hide the banner, so the stage collapses to the header offset. */
+@media (max-width: 1279px) {
+	html.katelya-art-theme body.enable-banner .katelya-hero-stage:not(.is-home-hero) {
+		--katelya-active-hero-height: calc(
+			var(--impasto-header-height) + var(--impasto-header-top) * 2 + 1rem
+		);
+	}
+}
+
+/* Mobile home hero heights (migrated from banner.css). */
+@media (max-width: 479px) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: max(70vh, 450px);
+	}
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: max(75vh, 500px);
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: max(70vh, 500px);
+	}
+}
+
+@media (max-width: 1279px) and (orientation: landscape) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: 60vh;
+	}
 }
 
 html.katelya-art-theme #main-grid,
@@ -254,14 +298,6 @@ html.katelya-art-theme #content-wrapper {
 	transform: none !important;
 }
 
-#overlay-root {
-	position: fixed;
-	inset: 0;
-	z-index: 110;
-	pointer-events: none;
-}
-
-#overlay-root > *,
 #display-setting,
 #nav-menu-panel,
 .katelya-search-panel {
@@ -319,11 +355,13 @@ html.katelya-art-theme .post-card:hover {
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 		gap: 0 !important;
+		padding-inline-end: 0.4rem !important;
 	}
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 		min-width: 7.9rem !important;
-		margin-left: 0.6rem !important;
+		column-gap: 0.18rem !important;
+		margin-inline-start: 0.7rem !important;
 	}
 }
 
@@ -343,7 +381,7 @@ html.katelya-art-theme .post-card:hover {
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 		grid-column: 2 !important;
 		min-width: 0 !important;
-		margin-left: 0 !important;
+		margin-inline-start: 0 !important;
 	}
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools::before {
@@ -356,6 +394,7 @@ html.katelya-art-theme .post-card:hover {
 		--impasto-header-height: 3.7rem;
 		--impasto-home-space: max(34rem, 72svh);
 		--impasto-article-space: 18rem;
+		--katelya-fullscreen-content-overlap: clamp(4.5rem, 12svh, 6.5rem);
 	}
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand span {
@@ -364,8 +403,11 @@ html.katelya-art-theme .post-card:hover {
 }
 
 @media print {
-	html.katelya-art-theme .katelya-main-shell,
-	html.katelya-art-theme .katelya-main-shell.is-home-layout {
-		padding-top: 0 !important;
+	html.katelya-art-theme .katelya-hero-stage {
+		height: 0;
+	}
+
+	html.katelya-art-theme .katelya-main-shell {
+		margin-top: 0;
 	}
 }

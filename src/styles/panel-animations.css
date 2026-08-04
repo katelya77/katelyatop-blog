@@ -1,6 +1,8 @@
 /*
  * 浮层面板动画
- * 关闭状态必须退出可见区域，避免在视口右侧留下缩放残影。
+ * 弹层面板（popover）关闭时退出渲染（display:none），
+ * class 面板关闭时退出可见区域，避免在视口边缘留下合成层残影。
+ * will-change 只在面板打开期间生效，避免长期占用合成层。
  */
 
 .float-panel {
@@ -10,11 +12,15 @@
   pointer-events: auto;
   transform: translate3d(0, 0, 0) scale(1);
   transform-origin: top right;
-  will-change: transform, opacity;
   transition:
     opacity 180ms ease,
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
     visibility 0s linear 0s;
+}
+
+.float-panel:popover-open,
+.float-panel:not([popover]):not(.float-panel-closed) {
+  will-change: transform, opacity;
 }
 
 .float-panel:not(.float-panel-closed) {
@@ -37,6 +43,43 @@
 
 #search-panel {
   transform-origin: top center;
+}
+
+/*
+ * Native popover panels: kill the UA popover margin/inset centering, and
+ * remove closed panels from the render tree so they leave no composited box.
+ * Search panel position/size itself lives in katelya-light-performance.css.
+ */
+html.katelya-art-theme .katelya-search-desktop-panel[popover] {
+  bottom: auto !important;
+  margin: 0 !important;
+}
+
+html.katelya-art-theme .katelya-search-desktop-panel:not(:popover-open):not([data-fallback-open="true"]) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html.katelya-art-theme .katelya-search-desktop-panel:popover-open,
+html.katelya-art-theme .katelya-search-desktop-panel[data-fallback-open="true"] {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* Settings and mobile menu panels keep their theme-driven fixed position. */
+html.katelya-art-theme #display-setting[popover],
+html.katelya-art-theme #nav-menu-panel[popover] {
+  bottom: auto !important;
+  margin: 0 !important;
+}
+
+html.katelya-art-theme #display-setting:not(:popover-open),
+html.katelya-art-theme #nav-menu-panel:not(:popover-open) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 #mobile-toc-panel,

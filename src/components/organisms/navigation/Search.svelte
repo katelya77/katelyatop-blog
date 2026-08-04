@@ -8,7 +8,6 @@ import { onDestroy, onMount } from "svelte";
 
 import type { SearchResult } from "@/global";
 import "@/styles/katelya-light-performance.css";
-import "@/styles/katelya-runtime-repair.css";
 
 type PopoverPanel = HTMLDivElement & {
 	showPopover?: () => void;

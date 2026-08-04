@@ -118,24 +118,27 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 			<Navbar />
 		</div>
 	</div>
-	<div id="overlay-root" aria-live="polite"></div>
 
-	<Banner
-		bannerImages={bannerImages}
-		mobileNonHomeBannerClass={mobileNonHomeBannerClass}
-		showTextOverlay={false}
-	/>
+	<div
+		class:list={["katelya-hero-stage", { "is-home-hero": isHomePage }]}
+	>
+		<Banner
+			bannerImages={bannerImages}
+			mobileNonHomeBannerClass={mobileNonHomeBannerClass}
+			showTextOverlay={false}
+		/>
 
-	{
-		siteConfig.banner.homeText?.enable && (
-			<KatelyaOrbitHero
-				title={siteConfig.banner.homeText.title}
-				subtitle={siteConfig.banner.homeText.subtitle}
-				typewriterConfig={siteConfig.banner.homeText.typewriter}
-				active={isHomePage}
-			/>
-		)
-	}
+		{
+			siteConfig.banner.homeText?.enable && (
+				<KatelyaOrbitHero
+					title={siteConfig.banner.homeText.title}
+					subtitle={siteConfig.banner.homeText.subtitle}
+					typewriterConfig={siteConfig.banner.homeText.typewriter}
+					active={isHomePage}
+				/>
+			)
+		}
+	</div>
 
 	<div
 		class:list={[

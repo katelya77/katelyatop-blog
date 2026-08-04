@@ -15,8 +15,6 @@ html.katelya-art-theme {
 	--katelya-forest: #174d4e;
 	--katelya-gallery-header-height: 4.25rem;
 	--katelya-header-offset: 0.75rem;
-	--katelya-home-hero-height: max(65vh, 38rem);
-	--katelya-article-banner-height: clamp(19rem, 38vh, 27rem);
 	--katelya-surface: rgba(248, 246, 232, 0.88);
 	--katelya-surface-strong: rgba(252, 249, 237, 0.96);
 	--katelya-surface-soft: rgba(226, 239, 230, 0.78);
@@ -128,10 +126,10 @@ html.katelya-art-theme .top-gradient-highlight {
 	display: none !important;
 }
 
-/* Shared banner identity */
+/* Shared banner identity — the hero stage owns the height, the banner fills it. */
 html.katelya-art-theme #banner-wrapper {
 	top: 0 !important;
-	height: var(--katelya-article-banner-height) !important;
+	height: 100%;
 	isolation: isolate;
 	transform: none !important;
 	background-image: url("/assets/art/katelya-van-gogh-day.svg") !important;
@@ -145,10 +143,6 @@ html.katelya-art-theme.dark #banner-wrapper {
 
 html.katelya-art-theme #banner-wrapper img {
 	opacity: 0 !important;
-}
-
-html.katelya-art-theme:has(.katelya-main-shell.is-home-layout) #banner-wrapper {
-	height: var(--katelya-home-hero-height) !important;
 }
 
 html.katelya-art-theme #banner-wrapper::before {
@@ -372,11 +366,8 @@ html.katelya-art-theme .katelya-search-result:hover {
 	background: var(--katelya-surface-soft);
 }
 
-/* Home hero and content geometry */
+/* Home hero and content geometry — the hero stage owns height; the hero fills it. */
 html.katelya-art-theme .katelya-orbit-hero {
-	top: 0 !important;
-	height: var(--katelya-home-hero-height) !important;
-	min-height: 0 !important;
 	padding-top: calc(var(--katelya-gallery-header-height) + 2.2rem);
 	overflow: hidden !important;
 }
@@ -411,22 +402,6 @@ html.katelya-art-theme .katelya-orbit-card {
 	border-color: var(--katelya-border-bright) !important;
 	background: color-mix(in srgb, var(--katelya-surface) 78%, transparent) !important;
 	box-shadow: var(--katelya-art-shadow) !important;
-}
-
-html.katelya-art-theme .katelya-main-shell {
-	margin-top: 0 !important;
-}
-
-html.katelya-art-theme .katelya-main-shell.is-home-layout {
-	top: var(--katelya-home-hero-height) !important;
-}
-
-html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
-	top: var(--katelya-article-banner-height) !important;
-}
-
-html.katelya-art-theme #main-grid {
-	transform: none !important;
 }
 
 html.katelya-art-theme #banner-credit {
@@ -629,8 +604,6 @@ html.katelya-art-theme [class*="floating-control"] {
 	html.katelya-art-theme {
 		--katelya-gallery-header-height: 3.75rem;
 		--katelya-header-offset: 0.5rem;
-		--katelya-home-hero-height: max(68vh, 33rem);
-		--katelya-article-banner-height: 18rem;
 	}
 
 	html.katelya-art-theme body {
@@ -683,10 +656,6 @@ html.katelya-art-theme [class*="floating-control"] {
 
 	html.katelya-art-theme .katelya-orbit-stage {
 		display: none;
-	}
-
-	html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
-		top: var(--katelya-article-banner-height) !important;
 	}
 
 	html.katelya-art-theme .katelya-post-card-content {
