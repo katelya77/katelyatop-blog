@@ -55,8 +55,16 @@ test("quantized structure field and generated fallbacks stay compact", async () 
 	assert.match(night, /stroke-linecap="round"/);
 
 	const total =
-		(await stat(new URL("../public/assets/impasto/impasto-day.svg", import.meta.url))).size +
-		(await stat(new URL("../public/assets/impasto/impasto-night.svg", import.meta.url))).size;
+		(
+			await stat(
+				new URL("../public/assets/impasto/impasto-day.svg", import.meta.url),
+			)
+		).size +
+		(
+			await stat(
+				new URL("../public/assets/impasto/impasto-night.svg", import.meta.url),
+			)
+		).size;
 	assert.ok(total < 500_000, `generated fallbacks are ${total} bytes`);
 });
 
@@ -68,11 +76,19 @@ test("navigation and page content use independent stable geometry", async () => 
 
 	assert.doesNotMatch(grid, /katelya-main-shell absolute/);
 	assert.doesNotMatch(grid, /style=\{`top:/);
-	assert.match(grid, /id="overlay-root"/);
+	assert.doesNotMatch(grid, /id="overlay-root"/);
 	assert.match(navbar, /data-katelya-overlay-trigger/);
-	assert.match(navbar, /overlayRoot\.append\(panel\)/);
+	assert.doesNotMatch(navbar, /overlayRoot\.append\(panel\)/);
+	assert.doesNotMatch(navbar, /MutationObserver/);
+	assert.match(navbar, /popovertarget="display-setting"/);
+	assert.match(navbar, /popovertarget="nav-menu-panel"/);
 	assert.match(geometry, /\.katelya-header-stage[\s\S]*position:\s*fixed/);
-	assert.match(geometry, /\.katelya-main-shell[\s\S]*position:\s*relative\s*!important/);
+	assert.match(geometry, /\.katelya-hero-stage\s*\{[^}]*position:\s*relative/);
+	assert.match(geometry, /\.katelya-main-shell\s*\{[^}]*position:\s*relative/);
+	assert.doesNotMatch(
+		geometry,
+		/padding-top:\s*var\(--katelya-active-hero-height\)/,
+	);
 	assert.doesNotMatch(backdrop, /background-attachment:\s*fixed/);
 });
 

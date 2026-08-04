@@ -30,18 +30,21 @@ test("hero follows route state and uses shared gallery geometry", async () => {
 	assert.match(hero, /is-home-active/);
 	assert.match(hero, /function syncKatelyaHomeState\(isHomePage\)/);
 	assert.match(hero, /katelya-home-page/);
+	assert.match(grid, /katelya-hero-stage/);
 	assert.match(grid, /katelya-main-shell/);
 	assert.match(grid, /is-home-layout/);
-	assert.match(theme, /--katelya-home-hero-height:/);
-	assert.match(theme, /--katelya-article-banner-height:/);
-	assert.match(theme, /\.katelya-main-shell\.is-home-layout/);
+	assert.match(theme, /--impasto-home-space:/);
+	assert.match(theme, /--impasto-article-space:/);
+	assert.match(theme, /\.katelya-hero-stage\.is-home-hero/);
 	assert.match(theme, /#main-grid\s*\{[\s\S]*?transform:\s*none\s*!important/);
 });
 
 test("full page uses day-night painterly artwork and clips overflow", async () => {
 	const theme = await readTheme();
 	const dayArtwork = await read("public/assets/art/katelya-van-gogh-day.svg");
-	const nightArtwork = await read("public/assets/art/katelya-van-gogh-night.svg");
+	const nightArtwork = await read(
+		"public/assets/art/katelya-van-gogh-night.svg",
+	);
 
 	assert.match(theme, /katelya-van-gogh-day\.svg/);
 	assert.match(theme, /katelya-van-gogh-night\.svg/);
@@ -63,8 +66,14 @@ test("desktop navigation is centered and keeps a stable primary order", async ()
 	assert.match(navbar, /katelya-gallery-header/);
 	assert.match(navbar, /katelya-navbar-links/);
 	assert.doesNotMatch(navbar, /hideLinks/);
-	assert.match(theme, /grid-template-columns:\s*minmax\(11\.5rem,\s*1fr\)\s+auto\s+minmax\(11\.5rem,\s*1fr\)/);
-	assert.match(theme, /\.katelya-navbar-links[\s\S]*?opacity:\s*1\s*!important/);
+	assert.match(
+		theme,
+		/grid-template-columns:\s*minmax\(11\.5rem,\s*1fr\)\s+auto\s+minmax\(11\.5rem,\s*1fr\)/,
+	);
+	assert.match(
+		theme,
+		/\.katelya-navbar-links[\s\S]*?opacity:\s*1\s*!important/,
+	);
 });
 
 test("display settings close invisibly and stay inside the viewport", async () => {
@@ -82,16 +91,29 @@ test("display settings close invisibly and stay inside the viewport", async () =
 	assert.doesNotMatch(animation, /scaleX\(0\.6\)/);
 });
 
-test("gallery reserves banner height exactly once", async () => {
+test("hero stage reserves banner height exactly once", async () => {
 	const safety = await read("src/styles/katelya-van-gogh-safety.css");
 	const geometry = await read("src/styles/impasto-geometry.css");
 
 	assert.doesNotMatch(safety, /\.katelya-main-shell::before/);
 	assert.doesNotMatch(safety, /\.katelya-main-shell\.is-home-layout::before/);
-	assert.match(geometry, /--katelya-active-hero-height:\s*var\(--impasto-article-space\)/);
-	assert.match(geometry, /body\.fullscreen-banner\s*\{[\s\S]*?--katelya-active-hero-height:\s*100svh/);
-	assert.match(geometry, /body\.fullscreen-banner #banner-wrapper[\s\S]*?top:\s*0\s*!important/);
-	assert.match(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*?padding-top:\s*var\(--katelya-active-hero-height\)\s*!important/);
+	assert.doesNotMatch(safety, /fullscreen-banner/);
+	assert.match(
+		geometry,
+		/--katelya-active-hero-height:\s*var\(--impasto-article-space\)/,
+	);
+	assert.match(
+		geometry,
+		/body\.fullscreen-banner \.katelya-hero-stage\s*\{[\s\S]*?--katelya-active-hero-height:\s*100svh/,
+	);
+	assert.match(
+		geometry,
+		/\.katelya-hero-stage\s*\{[\s\S]*?height:\s*var\(--katelya-active-hero-height\)/,
+	);
+	assert.doesNotMatch(
+		geometry,
+		/padding-top:\s*var\(--katelya-active-hero-height\)/,
+	);
 });
 
 test("navbar panel and content use one DOM grid", async () => {
@@ -101,12 +123,30 @@ test("navbar panel and content use one DOM grid", async () => {
 
 	assert.doesNotMatch(layout, /mobile-navbar\.css/);
 	assert.doesNotMatch(layout, /wallpaper-navbar-transparent\.css/);
-	assert.match(navbar, /id="navbar"[\s\S]*class="katelya-gallery-header katelya-navbar-shell z-50"/);
-	assert.doesNotMatch(navbar, /<div class:list=\{\[className, "katelya-navbar-shell"\]\}>/);
-	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*\{[\s\S]*?display:\s*grid\s*!important/);
-	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-brand/);
-	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-links/);
-	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-tools/);
+	assert.match(
+		navbar,
+		/id="navbar"[\s\S]*class="katelya-gallery-header katelya-navbar-shell z-50"/,
+	);
+	assert.doesNotMatch(
+		navbar,
+		/<div class:list=\{\[className, "katelya-navbar-shell"\]\}>/,
+	);
+	assert.match(
+		geometry,
+		/#navbar\.katelya-navbar-shell\s*\{[\s\S]*?display:\s*grid\s*!important/,
+	);
+	assert.match(
+		geometry,
+		/#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-brand/,
+	);
+	assert.match(
+		geometry,
+		/#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-links/,
+	);
+	assert.match(
+		geometry,
+		/#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-tools/,
+	);
 });
 
 test("fixed gallery header does not animate vertically on page load", async () => {
@@ -114,18 +154,30 @@ test("fixed gallery header does not animate vertically on page load", async () =
 	assert.doesNotMatch(navbar, /katelya-gallery-header z-50 onload-animation/);
 });
 
-test("settings button resolves the hydrated panel when clicked", async () => {
+test("settings and menu triggers invoke native popovers without portal reparenting", async () => {
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	const settings = await read(
+		"src/components/features/settings/SettingsPanel.svelte",
+	);
+	const menu = await read(
+		"src/components/organisms/navigation/NavMenuPanel.astro",
+	);
 
-	assert.match(navbar, /const getSettingsPanel = \(\) => document\.getElementById\("display-setting"\)/);
-	assert.match(navbar, /const onSettingsClick/);
-	assert.doesNotMatch(navbar, /const settingsPanel = document\.getElementById\("display-setting"\)/);
+	assert.match(navbar, /popovertarget="display-setting"/);
+	assert.match(navbar, /popovertarget="nav-menu-panel"/);
+	assert.match(settings, /popover="auto"/);
+	assert.match(menu, /popover="auto"/);
+	assert.doesNotMatch(navbar, /getSettingsPanel/);
+	assert.doesNotMatch(navbar, /overlayRoot/);
 });
 
 test("hero route sync avoids observing every DOM mutation", async () => {
 	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
 	assert.doesNotMatch(hero, /new MutationObserver/);
-	assert.match(hero, /document\.addEventListener\("swup:page:view", queueHomeStateSync\)/);
+	assert.match(
+		hero,
+		/document\.addEventListener\("swup:page:view", queueHomeStateSync\)/,
+	);
 });
 
 test("only the current gallery theme stylesheet is loaded", async () => {
@@ -136,22 +188,46 @@ test("only the current gallery theme stylesheet is loaded", async () => {
 	assert.match(grid, /katelya-van-gogh-gallery\.css/);
 });
 
-test("closed search leaves no composited rectangle and overlays are exclusive", async () => {
-	const search = await read("src/components/organisms/navigation/Search.svelte");
+test("closed overlays leave no composited rectangle and overlays are exclusive", async () => {
+	const search = await read(
+		"src/components/organisms/navigation/Search.svelte",
+	);
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
-	const runtime = await read("src/styles/katelya-runtime-repair.css");
+	const settings = await read(
+		"src/components/features/settings/SettingsPanel.svelte",
+	);
+	const menu = await read(
+		"src/components/organisms/navigation/NavMenuPanel.astro",
+	);
+	const panels = await read("src/styles/panel-animations.css");
 
 	assert.match(search, /popover="auto"/);
 	assert.match(search, /showPopover\(\)/);
 	assert.match(search, /hidePopover\(\)/);
 	assert.match(search, /clearSearchPanelGeometry/);
 	assert.match(search, /katelya:overlay-open/);
-	assert.match(navbar, /katelya:overlay-open/);
+	assert.match(settings, /popover="auto"/);
+	assert.match(settings, /katelya:overlay-open/);
+	assert.match(menu, /popover="auto"/);
+	assert.match(menu, /katelya:overlay-open/);
 	assert.doesNotMatch(navbar, /getSearchPanel/);
+	assert.doesNotMatch(navbar, /overlayRoot/);
+	assert.doesNotMatch(settings, /float-panel-closed/);
+	assert.doesNotMatch(menu, /float-panel-closed/);
 	assert.match(
-		runtime,
+		panels,
 		/\.katelya-search-desktop-panel:not\(:popover-open\):not\(\[data-fallback-open="true"\]\)[\s\S]*?display:\s*none\s*!important/,
 	);
+	assert.match(
+		panels,
+		/#display-setting:not\(:popover-open\)[\s\S]*?display:\s*none\s*!important/,
+	);
+	assert.match(
+		panels,
+		/#nav-menu-panel:not\(:popover-open\)[\s\S]*?display:\s*none\s*!important/,
+	);
+	assert.doesNotMatch(panels, /\.float-panel\s*\{[^}]*will-change/);
+	assert.match(panels, /\.float-panel:popover-open[^{]*\{[^}]*will-change/);
 });
 
 test("navbar tools keep search away from More at every desktop width", async () => {
@@ -161,15 +237,22 @@ test("navbar tools keep search away from More at every desktop width", async () 
 	const toolsEnd = navbar.indexOf("</div>\n</nav>", toolsStart);
 	const tools = navbar.slice(toolsStart, toolsEnd);
 
-	assert.ok(tools.indexOf("display-settings-switch") < tools.indexOf("ThemeSwitch"));
+	assert.ok(
+		tools.indexOf("display-settings-switch") < tools.indexOf("ThemeSwitch"),
+	);
 	assert.ok(tools.indexOf("ThemeSwitch") < tools.indexOf("search-container"));
 	assert.match(geometry, /\.katelya-navbar-links[\s\S]*?max-width:\s*100%/);
-	assert.match(geometry, /\.katelya-navbar-tools[\s\S]*?margin-left:\s*clamp\(/);
+	assert.match(
+		geometry,
+		/\.katelya-navbar-tools[\s\S]*?margin-inline-start:\s*clamp\(/,
+	);
 });
 
 test("abstract starry cypress seal replaces the plain K mark", async () => {
 	const config = await read("src/config/siteConfig.ts");
-	const seal = await read("public/assets/brand/katelya-starry-cypress-seal.svg");
+	const seal = await read(
+		"public/assets/brand/katelya-starry-cypress-seal.svg",
+	);
 
 	assert.match(config, /katelya-starry-cypress-seal\.svg/g);
 	assert.match(seal, /data-motif="cypress"/);

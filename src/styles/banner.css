@@ -33,10 +33,6 @@
 /* ==========================================================================
    无 Banner 模式布局
    ========================================================================== */
-body.no-banner-mode .absolute.w-full.z-30 {
-  top: 5.5rem !important;
-}
-
 /* TOC 垂直对齐优化 */
 body.no-banner-mode #toc-inner-wrapper {
   top: 5.5rem !important;
@@ -65,13 +61,6 @@ body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded=
   border-radius: var(--radius-large);
   padding: 0.5rem;
   box-shadow: var(--shadow-lg);
-}
-
-/* 桌面端 Banner 模式下的主内容区域位置 */
-@media (width >= 1280px) {
-  body.enable-banner .absolute.w-full.z-30 {
-    top: 35vh !important;
-  }
 }
 
 /* ==========================================================================
@@ -119,20 +108,6 @@ body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded=
    移动端横幅优化 - 小屏手机 (320px - 479px)
    ========================================================================== */
 @media (width < 480px) {
-  /* Banner wrapper 高度优化 */
-  body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
-    height: max(70vh, 450px) !important;
-    min-height: 450px;
-    max-height: none;
-    top: 0 !important;
-  }
-
-  /* 主内容区域位置调整 */
-  body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-    top: max(70vh, 450px) !important;
-    min-height: calc(100vh - max(70vh, 450px)) !important;
-  }
-
   /* 横幅文本覆盖层优化 */
   .banner-text-overlay {
     align-items: center !important;
@@ -175,20 +150,6 @@ body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded=
    移动端横幅优化 - 大屏手机 (480px - 767px)
    ========================================================================== */
 @media (480px <= width < 768px) {
-  /* Banner wrapper 高度优化 */
-  body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
-    height: max(75vh, 500px) !important;
-    min-height: 500px;
-    max-height: none;
-    top: 0 !important;
-  }
-
-  /* 主内容区域位置调整 */
-  body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-    top: max(75vh, 500px) !important;
-    min-height: calc(100vh - max(75vh, 500px)) !important;
-  }
-
   /* 横幅文本覆盖层优化 */
   .banner-text-overlay {
     align-items: center !important;
@@ -231,19 +192,6 @@ body.wallpaper-transparent #toc-inner-wrapper:has(table-of-contents[data-loaded=
    平板设备横幅优化 (768px - 1279px)
    ========================================================================== */
 @media (768px <= width < 1280px) {
-  /* Banner wrapper 高度优化 */
-  body.enable-banner #banner-wrapper:not(.mobile-hide-banner) {
-    height: max(70vh, 500px) !important;
-    min-height: 500px;
-    top: 0 !important;
-  }
-
-  /* 主内容区域位置调整 */
-  body.enable-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-    top: max(70vh, 500px) !important;
-    min-height: calc(100vh - max(70vh, 500px)) !important;
-  }
-
   /* 横幅文本覆盖层优化 */
   .banner-text-overlay {
     align-items: center !important;
@@ -354,71 +302,6 @@ html[data-banner-title-enabled="false"] .banner-text-overlay {
 	display: none !important;
 }
 
-/* ==========================================================================
-   全屏 Banner 模式 - 复用 Banner 设计，仅改变高度
-   ========================================================================== */
-@media (width >= 1280px) {
-  body.enable-banner.fullscreen-banner #top-row {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 100vh !important;
-    overflow: visible !important;
-    transition: none !important;
-  }
-
-  body.enable-banner.fullscreen-banner #banner-wrapper {
-    position: relative !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: none !important;
-    top: 0 !important;
-    transform: none !important;
-    overflow: hidden !important;
-  }
-
-  body.enable-banner.fullscreen-banner #banner {
-    height: 100vh !important;
-    min-height: 100vh !important;
-    transform: none !important;
-  }
-
-  body.enable-banner.fullscreen-banner .absolute.w-full.z-30 {
-    position: relative !important;
-    top: 0 !important;
-    margin-top: 1rem !important;
-  }
-
-  body.enable-banner.fullscreen-banner #main-grid {
-    transform: translateY(0) !important;
-  }
-}
-
-@media (width < 1280px) {
-  body.enable-banner.fullscreen-banner #top-row {
-    height: 0 !important;
-    overflow: visible !important;
-    transition: none !important;
-  }
-
-  body.enable-banner.fullscreen-banner #banner-wrapper:not(.mobile-hide-banner) {
-    position: relative !important;
-    height: 100vh !important;
-    min-height: 100vh !important;
-    max-height: none;
-    top: 0 !important;
-    transform: none !important;
-  }
-
-  body.enable-banner.fullscreen-banner .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-    position: relative !important;
-    top: 0 !important;
-    margin-top: 0 !important;
-    min-height: 0 !important;
-  }
-}
-
 html.is-page-transitioning .banner-text-overlay {
 	display: none !important;
 }
@@ -472,18 +355,6 @@ html.is-page-transitioning #header-waves {
     transition:
       transform 0.3s ease-in,
       opacity 0.2s ease-in !important;
-  }
-
-  /* 手机端非首页时主内容区域从顶部开始 */
-  .absolute.w-full.z-30 {
-    transition: top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
-    will-change: top;
-  }
-
-  .absolute.w-full.z-30.mobile-main-no-banner {
-    top: 5.5rem !important;
-    min-height: calc(100vh - 5.5rem) !important;
-    transition: top 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s !important;
   }
 }
 
@@ -539,14 +410,6 @@ html.is-page-transitioning #header-waves {
     user-drag: none;
     pointer-events: none;
   }
-}
-
-/* ==========================================================================
-   无 Banner 布局
-   ========================================================================== */
-.no-banner-layout {
-  top: 5.5rem !important;
-  min-height: calc(100vh - 5.5rem) !important;
 }
 
 /* Grid 模式下隐藏右侧边栏 */
@@ -648,49 +511,9 @@ html.is-page-transitioning #header-waves {
 }
 
 /* ==========================================================================
-   移动端当 Banner 被禁用时的布局样式
-   ========================================================================== */
-@media (width < 1280px) {
-  .absolute.w-full.z-30.no-banner-layout {
-    top: 5.5rem !important;
-    min-height: calc(100vh - 5.5rem) !important;
-    transition: none !important;
-  }
-}
-
-/* 小屏手机当 Banner 被禁用时的布局样式 */
-@media (width < 480px) {
-  .absolute.w-full.z-30.no-banner-layout {
-    top: 5.5rem !important;
-    min-height: calc(100vh - 5.5rem) !important;
-    transition: none !important;
-  }
-}
-
-/* 平板设备当 Banner 被禁用时的布局样式 */
-@media (768px <= width < 1280px) {
-  .absolute.w-full.z-30.no-banner-layout {
-    top: 5.5rem !important;
-    min-height: calc(100vh - 5.5rem) !important;
-    transition: none !important;
-  }
-}
-
-/* ==========================================================================
    移动端横屏优化
    ========================================================================== */
 @media (width < 1280px) and (orientation: landscape) {
-  #banner-wrapper:not(.mobile-hide-banner) {
-    top: 0 !important;
-    height: 60vh !important;
-  }
-
-  /* 主内容区域位置调整 */
-  .absolute.w-full.z-30:not(.mobile-main-no-banner) {
-    top: 60vh !important;
-    min-height: calc(100vh - 60vh) !important;
-  }
-
   .banner-container {
     height: 60vh;
     min-height: 300px;

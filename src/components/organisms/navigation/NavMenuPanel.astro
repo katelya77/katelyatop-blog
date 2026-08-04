@@ -50,8 +50,9 @@ const processedLinks: ProcessedNavBarLink[] = (
 
 <div
 	id="nav-menu-panel"
+	popover="auto"
 	class:list={[
-		"float-panel float-panel-closed absolute transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto",
+		"float-panel absolute transition-all fixed right-4 px-2 py-2 max-h-[80vh] overflow-y-auto",
 	]}
 >
 	{
@@ -163,7 +164,50 @@ const processedLinks: ProcessedNavBarLink[] = (
 </style>
 
 <script>
+	type PopoverPanel = HTMLElement & {
+		hidePopover?: () => void;
+	};
+
+	type PopoverToggleEvent = Event & {
+		newState?: "open" | "closed";
+	};
+
 	document.addEventListener("DOMContentLoaded", function () {
+		const panel = document.getElementById("nav-menu-panel") as PopoverPanel | null;
+
+		if (panel) {
+			const closePanel = () => {
+				if (
+					typeof panel.hidePopover === "function" &&
+					panel.matches(":popover-open")
+				) {
+					panel.hidePopover();
+				}
+			};
+			const onPopoverToggle = (event: Event) => {
+				if ((event as PopoverToggleEvent).newState === "open") {
+					document.dispatchEvent(
+						new CustomEvent("katelya:overlay-open", { detail: { id: "menu" } }),
+					);
+				}
+			};
+			const onOverlayOpen = (event: Event) => {
+				if ((event as CustomEvent<{ id?: string }>).detail?.id !== "menu") {
+					closePanel();
+				}
+			};
+			const onPageView = () => closePanel();
+			const onPanelClick = (event: MouseEvent) => {
+				const target = event.target;
+				if (target instanceof Element && target.closest("a")) closePanel();
+			};
+
+			panel.addEventListener("toggle", onPopoverToggle);
+			panel.addEventListener("click", onPanelClick);
+			document.addEventListener("katelya:overlay-open", onOverlayOpen);
+			document.addEventListener("swup:page:view", onPageView);
+		}
+
 		const mobileDropdowns = document.querySelectorAll(
 			"[data-mobile-dropdown]",
 		);

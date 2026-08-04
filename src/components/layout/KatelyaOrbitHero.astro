@@ -139,10 +139,12 @@ const orbitItems = [
 		function syncKatelyaHomeState(isHomePage) {
 			var shell = document.querySelector(".katelya-main-shell");
 			var navbar = document.getElementById("navbar");
+			var stage = hero.closest(".katelya-hero-stage");
 
 			document.body.classList.toggle("katelya-home-page", isHomePage);
 			hero.classList.toggle("is-home-active", isHomePage);
 			hero.setAttribute("aria-hidden", isHomePage ? "false" : "true");
+			if (stage) stage.classList.toggle("is-home-hero", isHomePage);
 			if (shell) shell.classList.toggle("is-home-layout", isHomePage);
 			if (navbar) {
 				navbar.dataset.isHome = isHomePage ? "true" : "false";
@@ -216,7 +218,7 @@ const orbitItems = [
 <style>
 	.katelya-orbit-hero {
 		position: absolute;
-		inset: 0 0 auto;
+		inset: 0;
 		z-index: 24;
 		display: grid;
 		place-items: center;

@@ -54,6 +54,10 @@ src/data/bilibili-data.json
 # Lighthouse CI
 .lighthouseci/
 
+# Playwright
+test-results/
+playwright-report/
+
 # Live2D editor source files
 *.psd
 *.psd~

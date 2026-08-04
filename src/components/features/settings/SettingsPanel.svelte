@@ -38,6 +38,14 @@ import { fullscreenWallpaperConfig, sakuraConfig, siteConfig } from "@/config";
 
 import type { WALLPAPER_MODE } from "@/types/config";
 
+type PopoverPanel = HTMLElement & {
+	hidePopover?: () => void;
+};
+
+type PopoverToggleEvent = Event & {
+	newState?: "open" | "closed";
+};
+
 let { className = "" }: { className?: string } = $props();
 
 type LayoutMode = "list" | "grid";
@@ -261,7 +269,9 @@ onMount(() => {
 	checkMobile();
 	window.addEventListener("resize", checkMobile);
 
-	const panel = document.getElementById("display-setting");
+	const panel = document.getElementById(
+		"display-setting",
+	) as PopoverPanel | null;
 	let handleRangeInput: ((event: Event) => void) | undefined;
 	if (panel) {
 		handleRangeInput = (event: Event) => {
@@ -273,11 +283,40 @@ onMount(() => {
 		panel.addEventListener("input", handleRangeInput);
 	}
 
+	const closePanel = () => {
+		if (
+			typeof panel?.hidePopover === "function" &&
+			panel.matches(":popover-open")
+		) {
+			panel.hidePopover();
+		}
+	};
+	const onPopoverToggle = (event: Event) => {
+		if ((event as PopoverToggleEvent).newState === "open") {
+			document.dispatchEvent(
+				new CustomEvent("katelya:overlay-open", { detail: { id: "settings" } }),
+			);
+			requestAnimationFrame(refreshAllRangeProgress);
+		}
+	};
+	const onOverlayOpen = (event: Event) => {
+		const overlayEvent = event as CustomEvent<{ id?: string }>;
+		if (overlayEvent.detail?.id !== "settings") closePanel();
+	};
+	const onPageView = () => closePanel();
+
+	panel?.addEventListener("toggle", onPopoverToggle);
+	document.addEventListener("katelya:overlay-open", onOverlayOpen);
+	document.addEventListener("swup:page:view", onPageView);
+
 	return () => {
 		window.removeEventListener("resize", checkMobile);
 		if (panel && handleRangeInput) {
 			panel.removeEventListener("input", handleRangeInput);
 		}
+		panel?.removeEventListener("toggle", onPopoverToggle);
+		document.removeEventListener("katelya:overlay-open", onOverlayOpen);
+		document.removeEventListener("swup:page:view", onPageView);
 	};
 });
 
@@ -300,7 +339,8 @@ $effect(() => {
 {#if hasAnyContent}
 <div
 	id="display-setting"
-	class="float-panel float-panel-closed absolute transition-all w-80 right-4 px-4 py-2"
+	popover="auto"
+	class="float-panel absolute transition-all w-80 right-4 px-4 py-2"
 	class:list={[className]}
 >
 	{#if showThemeColor}
