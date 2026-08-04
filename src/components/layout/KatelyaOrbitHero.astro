@@ -12,9 +12,10 @@ interface Props {
 	title?: string;
 	subtitle?: string | string[];
 	typewriterConfig?: TypewriterConfig;
+	active?: boolean;
 }
 
-const { title, subtitle, typewriterConfig } = Astro.props;
+const { title, subtitle, typewriterConfig, active = false } = Astro.props;
 
 const orbitItems = [
 	{
@@ -45,8 +46,9 @@ const orbitItems = [
 ---
 
 <section
-	class="katelya-orbit-hero"
+	class:list={["katelya-orbit-hero", { "is-home-active": active }]}
 	aria-labelledby="katelya-hero-title"
+	aria-hidden={active ? "false" : "true"}
 	data-katelya-orbit
 >
 	<div class="katelya-paint-aura" aria-hidden="true">
@@ -121,14 +123,41 @@ const orbitItems = [
 		var hero = document.querySelector("[data-katelya-orbit]");
 		if (!hero) return;
 
-		var reducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)",
-		).matches;
-		if (reducedMotion) return;
-
 		var frame = 0;
+		var syncFrame = 0;
 		var targetX = 0;
 		var targetY = 0;
+
+		function getHomeState() {
+			var data = document.getElementById("page-overlay-data");
+			if (data && data.dataset.isHome) {
+				return data.dataset.isHome === "true";
+			}
+			return window.location.pathname === "/";
+		}
+
+		function syncKatelyaHomeState(isHomePage) {
+			var shell = document.querySelector(
+				".absolute.w-full.z-30.pointer-events-none",
+			);
+			if (shell) shell.classList.add("katelya-main-shell");
+
+			document.body.classList.toggle("katelya-home-page", isHomePage);
+			hero.classList.toggle("is-home-active", isHomePage);
+			hero.setAttribute("aria-hidden", isHomePage ? "false" : "true");
+			if (shell) shell.classList.toggle("is-home-layout", isHomePage);
+
+			var legacyTitle = document.querySelector(".banner-text-overlay");
+			if (legacyTitle) legacyTitle.classList.add("hidden");
+		}
+
+		function queueHomeStateSync() {
+			if (syncFrame) return;
+			syncFrame = requestAnimationFrame(function () {
+				syncFrame = 0;
+				syncKatelyaHomeState(getHomeState());
+			});
+		}
 
 		function render() {
 			frame = 0;
@@ -145,11 +174,12 @@ const orbitItems = [
 		}
 
 		function onPointerMove(event) {
+			if (!hero.classList.contains("is-home-active")) return;
 			var rect = hero.getBoundingClientRect();
 			var x = (event.clientX - rect.left) / rect.width - 0.5;
 			var y = (event.clientY - rect.top) / rect.height - 0.5;
-			targetX = x * 8;
-			targetY = y * -6;
+			targetX = x * 6;
+			targetY = y * -4;
 			queueRender();
 		}
 
@@ -159,13 +189,228 @@ const orbitItems = [
 			queueRender();
 		}
 
-		hero.addEventListener("pointermove", onPointerMove, { passive: true });
-		hero.addEventListener("pointerleave", onPointerLeave, { passive: true });
+		var observer = new MutationObserver(queueHomeStateSync);
+		observer.observe(document.body, { childList: true, subtree: true });
+		document.addEventListener("swup:page:view", queueHomeStateSync);
+		window.addEventListener("popstate", queueHomeStateSync);
+		queueHomeStateSync();
+
+		var reducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+		if (!reducedMotion) {
+			hero.addEventListener("pointermove", onPointerMove, { passive: true });
+			hero.addEventListener("pointerleave", onPointerLeave, { passive: true });
+		}
 
 		window.__katelyaOrbitCleanup = function () {
 			if (frame) cancelAnimationFrame(frame);
+			if (syncFrame) cancelAnimationFrame(syncFrame);
+			observer.disconnect();
+			document.removeEventListener("swup:page:view", queueHomeStateSync);
+			window.removeEventListener("popstate", queueHomeStateSync);
 			hero.removeEventListener("pointermove", onPointerMove);
 			hero.removeEventListener("pointerleave", onPointerLeave);
 		};
 	})();
 </script>
+
+<style is:global>
+	html.katelya-art-theme {
+		--katelya-hero-height: max(65vh, 36rem);
+		max-width: 100%;
+		overflow-x: hidden;
+		overflow-x: clip;
+	}
+
+	html.katelya-art-theme body {
+		max-width: 100%;
+		overflow-x: hidden;
+		overflow-x: clip;
+		background-color: #dceae4;
+	}
+
+	html.katelya-art-theme body::before {
+		position: fixed;
+		inset: 0;
+		z-index: -2;
+		width: 100vw;
+		max-width: 100vw;
+		height: 100vh;
+		pointer-events: none;
+		content: "";
+		opacity: 0.7;
+		background-image:
+			linear-gradient(145deg, rgba(239, 247, 241, 0.36), rgba(26, 72, 75, 0.1)),
+			url("/assets/art/katelya-brush-field.svg");
+		background-position: center top;
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-attachment: fixed;
+		filter: saturate(0.94) contrast(0.98);
+		mix-blend-mode: normal;
+	}
+
+	html.katelya-art-theme.dark body::before {
+		opacity: 0.45;
+		filter: saturate(0.82) brightness(0.48) contrast(1.08);
+	}
+
+	html.katelya-art-theme body::after {
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		width: 100vw;
+		max-width: 100vw;
+		height: 100vh;
+		pointer-events: none;
+		content: "";
+		border-radius: 0;
+		background:
+			radial-gradient(circle at 78% 18%, rgba(235, 242, 215, 0.28), transparent 34rem),
+			radial-gradient(circle at 18% 68%, rgba(71, 126, 121, 0.18), transparent 38rem);
+		filter: none;
+	}
+
+	html.katelya-art-theme .banner-text-overlay {
+		display: none !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-hero {
+		height: var(--katelya-hero-height);
+		min-height: 0;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transform: translateY(-0.75rem);
+		transition:
+			opacity 220ms ease,
+			visibility 0s linear 220ms,
+			transform 260ms ease;
+	}
+
+	html.katelya-art-theme .katelya-orbit-hero.is-home-active {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: translateY(0);
+		transition-delay: 0s;
+	}
+
+	html.katelya-art-theme .katelya-hero-copy {
+		width: min(82vw, 58rem);
+		margin-top: -0.5rem;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		max-width: 100%;
+		font-size: clamp(3rem, 5.2vw, 5.9rem);
+		line-height: 1.04;
+		letter-spacing: 0.025em;
+		text-wrap: balance;
+	}
+
+	html.katelya-art-theme .katelya-hero-subtitle {
+		width: min(78vw, 44rem);
+		font-size: clamp(0.98rem, 1.25vw, 1.28rem);
+	}
+
+	html.katelya-art-theme body.katelya-home-page.enable-banner #banner-wrapper {
+		top: 0 !important;
+		height: var(--katelya-hero-height) !important;
+		transform: none !important;
+	}
+
+	html.katelya-art-theme body.katelya-home-page.enable-banner #banner {
+		height: 100% !important;
+		transform: none !important;
+	}
+
+	html.katelya-art-theme body.katelya-home-page .katelya-main-shell.is-home-layout {
+		top: var(--katelya-hero-height) !important;
+		margin-top: 0 !important;
+	}
+
+	html.katelya-art-theme body.katelya-home-page .katelya-main-shell.is-home-layout #main-grid {
+		transform: none !important;
+	}
+
+	html.katelya-art-theme body.katelya-home-page #top-row {
+		height: var(--katelya-hero-height) !important;
+	}
+
+	html.katelya-art-theme #navbar > div:not(.absolute) {
+		display: grid !important;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		column-gap: 0.75rem;
+		align-items: center;
+	}
+
+	html.katelya-art-theme #navbar > div:not(.absolute) > a:first-of-type {
+		min-width: 0;
+		justify-self: start;
+	}
+
+	html.katelya-art-theme #navbar-links-container {
+		justify-self: center;
+		opacity: 1 !important;
+		white-space: nowrap;
+	}
+
+	html.katelya-art-theme #navbar-links-container + div {
+		justify-self: end;
+	}
+
+	html.katelya-art-theme #display-setting {
+		position: fixed !important;
+		top: 5.25rem !important;
+		right: 1rem !important;
+		left: auto !important;
+		width: 20rem !important;
+		max-width: calc(100vw - 2rem) !important;
+		max-height: calc(100dvh - 6.5rem) !important;
+		overflow-x: hidden !important;
+		overflow-y: auto !important;
+		overscroll-behavior: contain;
+	}
+
+	@media (max-width: 1100px) {
+		html.katelya-art-theme #navbar > div:not(.absolute) {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+
+		html.katelya-art-theme #navbar-links-container {
+			display: none !important;
+		}
+
+		html.katelya-art-theme #nav-menu-switch {
+			display: inline-flex !important;
+		}
+	}
+
+	@media (max-width: 767px) {
+		html.katelya-art-theme {
+			--katelya-hero-height: max(70vh, 32rem);
+		}
+
+		html.katelya-art-theme body::before {
+			background-attachment: scroll;
+			background-size: auto 100%;
+		}
+
+		html.katelya-art-theme .katelya-hero-copy {
+			width: min(90vw, 34rem);
+			margin-top: -1rem;
+		}
+
+		html.katelya-art-theme .katelya-hero-title {
+			font-size: clamp(2.45rem, 10.5vw, 4rem);
+		}
+
+		html.katelya-art-theme #display-setting {
+			top: 4.75rem !important;
+			right: 0.75rem !important;
+			max-width: calc(100vw - 1.5rem) !important;
+		}
+	}
+</style>

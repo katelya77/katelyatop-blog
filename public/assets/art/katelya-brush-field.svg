@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="title desc">
+  <title id="title">Katelya 蓝绿厚涂笔触画布</title>
+  <desc id="desc">原创蓝绿油彩、雾白笔触、紫色暗影和矿物金点彩组成的抽象画布。</desc>
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#173b43"/>
+      <stop offset="0.28" stop-color="#4f8781"/>
+      <stop offset="0.58" stop-color="#b8d6c9"/>
+      <stop offset="0.82" stop-color="#789e99"/>
+      <stop offset="1" stop-color="#314f61"/>
+    </linearGradient>
+    <radialGradient id="light" cx="58%" cy="36%" r="72%">
+      <stop offset="0" stop-color="#f3f0d9" stop-opacity="0.72"/>
+      <stop offset="0.4" stop-color="#cde4d6" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#17373d" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="impasto" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.055" numOctaves="3" seed="27" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="28" xChannelSelector="R" yChannelSelector="B"/>
+    </filter>
+    <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="turbulence" baseFrequency="0.02 0.09" numOctaves="2" seed="43" result="grain"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="15"/>
+      <feGaussianBlur stdDeviation="0.45"/>
+    </filter>
+    <filter id="canvas" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="2" seed="61" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="glow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1200" fill="url(#base)"/>
+  <rect width="1920" height="1200" fill="url(#light)"/>
+
+  <g fill="none" stroke-linecap="round" filter="url(#impasto)" opacity="0.78">
+    <path d="M-120 1040C210 760 450 820 720 640S1190 410 1490 520s410 70 610-80" stroke="#dce9d8" stroke-width="148"/>
+    <path d="M-100 1180C270 890 590 1010 920 800s610-250 1110-30" stroke="#74a99f" stroke-width="118"/>
+    <path d="M-80 120C290 -30 610 220 950 110s610-75 1040 100" stroke="#274e61" stroke-width="112"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round" filter="url(#rough)">
+    <path d="M110 260C310 130 490 190 630 300" stroke="#d9e7d3" stroke-opacity="0.7" stroke-width="30"/>
+    <path d="M220 360C440 210 670 260 820 420" stroke="#4f8f87" stroke-opacity="0.8" stroke-width="35"/>
+    <path d="M450 170C620 70 840 115 980 250" stroke="#92bdb2" stroke-opacity="0.68" stroke-width="26"/>
+    <path d="M750 340C940 180 1180 230 1300 390" stroke="#e0ead7" stroke-opacity="0.62" stroke-width="38"/>
+    <path d="M1120 180C1310 60 1510 120 1630 270" stroke="#5e888e" stroke-opacity="0.78" stroke-width="32"/>
+    <path d="M1380 390C1540 260 1770 310 1880 460" stroke="#cadfd1" stroke-opacity="0.56" stroke-width="36"/>
+    <path d="M90 590C270 470 510 520 670 690" stroke="#2d706e" stroke-opacity="0.76" stroke-width="42"/>
+    <path d="M530 690C740 500 980 560 1110 740" stroke="#e8ead1" stroke-opacity="0.6" stroke-width="34"/>
+    <path d="M960 590C1160 450 1390 520 1510 690" stroke="#6d5e8d" stroke-opacity="0.32" stroke-width="47"/>
+    <path d="M1320 770C1530 600 1760 680 1930 860" stroke="#3c7776" stroke-opacity="0.78" stroke-width="44"/>
+    <path d="M130 900C330 740 560 800 740 990" stroke="#bcd7c8" stroke-opacity="0.64" stroke-width="39"/>
+    <path d="M770 970C980 790 1230 850 1390 1040" stroke="#426b79" stroke-opacity="0.66" stroke-width="41"/>
+  </g>
+
+  <g fill="#d5b866" filter="url(#glow)" opacity="0.8">
+    <circle cx="170" cy="185" r="3"/><circle cx="370" cy="470" r="4"/><circle cx="690" cy="190" r="3"/>
+    <circle cx="1010" cy="365" r="4"/><circle cx="1260" cy="125" r="3"/><circle cx="1510" cy="510" r="4"/>
+    <circle cx="1740" cy="230" r="3"/><circle cx="1810" cy="820" r="4"/><circle cx="1260" cy="930" r="3"/>
+    <circle cx="570" cy="1060" r="4"/><circle cx="250" cy="760" r="3"/>
+  </g>
+
+  <g fill="none" stroke="#d7bc72" stroke-linecap="round" opacity="0.38" filter="url(#rough)">
+    <path d="M150 515c210-90 390-70 560 30" stroke-width="5"/>
+    <path d="M910 465c230-95 430-55 600 65" stroke-width="6"/>
+    <path d="M1210 880c220-60 410-20 590 100" stroke-width="5"/>
+  </g>
+
+  <rect width="1920" height="1200" filter="url(#canvas)" opacity="0.62"/>
+</svg>
