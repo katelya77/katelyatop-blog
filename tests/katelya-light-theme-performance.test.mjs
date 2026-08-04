@@ -20,10 +20,12 @@ test("light hero uses a localized readability veil and explicit contrast tokens"
 test("desktop search is a fixed trigger with an independent overlay dialog", async () => {
 	const search = await read("src/components/organisms/navigation/Search.svelte");
 	const performanceCss = await read("src/styles/katelya-light-performance.css");
-	assert.match(search, /data-search-trigger/);
+	assert.match(search, /<button[\s\S]*data-search-trigger/);
+	assert.match(search, /aria-controls="search-panel"/);
+	assert.match(search, /aria-expanded=\{isOpen\}/);
 	assert.match(search, /data-search-dialog/);
-	assert.match(search, /onkeydown=\{handleDesktopKeydown\}/);
-	assert.match(search, /document\.addEventListener\("keydown", onDocumentKeydown\)/);
+	assert.match(search, /popover="auto"/);
+	assert.doesNotMatch(search, /handleDesktopKeydown/);
 	assert.doesNotMatch(search, /isDesktopSearchExpanded/);
 	assert.match(
 		performanceCss,
