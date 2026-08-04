@@ -59,7 +59,7 @@
     "pako": "^3.0.1",
     "qrcode": "^1.5.4",
     "reading-time": "^1.5.0",
-    "rehype-autolink-headings": "^7.2.1",
+    "rehype-autolink-headings": "^7.1.0",
     "rehype-code-group": "^0.3.1",
     "rehype-components": "^0.3.0",
     "rehype-external-links": "^3.0.0",
