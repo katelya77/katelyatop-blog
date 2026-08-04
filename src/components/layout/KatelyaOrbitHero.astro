@@ -123,7 +123,7 @@ const orbitItems = [
 		var hero = document.querySelector("[data-katelya-orbit]");
 		if (!hero) return;
 
-		var frame = 0;
+		var animationFrame = 0;
 		var syncFrame = 0;
 		var targetX = 0;
 		var targetY = 0;
@@ -137,15 +137,20 @@ const orbitItems = [
 		}
 
 		function syncKatelyaHomeState(isHomePage) {
-			var shell = document.querySelector(
-				".absolute.w-full.z-30.pointer-events-none",
-			);
-			if (shell) shell.classList.add("katelya-main-shell");
+			var shell = document.querySelector(".katelya-main-shell");
+			var navbar = document.getElementById("navbar");
 
 			document.body.classList.toggle("katelya-home-page", isHomePage);
 			hero.classList.toggle("is-home-active", isHomePage);
 			hero.setAttribute("aria-hidden", isHomePage ? "false" : "true");
 			if (shell) shell.classList.toggle("is-home-layout", isHomePage);
+			if (navbar) {
+				navbar.dataset.isHome = isHomePage ? "true" : "false";
+				navbar.classList.toggle(
+					"scrolled",
+					!isHomePage || window.scrollY > 28,
+				);
+			}
 
 			var legacyTitle = document.querySelector(".banner-text-overlay");
 			if (legacyTitle) legacyTitle.classList.add("hidden");
@@ -159,18 +164,14 @@ const orbitItems = [
 			});
 		}
 
-		function render() {
-			frame = 0;
+		function renderTilt() {
+			animationFrame = 0;
 			hero.style.setProperty("--orbit-ry", targetX.toFixed(2) + "deg");
 			hero.style.setProperty("--orbit-rx", targetY.toFixed(2) + "deg");
-			hero.style.setProperty(
-				"--orbit-depth",
-				(Math.abs(targetX) + Math.abs(targetY)).toFixed(2),
-			);
 		}
 
-		function queueRender() {
-			if (!frame) frame = requestAnimationFrame(render);
+		function queueTiltRender() {
+			if (!animationFrame) animationFrame = requestAnimationFrame(renderTilt);
 		}
 
 		function onPointerMove(event) {
@@ -178,15 +179,15 @@ const orbitItems = [
 			var rect = hero.getBoundingClientRect();
 			var x = (event.clientX - rect.left) / rect.width - 0.5;
 			var y = (event.clientY - rect.top) / rect.height - 0.5;
-			targetX = x * 6;
-			targetY = y * -4;
-			queueRender();
+			targetX = x * 5;
+			targetY = y * -3.5;
+			queueTiltRender();
 		}
 
 		function onPointerLeave() {
 			targetX = 0;
 			targetY = 0;
-			queueRender();
+			queueTiltRender();
 		}
 
 		var observer = new MutationObserver(queueHomeStateSync);
@@ -204,7 +205,7 @@ const orbitItems = [
 		}
 
 		window.__katelyaOrbitCleanup = function () {
-			if (frame) cancelAnimationFrame(frame);
+			if (animationFrame) cancelAnimationFrame(animationFrame);
 			if (syncFrame) cancelAnimationFrame(syncFrame);
 			observer.disconnect();
 			document.removeEventListener("swup:page:view", queueHomeStateSync);
@@ -215,81 +216,26 @@ const orbitItems = [
 	})();
 </script>
 
-<style is:global>
-	html.katelya-art-theme {
-		--katelya-hero-height: max(65vh, 36rem);
-		max-width: 100%;
-		overflow-x: hidden;
-		overflow-x: clip;
-	}
-
-	html.katelya-art-theme body {
-		max-width: 100%;
-		overflow-x: hidden;
-		overflow-x: clip;
-		background-color: #dceae4;
-	}
-
-	html.katelya-art-theme body::before {
-		position: fixed;
-		inset: 0;
-		z-index: -2;
-		width: 100vw;
-		max-width: 100vw;
-		height: 100vh;
-		pointer-events: none;
-		content: "";
-		opacity: 0.7;
-		background-image:
-			linear-gradient(145deg, rgba(239, 247, 241, 0.36), rgba(26, 72, 75, 0.1)),
-			url("/assets/art/katelya-brush-field.svg");
-		background-position: center top;
-		background-size: cover;
-		background-repeat: no-repeat;
-		background-attachment: fixed;
-		filter: saturate(0.94) contrast(0.98);
-		mix-blend-mode: normal;
-	}
-
-	html.katelya-art-theme.dark body::before {
-		opacity: 0.45;
-		filter: saturate(0.82) brightness(0.48) contrast(1.08);
-	}
-
-	html.katelya-art-theme body::after {
-		position: fixed;
-		inset: 0;
-		z-index: -1;
-		width: 100vw;
-		max-width: 100vw;
-		height: 100vh;
-		pointer-events: none;
-		content: "";
-		border-radius: 0;
-		background:
-			radial-gradient(circle at 78% 18%, rgba(235, 242, 215, 0.28), transparent 34rem),
-			radial-gradient(circle at 18% 68%, rgba(71, 126, 121, 0.18), transparent 38rem);
-		filter: none;
-	}
-
-	html.katelya-art-theme .banner-text-overlay {
-		display: none !important;
-	}
-
-	html.katelya-art-theme .katelya-orbit-hero {
-		height: var(--katelya-hero-height);
-		min-height: 0;
+<style>
+	.katelya-orbit-hero {
+		position: absolute;
+		inset: 0 0 auto;
+		z-index: 24;
+		display: grid;
+		place-items: center;
+		width: 100%;
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: none;
-		transform: translateY(-0.75rem);
+		perspective: 1200px;
+		transform: translateY(-0.6rem);
 		transition:
 			opacity 220ms ease,
 			visibility 0s linear 220ms,
 			transform 260ms ease;
 	}
 
-	html.katelya-art-theme .katelya-orbit-hero.is-home-active {
+	.katelya-orbit-hero.is-home-active {
 		opacity: 1;
 		visibility: visible;
 		pointer-events: auto;
@@ -297,120 +243,209 @@ const orbitItems = [
 		transition-delay: 0s;
 	}
 
-	html.katelya-art-theme .katelya-hero-copy {
-		width: min(82vw, 58rem);
-		margin-top: -0.5rem;
+	.katelya-paint-aura,
+	.katelya-orbit-stage {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
 	}
 
-	html.katelya-art-theme .katelya-hero-title {
-		max-width: 100%;
-		font-size: clamp(3rem, 5.2vw, 5.9rem);
-		line-height: 1.04;
-		letter-spacing: 0.025em;
+	.katelya-paint-aura {
+		overflow: hidden;
+	}
+
+	.katelya-aura-ring {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		border: 1px solid color-mix(in srgb, var(--katelya-gold) 44%, transparent);
+		border-radius: 50%;
+		transform: translate(-50%, -50%) rotate(-8deg);
+	}
+
+	.katelya-aura-ring--outer {
+		width: min(76vw, 72rem);
+		height: min(36vw, 32rem);
+	}
+
+	.katelya-aura-ring--inner {
+		width: min(54vw, 50rem);
+		height: min(25vw, 22rem);
+		transform: translate(-50%, -50%) rotate(11deg);
+	}
+
+	.katelya-gold-fleck {
+		position: absolute;
+		width: 0.44rem;
+		height: 0.44rem;
+		border-radius: 50%;
+		background: var(--katelya-gold);
+		box-shadow: 0 0 1.1rem color-mix(in srgb, var(--katelya-gold) 68%, transparent);
+	}
+
+	.katelya-gold-fleck--one {
+		top: 18%;
+		left: 21%;
+	}
+
+	.katelya-gold-fleck--two {
+		top: 30%;
+		right: 18%;
+	}
+
+	.katelya-gold-fleck--three {
+		bottom: 25%;
+		right: 25%;
+	}
+
+	.katelya-orbit-stage {
+		left: 50%;
+		width: min(82vw, 78rem);
+		transform: translateX(-50%) rotateX(var(--orbit-rx, 0deg))
+			rotateY(var(--orbit-ry, 0deg));
+		transform-style: preserve-3d;
+		transition: transform 120ms ease-out;
+	}
+
+	.katelya-orbit-card {
+		position: absolute;
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		min-width: 10.5rem;
+		padding: 0.72rem 0.9rem;
+		color: var(--katelya-text);
+		text-decoration: none;
+		border-radius: 1rem 0.78rem 1.08rem 0.82rem;
+		backdrop-filter: blur(12px);
+		transform-style: preserve-3d;
+	}
+
+	.katelya-orbit-card--1 {
+		top: 8%;
+		left: 4%;
+		transform: translateZ(46px) rotate(-4deg);
+	}
+
+	.katelya-orbit-card--2 {
+		top: 4%;
+		right: 3%;
+		transform: translateZ(70px) rotate(3deg);
+	}
+
+	.katelya-orbit-card--3 {
+		bottom: 2%;
+		left: 8%;
+		transform: translateZ(24px) rotate(2deg);
+	}
+
+	.katelya-orbit-card--4 {
+		right: 7%;
+		bottom: 4%;
+		transform: translateZ(38px) rotate(-3deg);
+	}
+
+	.katelya-orbit-card__icon {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		flex: 0 0 auto;
+		color: var(--primary);
+		border-radius: 50%;
+		background: color-mix(in srgb, var(--katelya-surface-soft) 84%, transparent);
+	}
+
+	.katelya-orbit-card__copy {
+		display: grid;
+		gap: 0.05rem;
+	}
+
+	.katelya-orbit-card__copy strong {
+		font-size: 0.92rem;
+	}
+
+	.katelya-orbit-card__copy small {
+		font-size: 0.63rem;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		opacity: 0.56;
+	}
+
+	.katelya-hero-copy {
+		position: relative;
+		z-index: 3;
+		display: grid;
+		justify-items: center;
+		text-align: center;
+	}
+
+	.katelya-hero-eyebrow {
+		margin: 0 0 1.1rem;
+		color: color-mix(in srgb, var(--katelya-gold) 78%, var(--katelya-text));
+		font-size: clamp(0.65rem, 0.9vw, 0.82rem);
+		font-weight: 700;
+		letter-spacing: 0.28em;
+	}
+
+	.katelya-hero-title {
+		margin: 0;
+		color: var(--katelya-cream);
+		font-family: var(--font-cjk), var(--font-body), serif;
+		font-weight: 760;
 		text-wrap: balance;
 	}
 
-	html.katelya-art-theme .katelya-hero-subtitle {
-		width: min(78vw, 44rem);
-		font-size: clamp(0.98rem, 1.25vw, 1.28rem);
+	.katelya-hero-subtitle {
+		min-height: 2rem;
+		margin: 1.15rem 0 0;
+		color: color-mix(in srgb, var(--katelya-cream) 88%, var(--katelya-text));
+		font-weight: 580;
+		text-shadow: 0 2px 14px rgba(10, 38, 40, 0.35);
 	}
 
-	html.katelya-art-theme body.katelya-home-page.enable-banner #banner-wrapper {
-		top: 0 !important;
-		height: var(--katelya-hero-height) !important;
-		transform: none !important;
+	.katelya-hero-links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.45rem;
+		margin-top: 1.45rem;
 	}
 
-	html.katelya-art-theme body.katelya-home-page.enable-banner #banner {
-		height: 100% !important;
-		transform: none !important;
-	}
-
-	html.katelya-art-theme body.katelya-home-page .katelya-main-shell.is-home-layout {
-		top: var(--katelya-hero-height) !important;
-		margin-top: 0 !important;
-	}
-
-	html.katelya-art-theme body.katelya-home-page .katelya-main-shell.is-home-layout #main-grid {
-		transform: none !important;
-	}
-
-	html.katelya-art-theme body.katelya-home-page #top-row {
-		height: var(--katelya-hero-height) !important;
-	}
-
-	html.katelya-art-theme #navbar > div:not(.absolute) {
-		display: grid !important;
-		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-		column-gap: 0.75rem;
+	.katelya-hero-links a {
+		display: inline-flex;
 		align-items: center;
+		gap: 0.35rem;
+		padding: 0.5rem 0.78rem;
+		color: var(--katelya-text);
+		font-size: 0.78rem;
+		font-weight: 650;
+		text-decoration: none;
+		border: 1px solid var(--katelya-border-bright);
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--katelya-surface) 84%, transparent);
+		box-shadow: 0 8px 24px rgba(18, 58, 57, 0.16);
+		backdrop-filter: blur(10px);
 	}
 
-	html.katelya-art-theme #navbar > div:not(.absolute) > a:first-of-type {
-		min-width: 0;
-		justify-self: start;
-	}
-
-	html.katelya-art-theme #navbar-links-container {
-		justify-self: center;
-		opacity: 1 !important;
-		white-space: nowrap;
-	}
-
-	html.katelya-art-theme #navbar-links-container + div {
-		justify-self: end;
-	}
-
-	html.katelya-art-theme #display-setting {
-		position: fixed !important;
-		top: 5.25rem !important;
-		right: 1rem !important;
-		left: auto !important;
-		width: 20rem !important;
-		max-width: calc(100vw - 2rem) !important;
-		max-height: calc(100dvh - 6.5rem) !important;
-		overflow-x: hidden !important;
-		overflow-y: auto !important;
-		overscroll-behavior: contain;
-	}
-
-	@media (max-width: 1100px) {
-		html.katelya-art-theme #navbar > div:not(.absolute) {
-			grid-template-columns: minmax(0, 1fr) auto;
-		}
-
-		html.katelya-art-theme #navbar-links-container {
-			display: none !important;
-		}
-
-		html.katelya-art-theme #nav-menu-switch {
-			display: inline-flex !important;
-		}
+	.katelya-hero-links a:hover,
+	.katelya-hero-links a:focus-visible {
+		color: var(--primary);
+		background: var(--katelya-surface-strong);
 	}
 
 	@media (max-width: 767px) {
-		html.katelya-art-theme {
-			--katelya-hero-height: max(70vh, 32rem);
+		.katelya-hero-eyebrow {
+			letter-spacing: 0.18em;
 		}
 
-		html.katelya-art-theme body::before {
-			background-attachment: scroll;
-			background-size: auto 100%;
+		.katelya-hero-subtitle {
+			width: min(88vw, 30rem);
+			font-size: 0.94rem;
 		}
 
-		html.katelya-art-theme .katelya-hero-copy {
-			width: min(90vw, 34rem);
-			margin-top: -1rem;
-		}
-
-		html.katelya-art-theme .katelya-hero-title {
-			font-size: clamp(2.45rem, 10.5vw, 4rem);
-		}
-
-		html.katelya-art-theme #display-setting {
-			top: 4.75rem !important;
-			right: 0.75rem !important;
-			max-width: calc(100vw - 1.5rem) !important;
+		.katelya-hero-links {
+			width: min(90vw, 30rem);
 		}
 	}
 </style>
