@@ -18,7 +18,7 @@ export const siteConfig: SiteConfig = {
 	featurePages: {
 		anime: false,
 		diary: false,
-		friends: true,
+		friends: false,
 		projects: true,
 		skills: false,
 		timeline: true,
