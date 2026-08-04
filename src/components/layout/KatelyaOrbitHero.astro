@@ -1,0 +1,171 @@
+---
+import TypewriterText from "@components/atoms/typewriter-text/TypewriterText.astro";
+
+interface TypewriterConfig {
+	enable?: boolean;
+	speed?: number;
+	deleteSpeed?: number;
+	pauseTime?: number;
+}
+
+interface Props {
+	title?: string;
+	subtitle?: string | string[];
+	typewriterConfig?: TypewriterConfig;
+}
+
+const { title, subtitle, typewriterConfig } = Astro.props;
+
+const orbitItems = [
+	{
+		label: "技术折腾",
+		detail: "Code & Deploy",
+		href: "/archive/",
+		icon: "⌁",
+	},
+	{
+		label: "开源项目",
+		detail: "Projects",
+		href: "/projects/",
+		icon: "✦",
+	},
+	{
+		label: "成长时间线",
+		detail: "Timeline",
+		href: "/timeline/",
+		icon: "◌",
+	},
+	{
+		label: "关于我",
+		detail: "About",
+		href: "/about/",
+		icon: "✧",
+	},
+];
+---
+
+<section
+	class="katelya-orbit-hero"
+	aria-labelledby="katelya-hero-title"
+	data-katelya-orbit
+>
+	<div class="katelya-paint-aura" aria-hidden="true">
+		<span class="katelya-aura-ring katelya-aura-ring--outer"></span>
+		<span class="katelya-aura-ring katelya-aura-ring--inner"></span>
+		<span class="katelya-gold-fleck katelya-gold-fleck--one"></span>
+		<span class="katelya-gold-fleck katelya-gold-fleck--two"></span>
+		<span class="katelya-gold-fleck katelya-gold-fleck--three"></span>
+	</div>
+
+	<div class="katelya-orbit-stage" aria-hidden="true">
+		{orbitItems.map((item, index) => (
+			<a
+				class={`katelya-orbit-card katelya-orbit-card--${index + 1}`}
+				href={item.href}
+				tabindex="-1"
+				aria-hidden="true"
+			>
+				<span class="katelya-orbit-card__icon">{item.icon}</span>
+				<span class="katelya-orbit-card__copy">
+					<strong>{item.label}</strong>
+					<small>{item.detail}</small>
+				</span>
+			</a>
+		))}
+	</div>
+
+	<div class="katelya-hero-copy">
+		<p class="katelya-hero-eyebrow">PERSONAL DIGITAL GARDEN · 2026</p>
+		{title && (
+			<h1 id="katelya-hero-title" class="katelya-hero-title">
+				<span>{title}</span>
+			</h1>
+		)}
+		{subtitle && (
+			<p class="katelya-hero-subtitle">
+				<span class="katelya-hero-subtitle__line">
+					{typewriterConfig?.enable && Array.isArray(subtitle) ? (
+						<TypewriterText
+							text={subtitle}
+							speed={typewriterConfig.speed}
+							deleteSpeed={typewriterConfig.deleteSpeed}
+							pauseTime={typewriterConfig.pauseTime}
+						/>
+					) : Array.isArray(subtitle) ? (
+						subtitle[0]
+					) : (
+						subtitle
+					)}
+				</span>
+			</p>
+		)}
+
+		<nav class="katelya-hero-links" aria-label="首页快速入口">
+			{orbitItems.map((item) => (
+				<a href={item.href}>
+					<span aria-hidden="true">{item.icon}</span>
+					{item.label}
+				</a>
+			))}
+		</nav>
+	</div>
+</section>
+
+<script is:inline data-swup-ignore-script>
+	(function initKatelyaOrbitHero() {
+		if (window.__katelyaOrbitCleanup) {
+			window.__katelyaOrbitCleanup();
+			window.__katelyaOrbitCleanup = null;
+		}
+
+		var hero = document.querySelector("[data-katelya-orbit]");
+		if (!hero) return;
+
+		var reducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+		if (reducedMotion) return;
+
+		var frame = 0;
+		var targetX = 0;
+		var targetY = 0;
+
+		function render() {
+			frame = 0;
+			hero.style.setProperty("--orbit-ry", targetX.toFixed(2) + "deg");
+			hero.style.setProperty("--orbit-rx", targetY.toFixed(2) + "deg");
+			hero.style.setProperty(
+				"--orbit-depth",
+				(Math.abs(targetX) + Math.abs(targetY)).toFixed(2),
+			);
+		}
+
+		function queueRender() {
+			if (!frame) frame = requestAnimationFrame(render);
+		}
+
+		function onPointerMove(event) {
+			var rect = hero.getBoundingClientRect();
+			var x = (event.clientX - rect.left) / rect.width - 0.5;
+			var y = (event.clientY - rect.top) / rect.height - 0.5;
+			targetX = x * 8;
+			targetY = y * -6;
+			queueRender();
+		}
+
+		function onPointerLeave() {
+			targetX = 0;
+			targetY = 0;
+			queueRender();
+		}
+
+		hero.addEventListener("pointermove", onPointerMove, { passive: true });
+		hero.addEventListener("pointerleave", onPointerLeave, { passive: true });
+
+		window.__katelyaOrbitCleanup = function () {
+			if (frame) cancelAnimationFrame(frame);
+			hero.removeEventListener("pointermove", onPointerMove);
+			hero.removeEventListener("pointerleave", onPointerLeave);
+		};
+	})();
+</script>

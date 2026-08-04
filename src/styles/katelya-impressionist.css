@@ -1,0 +1,748 @@
+/*
+ * Katelya · 思囿随笔
+ * Original impressionist digital-garden theme layer.
+ */
+
+html.katelya-art-theme {
+	--katelya-ink: #10272b;
+	--katelya-teal: #2f706d;
+	--katelya-mist: #7fb9b0;
+	--katelya-porcelain: #eaf4ef;
+	--katelya-violet: #6d5aa7;
+	--katelya-gold: #c8a765;
+	--katelya-paper: rgba(244, 249, 244, 0.82);
+	--katelya-paper-strong: rgba(249, 251, 247, 0.94);
+	--katelya-line: rgba(43, 102, 98, 0.2);
+	--katelya-shadow: 0 24px 60px rgba(25, 68, 67, 0.13);
+	--radius-large: 1.35rem;
+	--primary: #5d6fa8;
+	--page-bg: #e8f1ed;
+	--card-bg: var(--katelya-paper-strong);
+	--card-bg-transparent: var(--katelya-paper);
+	--btn-content: #496b79;
+	--btn-regular-bg: rgba(226, 240, 235, 0.9);
+	--btn-regular-bg-hover: rgba(208, 232, 225, 0.96);
+	--btn-regular-bg-active: rgba(194, 221, 214, 0.98);
+	--btn-plain-bg-hover: rgba(220, 237, 231, 0.72);
+	--btn-plain-bg-active: rgba(205, 226, 220, 0.88);
+	--btn-card-bg-hover: rgba(237, 246, 241, 0.96);
+	--btn-card-bg-active: rgba(219, 237, 230, 0.98);
+	--deep-text: #183638;
+	--title-active: #655a99;
+	--line-divider: rgba(46, 100, 96, 0.16);
+	--line-color: rgba(46, 100, 96, 0.21);
+	--meta-divider: rgba(30, 77, 75, 0.22);
+	--content-meta: rgba(24, 54, 56, 0.68);
+	--selection-bg: rgba(119, 152, 191, 0.24);
+	--float-panel-bg: rgba(244, 249, 245, 0.92);
+	--link-underline: rgba(109, 90, 167, 0.16);
+	--link-hover: rgba(109, 90, 167, 0.11);
+	--link-active: rgba(109, 90, 167, 0.18);
+}
+
+html.katelya-art-theme.dark {
+	--katelya-paper: rgba(16, 37, 40, 0.76);
+	--katelya-paper-strong: rgba(17, 39, 42, 0.92);
+	--katelya-line: rgba(163, 207, 194, 0.15);
+	--katelya-shadow: 0 26px 70px rgba(0, 10, 13, 0.38);
+	--primary: #9586d0;
+	--page-bg: #0d2024;
+	--card-bg: var(--katelya-paper-strong);
+	--card-bg-transparent: var(--katelya-paper);
+	--btn-content: #b8d8d0;
+	--btn-regular-bg: rgba(35, 69, 69, 0.78);
+	--btn-regular-bg-hover: rgba(44, 83, 81, 0.88);
+	--btn-regular-bg-active: rgba(52, 94, 90, 0.94);
+	--btn-plain-bg-hover: rgba(50, 82, 82, 0.58);
+	--btn-plain-bg-active: rgba(60, 95, 91, 0.7);
+	--btn-card-bg-hover: rgba(35, 66, 67, 0.92);
+	--btn-card-bg-active: rgba(43, 79, 77, 0.96);
+	--deep-text: #e2eee9;
+	--title-active: #a99add;
+	--line-divider: rgba(180, 217, 207, 0.11);
+	--line-color: rgba(180, 217, 207, 0.16);
+	--content-meta: rgba(219, 235, 229, 0.64);
+	--selection-bg: rgba(145, 130, 199, 0.28);
+	--float-panel-bg: rgba(15, 36, 39, 0.94);
+	--link-underline: rgba(155, 139, 210, 0.23);
+	--link-hover: rgba(155, 139, 210, 0.14);
+	--link-active: rgba(155, 139, 210, 0.22);
+}
+
+html.katelya-art-theme,
+html.katelya-art-theme body {
+	min-height: 100%;
+	background-color: var(--page-bg);
+}
+
+html.katelya-art-theme body {
+	position: relative;
+	isolation: isolate;
+	background-image:
+		radial-gradient(circle at 15% 14%, rgba(109, 90, 167, 0.09), transparent 30rem),
+		radial-gradient(circle at 84% 34%, rgba(94, 169, 155, 0.16), transparent 34rem),
+		linear-gradient(145deg, rgba(239, 247, 242, 0.96), rgba(218, 234, 229, 0.9));
+	background-attachment: fixed;
+}
+
+html.katelya-art-theme.dark body {
+	background-image:
+		radial-gradient(circle at 18% 16%, rgba(109, 90, 167, 0.16), transparent 30rem),
+		radial-gradient(circle at 82% 33%, rgba(60, 132, 122, 0.17), transparent 36rem),
+		linear-gradient(145deg, #0d2024, #122b2d 58%, #0c1c22);
+}
+
+html.katelya-art-theme body::before {
+	position: fixed;
+	inset: 0;
+	z-index: -2;
+	pointer-events: none;
+	content: "";
+	opacity: 0.36;
+	background-image:
+		repeating-linear-gradient(
+			8deg,
+			rgba(255, 255, 255, 0.055) 0,
+			rgba(255, 255, 255, 0.055) 1px,
+			transparent 1px,
+			transparent 9px
+		),
+		repeating-linear-gradient(
+			98deg,
+			rgba(12, 51, 53, 0.025) 0,
+			rgba(12, 51, 53, 0.025) 1px,
+			transparent 1px,
+			transparent 12px
+		);
+	mix-blend-mode: soft-light;
+}
+
+html.katelya-art-theme body::after {
+	position: fixed;
+	inset: auto -10vw -30vh auto;
+	z-index: -1;
+	width: 48rem;
+	height: 48rem;
+	pointer-events: none;
+	content: "";
+	border-radius: 999px;
+	background: radial-gradient(circle, rgba(127, 185, 176, 0.16), transparent 68%);
+	filter: blur(28px);
+}
+
+html.katelya-art-theme ::selection {
+	color: var(--deep-text);
+	background: rgba(200, 167, 101, 0.34);
+}
+
+html.katelya-art-theme #banner-wrapper {
+	isolation: isolate;
+	background: #173a40;
+}
+
+html.katelya-art-theme #banner-wrapper img {
+	filter: saturate(1.08) contrast(1.03) brightness(0.94);
+}
+
+html.katelya-art-theme #banner-wrapper::before,
+html.katelya-art-theme #banner-wrapper::after {
+	position: absolute;
+	inset: 0;
+	z-index: 12;
+	pointer-events: none;
+	content: "";
+}
+
+html.katelya-art-theme #banner-wrapper::before {
+	background:
+		radial-gradient(circle at 50% 54%, rgba(236, 244, 224, 0.12), transparent 38%),
+		linear-gradient(180deg, rgba(7, 27, 31, 0.28), transparent 38%, rgba(10, 34, 38, 0.2));
+	mix-blend-mode: screen;
+}
+
+html.katelya-art-theme #banner-wrapper::after {
+	background:
+		linear-gradient(90deg, rgba(10, 36, 42, 0.28), transparent 28%, transparent 72%, rgba(12, 44, 47, 0.24)),
+		linear-gradient(180deg, rgba(8, 29, 34, 0.12), transparent 55%, rgba(227, 240, 233, 0.18));
+}
+
+html.katelya-art-theme #header-waves {
+	filter: drop-shadow(0 -12px 28px rgba(208, 230, 223, 0.16));
+}
+
+html.katelya-art-theme .katelya-orbit-hero {
+	--orbit-rx: 0deg;
+	--orbit-ry: 0deg;
+	--orbit-depth: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 25;
+	display: grid;
+	width: 100%;
+	height: 65vh;
+	min-height: 34rem;
+	place-items: center;
+	overflow: hidden;
+	color: #f7f5e8;
+	pointer-events: auto;
+	perspective: 1300px;
+}
+
+html.katelya-art-theme .katelya-orbit-hero::before {
+	position: absolute;
+	inset: 8% 10%;
+	content: "";
+	border-radius: 50%;
+	background:
+		radial-gradient(circle, rgba(245, 243, 222, 0.17), transparent 48%),
+		radial-gradient(circle at 63% 46%, rgba(128, 108, 182, 0.2), transparent 42%);
+	filter: blur(18px);
+	transform: translate3d(0, 0, 0);
+}
+
+html.katelya-art-theme .katelya-paint-aura,
+html.katelya-art-theme .katelya-orbit-stage {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+html.katelya-art-theme .katelya-paint-aura {
+	z-index: 1;
+	transform: rotateX(var(--orbit-rx)) rotateY(var(--orbit-ry));
+	transform-style: preserve-3d;
+	transition: transform 240ms ease-out;
+}
+
+html.katelya-art-theme .katelya-aura-ring {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	border: 1px solid rgba(227, 208, 144, 0.36);
+	border-radius: 50%;
+	box-shadow:
+		inset 0 0 40px rgba(229, 211, 154, 0.07),
+		0 0 36px rgba(111, 176, 165, 0.08);
+	transform: translate(-50%, -50%) rotate(-9deg);
+}
+
+html.katelya-art-theme .katelya-aura-ring--outer {
+	width: min(73vw, 70rem);
+	height: min(39vw, 35rem);
+	animation: katelya-ring-breathe 9s ease-in-out infinite;
+}
+
+html.katelya-art-theme .katelya-aura-ring--inner {
+	width: min(55vw, 50rem);
+	height: min(28vw, 25rem);
+	border-color: rgba(226, 238, 218, 0.24);
+	transform: translate(-50%, -50%) rotate(11deg) translateZ(54px);
+	animation: katelya-ring-breathe 7s ease-in-out -2s infinite reverse;
+}
+
+html.katelya-art-theme .katelya-gold-fleck {
+	position: absolute;
+	width: 0.42rem;
+	height: 0.42rem;
+	border-radius: 50%;
+	background: var(--katelya-gold);
+	box-shadow: 0 0 20px rgba(230, 207, 137, 0.72);
+	animation: katelya-fleck 5.5s ease-in-out infinite;
+}
+
+html.katelya-art-theme .katelya-gold-fleck--one {
+	top: 24%;
+	left: 22%;
+}
+
+html.katelya-art-theme .katelya-gold-fleck--two {
+	top: 31%;
+	right: 19%;
+	animation-delay: -1.8s;
+}
+
+html.katelya-art-theme .katelya-gold-fleck--three {
+	right: 29%;
+	bottom: 24%;
+	animation-delay: -3.2s;
+}
+
+html.katelya-art-theme .katelya-orbit-stage {
+	top: 50%;
+	left: 50%;
+	z-index: 2;
+	width: min(78vw, 74rem);
+	height: min(42vw, 38rem);
+	transform: translate(-50%, -50%) rotateX(var(--orbit-rx)) rotateY(var(--orbit-ry));
+	transform-style: preserve-3d;
+	transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html.katelya-art-theme .katelya-orbit-card {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: 0.72rem;
+	width: 10.8rem;
+	min-height: 4.4rem;
+	padding: 0.78rem 0.9rem;
+	color: rgba(247, 247, 232, 0.9);
+	text-decoration: none;
+	border: 1px solid rgba(227, 236, 218, 0.24);
+	border-radius: 1.2rem;
+	background:
+		linear-gradient(145deg, rgba(229, 241, 226, 0.15), rgba(17, 53, 57, 0.28)),
+		rgba(20, 58, 61, 0.22);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.18),
+		0 24px 50px rgba(6, 27, 30, 0.2);
+	backdrop-filter: blur(14px) saturate(1.15);
+	-webkit-backdrop-filter: blur(14px) saturate(1.15);
+	transform-style: preserve-3d;
+}
+
+html.katelya-art-theme .katelya-orbit-card--1 {
+	top: 9%;
+	left: 4%;
+	transform: translate3d(0, 0, 72px) rotateY(16deg) rotateZ(-3deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--2 {
+	top: 6%;
+	right: 2%;
+	transform: translate3d(0, 0, 118px) rotateY(-16deg) rotateZ(3deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--3 {
+	bottom: 7%;
+	left: 8%;
+	transform: translate3d(0, 0, 38px) rotateY(13deg) rotateZ(2deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--4 {
+	right: 7%;
+	bottom: 9%;
+	transform: translate3d(0, 0, 92px) rotateY(-14deg) rotateZ(-2deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card__icon {
+	display: grid;
+	flex: 0 0 auto;
+	width: 2.2rem;
+	height: 2.2rem;
+	place-items: center;
+	color: #e4cd86;
+	border: 1px solid rgba(226, 202, 131, 0.34);
+	border-radius: 50%;
+	background: rgba(16, 49, 52, 0.38);
+	box-shadow: 0 0 20px rgba(221, 196, 120, 0.16);
+}
+
+html.katelya-art-theme .katelya-orbit-card__copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.08rem;
+}
+
+html.katelya-art-theme .katelya-orbit-card__copy strong {
+	font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+	font-size: 0.92rem;
+	font-weight: 650;
+	letter-spacing: 0.08em;
+}
+
+html.katelya-art-theme .katelya-orbit-card__copy small {
+	color: rgba(218, 234, 224, 0.62);
+	font-family: var(--font-jetbrains-mono), monospace;
+	font-size: 0.62rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+html.katelya-art-theme .katelya-hero-copy {
+	position: relative;
+	z-index: 4;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: min(86vw, 64rem);
+	margin-top: -1.5rem;
+	text-align: center;
+	pointer-events: none;
+	transform: translateZ(130px);
+}
+
+html.katelya-art-theme .katelya-hero-eyebrow {
+	margin: 0 0 1rem;
+	color: rgba(232, 218, 170, 0.82);
+	font-family: var(--font-jetbrains-mono), monospace;
+	font-size: clamp(0.64rem, 0.78vw, 0.8rem);
+	letter-spacing: 0.24em;
+	text-shadow: 0 0 18px rgba(201, 169, 101, 0.22);
+}
+
+html.katelya-art-theme .katelya-hero-title {
+	position: relative;
+	margin: 0;
+	font-family: "Noto Serif SC", "Source Han Serif SC", "STSong", "Songti SC", serif;
+	font-size: clamp(3.2rem, 6.4vw, 7.2rem);
+	font-weight: 760;
+	line-height: 1.02;
+	letter-spacing: 0.045em;
+}
+
+html.katelya-art-theme .katelya-hero-title span {
+	color: transparent;
+	background:
+		linear-gradient(180deg, #fffdf0 0%, #e7f0df 52%, #d6c994 100%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	filter: drop-shadow(0 6px 2px rgba(8, 31, 34, 0.2));
+	text-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.52),
+		0 8px 26px rgba(5, 24, 28, 0.3),
+		0 0 42px rgba(204, 226, 210, 0.16);
+}
+
+html.katelya-art-theme .katelya-hero-title::after {
+	position: absolute;
+	left: 50%;
+	bottom: -0.55rem;
+	width: min(18rem, 34vw);
+	height: 0.22rem;
+	content: "";
+	border-radius: 999px;
+	background: linear-gradient(90deg, transparent, #ccb06a 38%, #8f80c4 68%, transparent);
+	filter: blur(0.3px) drop-shadow(0 0 8px rgba(216, 190, 113, 0.4));
+	transform: translateX(-50%) rotate(-1deg);
+}
+
+html.katelya-art-theme .katelya-hero-subtitle {
+	width: min(82vw, 48rem);
+	min-height: 2.3rem;
+	margin: 1.7rem 0 0;
+	color: rgba(241, 246, 232, 0.9);
+	font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+	font-size: clamp(1rem, 1.55vw, 1.45rem);
+	font-weight: 520;
+	letter-spacing: 0.07em;
+	line-height: 1.65;
+	text-shadow: 0 3px 16px rgba(4, 27, 31, 0.62);
+}
+
+html.katelya-art-theme .katelya-hero-subtitle__line {
+	display: inline-block;
+	min-height: 1.65em;
+}
+
+html.katelya-art-theme .katelya-hero-links {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.58rem;
+	margin-top: 1.45rem;
+	pointer-events: auto;
+}
+
+html.katelya-art-theme .katelya-hero-links a {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.56rem 0.82rem;
+	color: rgba(244, 246, 230, 0.86);
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-decoration: none;
+	border: 1px solid rgba(230, 237, 217, 0.22);
+	border-radius: 999px;
+	background: rgba(18, 54, 57, 0.25);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	transition:
+		transform 180ms ease,
+		border-color 180ms ease,
+		background-color 180ms ease;
+}
+
+html.katelya-art-theme .katelya-hero-links a:hover,
+html.katelya-art-theme .katelya-hero-links a:focus-visible {
+	color: #fffce9;
+	border-color: rgba(219, 190, 112, 0.58);
+	background: rgba(69, 80, 111, 0.36);
+	outline: none;
+	transform: translateY(-3px);
+}
+
+html.katelya-art-theme #navbar > div:not(.absolute) {
+	border: 1px solid rgba(211, 228, 219, 0.2) !important;
+	border-radius: 1.2rem !important;
+	background:
+		linear-gradient(135deg, rgba(247, 249, 238, 0.18), rgba(32, 72, 73, 0.12)),
+		rgba(235, 243, 235, 0.1) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.16),
+		0 16px 40px rgba(10, 42, 45, 0.12) !important;
+	backdrop-filter: blur(18px) saturate(1.16) !important;
+	-webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
+}
+
+html.katelya-art-theme #navbar.scrolled > div:not(.absolute) {
+	border-color: var(--katelya-line) !important;
+	background: rgba(240, 247, 242, 0.84) !important;
+	box-shadow: var(--katelya-shadow) !important;
+}
+
+html.katelya-art-theme.dark #navbar.scrolled > div:not(.absolute) {
+	background: rgba(14, 36, 39, 0.88) !important;
+}
+
+html.katelya-art-theme .card-base,
+html.katelya-art-theme .card-base-transparent,
+html.katelya-art-theme .float-panel {
+	position: relative;
+	border: 1px solid var(--katelya-line) !important;
+	background:
+		linear-gradient(148deg, rgba(255, 255, 255, 0.34), transparent 42%),
+		var(--card-bg-transparent) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.4),
+		var(--katelya-shadow) !important;
+	backdrop-filter: blur(18px) saturate(1.04) !important;
+	-webkit-backdrop-filter: blur(18px) saturate(1.04) !important;
+}
+
+html.katelya-art-theme.dark .card-base,
+html.katelya-art-theme.dark .card-base-transparent,
+html.katelya-art-theme.dark .float-panel {
+	background:
+		linear-gradient(148deg, rgba(157, 203, 192, 0.06), transparent 44%),
+		var(--card-bg-transparent) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(212, 235, 226, 0.08),
+		var(--katelya-shadow) !important;
+}
+
+html.katelya-art-theme .card-base::after,
+html.katelya-art-theme .card-base-transparent::after {
+	position: absolute;
+	inset: 0.55rem;
+	z-index: 0;
+	pointer-events: none;
+	content: "";
+	border: 1px solid rgba(199, 167, 101, 0.09);
+	border-radius: calc(var(--radius-large) - 0.45rem);
+}
+
+html.katelya-art-theme .card-base > *,
+html.katelya-art-theme .card-base-transparent > * {
+	position: relative;
+	z-index: 1;
+}
+
+html.katelya-art-theme .post-card {
+	transform: perspective(1000px) translateZ(0);
+	transition:
+		transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+		box-shadow 240ms ease,
+		border-color 240ms ease !important;
+}
+
+html.katelya-art-theme .post-card:hover {
+	border-color: rgba(109, 90, 167, 0.28) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.42),
+		0 28px 65px rgba(38, 86, 83, 0.18) !important;
+	transform: perspective(1000px) translateY(-5px) rotateX(0.6deg) rotateY(-0.4deg);
+}
+
+html.katelya-art-theme .post-card h2,
+html.katelya-art-theme .post-card h3,
+html.katelya-art-theme .prose h1,
+html.katelya-art-theme .prose h2,
+html.katelya-art-theme .prose h3,
+html.katelya-art-theme .prose h4 {
+	font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+	letter-spacing: 0.035em;
+}
+
+html.katelya-art-theme .prose {
+	--tw-prose-body: var(--deep-text);
+	--tw-prose-headings: var(--deep-text);
+	line-height: 1.88;
+}
+
+html.katelya-art-theme .prose blockquote {
+	border-left-color: var(--katelya-gold);
+	background: linear-gradient(90deg, rgba(200, 167, 101, 0.1), transparent);
+}
+
+html.katelya-art-theme .btn-regular,
+html.katelya-art-theme .btn-plain,
+html.katelya-art-theme button,
+html.katelya-art-theme [role="button"] {
+	transition:
+		transform 170ms ease,
+		background-color 170ms ease,
+		border-color 170ms ease,
+		box-shadow 170ms ease;
+}
+
+html.katelya-art-theme .btn-regular:hover,
+html.katelya-art-theme button:hover,
+html.katelya-art-theme [role="button"]:hover {
+	transform: translateY(-1px);
+}
+
+html.katelya-art-theme a:focus-visible,
+html.katelya-art-theme button:focus-visible,
+html.katelya-art-theme [role="button"]:focus-visible {
+	outline: 2px solid rgba(109, 90, 167, 0.7);
+	outline-offset: 3px;
+}
+
+html.katelya-art-theme ::-webkit-scrollbar-thumb {
+	border: 2px solid transparent;
+	border-radius: 999px;
+	background: linear-gradient(180deg, #6f9f99, #75669f) padding-box;
+}
+
+@keyframes katelya-ring-breathe {
+	0%,
+	100% {
+		opacity: 0.48;
+		transform: translate(-50%, -50%) rotate(-9deg) scale(0.98);
+	}
+	50% {
+		opacity: 0.82;
+		transform: translate(-50%, -50%) rotate(-5deg) scale(1.025);
+	}
+}
+
+@keyframes katelya-fleck {
+	0%,
+	100% {
+		opacity: 0.35;
+		transform: translate3d(0, 0, 30px) scale(0.8);
+	}
+	50% {
+		opacity: 1;
+		transform: translate3d(0, -12px, 80px) scale(1.18);
+	}
+}
+
+@media (max-width: 1023px) {
+	html.katelya-art-theme .katelya-orbit-card {
+		width: 9.4rem;
+		min-height: 4rem;
+		padding: 0.68rem 0.75rem;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--1,
+	html.katelya-art-theme .katelya-orbit-card--3 {
+		left: 1%;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--2,
+	html.katelya-art-theme .katelya-orbit-card--4 {
+		right: 1%;
+	}
+}
+
+@media (max-width: 767px) {
+	html.katelya-art-theme .katelya-orbit-hero {
+		height: 65vh;
+		min-height: 32rem;
+		padding: 4.2rem 1rem 7rem;
+		perspective: none;
+	}
+
+	html.katelya-art-theme .katelya-orbit-hero::before {
+		inset: 14% -16%;
+	}
+
+	html.katelya-art-theme .katelya-orbit-stage,
+	html.katelya-art-theme .katelya-paint-aura {
+		transform: none;
+	}
+
+	html.katelya-art-theme .katelya-orbit-stage {
+		display: none;
+	}
+
+	html.katelya-art-theme .katelya-aura-ring--outer {
+		width: 92vw;
+		height: 58vw;
+	}
+
+	html.katelya-art-theme .katelya-aura-ring--inner {
+		width: 72vw;
+		height: 44vw;
+	}
+
+	html.katelya-art-theme .katelya-hero-copy {
+		width: 92vw;
+		margin-top: -2.5rem;
+		transform: none;
+	}
+
+	html.katelya-art-theme .katelya-hero-eyebrow {
+		margin-bottom: 0.7rem;
+		font-size: 0.58rem;
+		letter-spacing: 0.16em;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		font-size: clamp(2.65rem, 12vw, 4.5rem);
+		letter-spacing: 0.015em;
+	}
+
+	html.katelya-art-theme .katelya-hero-subtitle {
+		width: 88vw;
+		margin-top: 1.3rem;
+		font-size: 0.94rem;
+		letter-spacing: 0.035em;
+	}
+
+	html.katelya-art-theme .katelya-hero-links {
+		gap: 0.42rem;
+		margin-top: 1.05rem;
+	}
+
+	html.katelya-art-theme .katelya-hero-links a {
+		padding: 0.48rem 0.66rem;
+		font-size: 0.7rem;
+	}
+
+	html.katelya-art-theme #navbar > div:not(.absolute) {
+		border-radius: 0 0 1.1rem 1.1rem !important;
+	}
+
+	html.katelya-art-theme .post-card:hover {
+		transform: translateY(-2px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.katelya-art-theme .katelya-aura-ring,
+	html.katelya-art-theme .katelya-gold-fleck,
+	html.katelya-art-theme .katelya-orbit-card,
+	html.katelya-art-theme .katelya-paint-aura,
+	html.katelya-art-theme .katelya-orbit-stage {
+		animation: none !important;
+		transition: none !important;
+		transform-style: flat !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-stage,
+	html.katelya-art-theme .katelya-paint-aura {
+		transform: none !important;
+	}
+
+	html.katelya-art-theme .post-card:hover,
+	html.katelya-art-theme .katelya-hero-links a:hover {
+		transform: none !important;
+	}
+}

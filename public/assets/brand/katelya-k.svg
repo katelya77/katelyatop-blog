@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Katelya K</title>
+  <desc id="desc">由紫色笔触与矿物金微光组成的 Katelya 字母 K 标识。</desc>
+  <defs>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8f7bd4"/>
+      <stop offset="0.55" stop-color="#6d5aa7"/>
+      <stop offset="1" stop-color="#44386f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e1ce8d"/>
+      <stop offset="1" stop-color="#b88f4f"/>
+    </linearGradient>
+    <filter id="brush" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4"/>
+    </filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="#eaf4ef" fill-opacity="0.08" stroke="#dce8dd" stroke-opacity="0.3" stroke-width="3"/>
+  <path d="M76 44C70 89 72 138 77 212" fill="none" stroke="url(#violet)" stroke-width="30" stroke-linecap="round" filter="url(#brush)"/>
+  <path d="M83 132C117 105 145 77 176 45" fill="none" stroke="url(#violet)" stroke-width="26" stroke-linecap="round" filter="url(#brush)"/>
+  <path d="M88 132C124 151 153 180 181 212" fill="none" stroke="url(#violet)" stroke-width="28" stroke-linecap="round" filter="url(#brush)"/>
+  <path d="M112 111C137 91 154 73 172 54" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round" opacity="0.88" filter="url(#glow)"/>
+  <circle cx="190" cy="57" r="5" fill="#d9be72" filter="url(#glow)"/>
+  <circle cx="56" cy="194" r="3" fill="#d9be72" opacity="0.75"/>
+</svg>

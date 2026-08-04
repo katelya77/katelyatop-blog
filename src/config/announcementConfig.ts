@@ -1,14 +1,14 @@
 import type { AnnouncementConfig } from "../types/config";
 
-// 公告栏配置
 export const announcementConfig: AnnouncementConfig = {
-	title: "", // 公告标题，填空使用i18n字符串Key.announcement
-	content: "ブログへようこそ！これはサンプルの告知です", // 公告内容
-	closable: true, // 允许用户关闭公告
+	title: "",
+	content:
+		"欢迎来到 Katelya · 思囿随笔。这里收藏技术折腾、项目实践与生活里值得留下的微光。",
+	closable: true,
 	link: {
-		enable: true, // 启用链接
-		text: "Learn More", // 链接文本
-		url: "/about/", // 链接 URL
-		external: false, // 内部链接
+		enable: true,
+		text: "关于本站",
+		url: "/about/",
+		external: false,
 	},
 };
