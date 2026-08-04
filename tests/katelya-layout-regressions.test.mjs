@@ -3,6 +3,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const readTheme = async () => {
+	const [gallery, safety] = await Promise.all([
+		read("src/styles/katelya-van-gogh-gallery.css"),
+		read("src/styles/katelya-van-gogh-safety.css"),
+	]);
+	return `${gallery}\n${safety}`;
+};
 
 test("legacy banner title cannot reappear over the gallery hero", async () => {
 	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
@@ -16,7 +23,7 @@ test("legacy banner title cannot reappear over the gallery hero", async () => {
 test("hero follows route state and uses shared gallery geometry", async () => {
 	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
 	const grid = await read("src/layouts/MainGridLayout.astro");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 
 	assert.match(hero, /active\??:\s*boolean/);
 	assert.match(hero, /is-home-active/);
@@ -31,7 +38,7 @@ test("hero follows route state and uses shared gallery geometry", async () => {
 });
 
 test("full page uses day-night painterly artwork and clips overflow", async () => {
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 	const dayArtwork = await read("public/assets/art/katelya-van-gogh-day.svg");
 	const nightArtwork = await read("public/assets/art/katelya-van-gogh-night.svg");
 
@@ -46,7 +53,7 @@ test("full page uses day-night painterly artwork and clips overflow", async () =
 test("desktop navigation is centered and keeps a stable primary order", async () => {
 	const navConfig = await read("src/config/navBarConfig.ts");
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 
 	assert.match(navConfig, /LinkPreset\.Home[\s\S]*LinkPreset\.Archive/);
 	assert.match(navConfig, /name:\s*"项目"/);
@@ -61,7 +68,7 @@ test("desktop navigation is centered and keeps a stable primary order", async ()
 
 test("display settings close invisibly and stay inside the viewport", async () => {
 	const config = await read("src/config/siteConfig.ts");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 	const animation = await read("src/styles/panel-animations.css");
 
 	assert.match(config, /themeColor:\s*\{[\s\S]*?fixed:\s*true/);
@@ -75,7 +82,7 @@ test("display settings close invisibly and stay inside the viewport", async () =
 });
 
 test("gallery content geometry stays in normal flow after hydration", async () => {
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 
 	assert.match(theme, /\.katelya-main-shell\s*\{[\s\S]*?position:\s*static\s*!important/);
 	assert.match(theme, /\.katelya-main-shell::before\s*\{[\s\S]*?display:\s*block[\s\S]*?height:\s*var\(--katelya-article-banner-height\)/);
