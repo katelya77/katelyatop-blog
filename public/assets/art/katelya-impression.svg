@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1400" role="img" aria-labelledby="title desc" preserveAspectRatio="xMidYMid slice">
+  <title id="title">Katelya 蓝绿印象画境</title>
+  <desc id="desc">由蓝绿色薄雾、旋转笔触、紫色微光与矿物金颗粒构成的原创程序化背景。</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d2b31"/>
+      <stop offset="0.24" stop-color="#245a60"/>
+      <stop offset="0.52" stop-color="#78aaa5"/>
+      <stop offset="0.74" stop-color="#d6e9df"/>
+      <stop offset="1" stop-color="#567c86"/>
+    </linearGradient>
+    <radialGradient id="mist" cx="52%" cy="42%" r="65%">
+      <stop offset="0" stop-color="#f2f4de" stop-opacity="0.9"/>
+      <stop offset="0.32" stop-color="#b9ddd1" stop-opacity="0.55"/>
+      <stop offset="0.72" stop-color="#274f58" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#071d25" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violetGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#9182c7" stop-opacity="0.58"/>
+      <stop offset="0.48" stop-color="#69579d" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#493b78" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d7c184" stop-opacity="0"/>
+      <stop offset="0.35" stop-color="#e4cc86" stop-opacity="0.88"/>
+      <stop offset="0.7" stop-color="#b99250" stop-opacity="0.52"/>
+      <stop offset="1" stop-color="#e6d59f" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="paint" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.018" numOctaves="3" seed="17" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="58" xChannelSelector="R" yChannelSelector="B"/>
+    </filter>
+    <filter id="brush" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="turbulence" baseFrequency="0.012 0.035" numOctaves="2" seed="29" result="grain"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="34"/>
+      <feGaussianBlur stdDeviation="1.4"/>
+    </filter>
+    <filter id="grain" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="3" seed="41" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.08"/>
+      </feComponentTransfer>
+    </filter>
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="vignette" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="50"/>
+    </filter>
+    <pattern id="canvas" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M0 6H24M0 18H24" stroke="#f6f0d5" stroke-opacity="0.05" stroke-width="1"/>
+      <path d="M6 0V24M18 0V24" stroke="#092f34" stroke-opacity="0.045" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="2400" height="1400" fill="url(#sky)"/>
+  <rect width="2400" height="1400" fill="url(#mist)"/>
+
+  <g opacity="0.56" filter="url(#paint)">
+    <path d="M-180 1040C260 680 520 760 910 540s690-210 1010-80 470 42 680-130" fill="none" stroke="#d7ebe0" stroke-width="210" stroke-linecap="round"/>
+    <path d="M-90 1280C360 890 700 1010 1120 790s760-250 1430-60" fill="none" stroke="#75a69e" stroke-width="190" stroke-linecap="round"/>
+    <path d="M80 220C510 30 900 300 1270 170s690-120 1130 80" fill="none" stroke="#284f64" stroke-width="150" stroke-linecap="round"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round" filter="url(#brush)">
+    <path d="M210 760C420 280 1000 150 1400 330s270 630-190 670S480 910 650 570s720-340 1040-80" stroke="#dbe9d7" stroke-opacity="0.38" stroke-width="74"/>
+    <path d="M330 820C560 390 1030 300 1320 430s190 470-160 520-560-100-430-330 520-250 790-80" stroke="#5c9b91" stroke-opacity="0.62" stroke-width="46"/>
+    <path d="M470 870C660 550 1010 500 1220 590s120 320-130 360-390-70-300-230 360-170 560-50" stroke="#315f68" stroke-opacity="0.72" stroke-width="34"/>
+    <path d="M1530 260C1790 120 2110 260 2210 490s-30 430-230 520" stroke="#b9d7c9" stroke-opacity="0.36" stroke-width="66"/>
+    <path d="M80 1120C390 960 630 1010 930 1170s650 170 1010-40" stroke="#2f6e6c" stroke-opacity="0.46" stroke-width="86"/>
+  </g>
+
+  <ellipse cx="1210" cy="610" rx="620" ry="430" fill="url(#violetGlow)" opacity="0.52" filter="url(#softGlow)"/>
+  <ellipse cx="1210" cy="610" rx="760" ry="490" fill="none" stroke="url(#goldStroke)" stroke-width="5" opacity="0.58" transform="rotate(-8 1210 610)"/>
+  <ellipse cx="1210" cy="610" rx="545" ry="335" fill="none" stroke="#d5e7d8" stroke-opacity="0.22" stroke-width="13" transform="rotate(12 1210 610)" filter="url(#brush)"/>
+
+  <g fill="#d8bd77" filter="url(#softGlow)">
+    <circle cx="420" cy="350" r="5" opacity="0.82"/>
+    <circle cx="610" cy="210" r="3" opacity="0.7"/>
+    <circle cx="930" cy="330" r="4" opacity="0.78"/>
+    <circle cx="1510" cy="245" r="5" opacity="0.72"/>
+    <circle cx="1820" cy="420" r="3" opacity="0.88"/>
+    <circle cx="2100" cy="310" r="5" opacity="0.66"/>
+    <circle cx="1970" cy="820" r="4" opacity="0.75"/>
+    <circle cx="1540" cy="1050" r="3" opacity="0.82"/>
+    <circle cx="740" cy="1080" r="5" opacity="0.62"/>
+    <circle cx="250" cy="920" r="3" opacity="0.8"/>
+  </g>
+
+  <g fill="none" stroke="url(#goldStroke)" stroke-linecap="round" opacity="0.48">
+    <path d="M460 410c210-170 430-210 680-110" stroke-width="8"/>
+    <path d="M1420 980c270 80 490 30 710-140" stroke-width="6"/>
+    <path d="M170 980c170 60 330 50 500-40" stroke-width="5"/>
+  </g>
+
+  <rect width="2400" height="1400" fill="url(#canvas)" opacity="0.75"/>
+  <rect width="2400" height="1400" filter="url(#grain)" opacity="0.42"/>
+  <rect x="-80" y="-80" width="2560" height="1560" fill="none" stroke="#061a20" stroke-opacity="0.32" stroke-width="160" filter="url(#vignette)"/>
+</svg>
