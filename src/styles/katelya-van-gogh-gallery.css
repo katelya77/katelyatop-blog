@@ -1,0 +1,729 @@
+/*
+ * Katelya · Van Gogh day/night gallery layer
+ * Original web artwork inspired by directional oil brushwork, complementary
+ * colour contrast and strong light/dark landscape anchors.
+ */
+
+html.katelya-art-theme {
+	--katelya-day-canvas: #dcebe2;
+	--katelya-night-canvas: #071a42;
+	--katelya-iris: #6f55a8;
+	--katelya-cobalt: #153d6f;
+	--katelya-cyan: #75b9bd;
+	--katelya-gold: #f2c85b;
+	--katelya-cream: #f5f0dc;
+	--katelya-forest: #174d4e;
+	--katelya-gallery-header-height: 4.25rem;
+	--katelya-header-offset: 0.75rem;
+	--katelya-home-hero-height: max(65vh, 38rem);
+	--katelya-article-banner-height: clamp(19rem, 38vh, 27rem);
+	--katelya-surface: rgba(248, 246, 232, 0.88);
+	--katelya-surface-strong: rgba(252, 249, 237, 0.96);
+	--katelya-surface-soft: rgba(226, 239, 230, 0.78);
+	--katelya-border: rgba(67, 112, 105, 0.24);
+	--katelya-border-bright: rgba(111, 85, 168, 0.3);
+	--katelya-text: #18383a;
+	--katelya-muted: rgba(24, 56, 58, 0.66);
+	--katelya-art-shadow: 0 18px 50px rgba(28, 72, 67, 0.16);
+	--katelya-art-shadow-strong: 0 24px 70px rgba(26, 60, 58, 0.22);
+	--katelya-card-radius: 1.35rem 1.1rem 1.45rem 1.15rem;
+	--page-bg: var(--katelya-day-canvas);
+	--card-bg: var(--katelya-surface-strong);
+	--card-bg-transparent: var(--katelya-surface);
+	--float-panel-bg: var(--katelya-surface-strong);
+	--line-divider: var(--katelya-border);
+	--primary: var(--katelya-iris);
+	--deep-text: var(--katelya-text);
+	--radius-large: 1.35rem;
+	max-width: 100%;
+	overflow-x: hidden;
+	overflow-x: clip;
+}
+
+html.katelya-art-theme.dark {
+	--katelya-surface: rgba(8, 31, 57, 0.82);
+	--katelya-surface-strong: rgba(8, 27, 52, 0.94);
+	--katelya-surface-soft: rgba(18, 58, 80, 0.72);
+	--katelya-border: rgba(126, 189, 193, 0.2);
+	--katelya-border-bright: rgba(242, 200, 91, 0.34);
+	--katelya-text: #f4f0d7;
+	--katelya-muted: rgba(224, 235, 218, 0.68);
+	--katelya-art-shadow: 0 20px 58px rgba(0, 8, 28, 0.42);
+	--katelya-art-shadow-strong: 0 28px 78px rgba(0, 5, 22, 0.58);
+	--page-bg: var(--katelya-night-canvas);
+	--card-bg: var(--katelya-surface-strong);
+	--card-bg-transparent: var(--katelya-surface);
+	--float-panel-bg: var(--katelya-surface-strong);
+	--line-divider: var(--katelya-border);
+	--primary: var(--katelya-gold);
+	--deep-text: var(--katelya-text);
+}
+
+html.katelya-art-theme,
+html.katelya-art-theme body {
+	width: 100%;
+	min-height: 100%;
+	max-width: 100%;
+	overflow-x: hidden;
+	overflow-x: clip;
+	background-color: var(--page-bg);
+}
+
+html.katelya-art-theme body {
+	color: var(--katelya-text);
+	background-image:
+		linear-gradient(rgba(237, 244, 229, 0.68), rgba(219, 235, 225, 0.72)),
+		url("/assets/art/katelya-van-gogh-day.svg") !important;
+	background-size: cover !important;
+	background-position: center top !important;
+	background-attachment: fixed !important;
+}
+
+html.katelya-art-theme.dark body {
+	background-image:
+		linear-gradient(rgba(3, 14, 42, 0.62), rgba(4, 20, 44, 0.72)),
+		url("/assets/art/katelya-van-gogh-night.svg") !important;
+}
+
+html.katelya-art-theme body::before {
+	inset: 0 !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	opacity: 0.28 !important;
+	background-image:
+		repeating-linear-gradient(12deg, rgba(255, 255, 255, 0.09) 0 2px, transparent 2px 13px),
+		repeating-linear-gradient(101deg, rgba(22, 72, 70, 0.05) 0 1px, transparent 1px 10px) !important;
+	background-size: auto !important;
+	filter: none !important;
+	mix-blend-mode: soft-light !important;
+}
+
+html.katelya-art-theme.dark body::before {
+	opacity: 0.36 !important;
+	background-image:
+		repeating-linear-gradient(8deg, rgba(140, 195, 202, 0.08) 0 2px, transparent 2px 14px),
+		repeating-linear-gradient(98deg, rgba(242, 200, 91, 0.035) 0 1px, transparent 1px 11px) !important;
+}
+
+html.katelya-art-theme body::after {
+	inset: 0 !important;
+	width: 100vw !important;
+	height: 100vh !important;
+	border-radius: 0 !important;
+	background:
+		radial-gradient(circle at 51% 21%, rgba(255, 248, 210, 0.2), transparent 34rem),
+		radial-gradient(circle at 12% 74%, rgba(111, 85, 168, 0.13), transparent 28rem),
+		radial-gradient(circle at 90% 66%, rgba(53, 126, 122, 0.16), transparent 34rem) !important;
+	filter: none !important;
+}
+
+html.katelya-art-theme.dark body::after {
+	background:
+		radial-gradient(circle at 51% 18%, rgba(242, 200, 91, 0.09), transparent 30rem),
+		radial-gradient(circle at 16% 64%, rgba(51, 117, 160, 0.18), transparent 34rem),
+		radial-gradient(circle at 88% 54%, rgba(28, 105, 119, 0.18), transparent 36rem) !important;
+}
+
+html.katelya-art-theme .top-gradient-highlight {
+	display: none !important;
+}
+
+/* Shared banner identity */
+html.katelya-art-theme #banner-wrapper {
+	top: 0 !important;
+	height: var(--katelya-article-banner-height) !important;
+	isolation: isolate;
+	transform: none !important;
+	background-image: url("/assets/art/katelya-van-gogh-day.svg") !important;
+	background-position: center !important;
+	background-size: cover !important;
+}
+
+html.katelya-art-theme.dark #banner-wrapper {
+	background-image: url("/assets/art/katelya-van-gogh-night.svg") !important;
+}
+
+html.katelya-art-theme #banner-wrapper img {
+	opacity: 0 !important;
+}
+
+html.katelya-art-theme:has(.katelya-main-shell.is-home-layout) #banner-wrapper {
+	height: var(--katelya-home-hero-height) !important;
+}
+
+html.katelya-art-theme #banner-wrapper::before {
+	background:
+		radial-gradient(ellipse at 50% 47%, rgba(244, 242, 214, 0.2), transparent 34%),
+		linear-gradient(180deg, rgba(18, 55, 59, 0.12), transparent 42%, rgba(15, 55, 56, 0.12)) !important;
+}
+
+html.katelya-art-theme.dark #banner-wrapper::before {
+	background:
+		radial-gradient(ellipse at 50% 45%, rgba(242, 200, 91, 0.09), transparent 32%),
+		linear-gradient(180deg, rgba(2, 11, 34, 0.28), transparent 42%, rgba(2, 14, 34, 0.24)) !important;
+}
+
+html.katelya-art-theme #banner-wrapper::after {
+	background:
+		linear-gradient(90deg, rgba(19, 68, 68, 0.2), transparent 24%, transparent 76%, rgba(24, 67, 66, 0.18)),
+		linear-gradient(180deg, transparent 64%, var(--page-bg)) !important;
+}
+
+/* Fixed gallery header, independent from banner geometry */
+html.katelya-art-theme .katelya-header-stage {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 70;
+	width: 100%;
+	height: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2);
+	padding: var(--katelya-header-offset) 1rem;
+}
+
+html.katelya-art-theme #navbar-wrapper {
+	width: min(100%, var(--page-width));
+	margin-inline: auto;
+}
+
+html.katelya-art-theme .katelya-gallery-header {
+	width: 100%;
+}
+
+html.katelya-art-theme .katelya-navbar-shell {
+	display: grid !important;
+	grid-template-columns: minmax(12rem, 1fr) auto minmax(12rem, 1fr);
+	align-items: center;
+	gap: 0.75rem;
+	width: 100%;
+	height: var(--katelya-gallery-header-height);
+	padding: 0.42rem 0.7rem;
+	border: 1px solid var(--katelya-border-bright);
+	border-radius: 1.3rem 1rem 1.35rem 1.05rem;
+	background:
+		linear-gradient(110deg, rgba(255, 252, 235, 0.76), rgba(221, 238, 227, 0.66)),
+		rgba(242, 245, 230, 0.76) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.66),
+		var(--katelya-art-shadow);
+	backdrop-filter: blur(18px) saturate(1.08);
+	-webkit-backdrop-filter: blur(18px) saturate(1.08);
+	transition: background 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+html.katelya-art-theme.dark .katelya-navbar-shell {
+	background:
+		linear-gradient(110deg, rgba(16, 51, 78, 0.82), rgba(7, 27, 55, 0.82)),
+		rgba(6, 25, 52, 0.84) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(151, 204, 209, 0.12),
+		var(--katelya-art-shadow);
+}
+
+html.katelya-art-theme .katelya-gallery-header.scrolled .katelya-navbar-shell {
+	background-color: var(--katelya-surface-strong) !important;
+	box-shadow: var(--katelya-art-shadow-strong);
+}
+
+html.katelya-art-theme .katelya-navbar-brand {
+	display: inline-flex;
+	align-items: center;
+	justify-self: start;
+	min-width: 0;
+	max-width: 100%;
+	height: 3rem;
+	padding: 0 0.72rem;
+	color: var(--katelya-text);
+	font-weight: 760;
+	text-decoration: none;
+	border-radius: 0.95rem 0.72rem 1rem 0.75rem;
+}
+
+html.katelya-art-theme .katelya-navbar-brand:hover {
+	color: var(--primary);
+	background: color-mix(in srgb, var(--katelya-surface-soft) 78%, transparent);
+}
+
+html.katelya-art-theme .katelya-navbar-logo {
+	width: 1.62rem;
+	height: 1.62rem;
+	margin-right: 0.55rem;
+	object-fit: contain;
+}
+
+html.katelya-art-theme .katelya-navbar-brand span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+html.katelya-art-theme .katelya-navbar-links {
+	display: flex;
+	align-items: center;
+	justify-self: center;
+	gap: 0.08rem;
+	white-space: nowrap;
+	opacity: 1 !important;
+}
+
+html.katelya-art-theme .katelya-navbar-links > * {
+	flex: 0 0 auto;
+}
+
+html.katelya-art-theme .katelya-navbar-tools {
+	display: flex;
+	align-items: center;
+	justify-self: end;
+	gap: 0.08rem;
+	min-width: 0;
+}
+
+html.katelya-art-theme .katelya-menu-switch {
+	display: none;
+}
+
+/* Click-driven search */
+html.katelya-art-theme .katelya-search-trigger {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	overflow: hidden;
+	color: var(--katelya-text);
+	border: 1px solid transparent;
+	border-radius: 0.9rem;
+	background: transparent;
+	cursor: pointer;
+	transition: width 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+html.katelya-art-theme .katelya-search-trigger.is-expanded {
+	width: min(17rem, 28vw);
+	border-color: var(--katelya-border);
+	background: var(--katelya-surface-strong);
+	box-shadow: var(--katelya-art-shadow);
+}
+
+html.katelya-art-theme .katelya-search-icon {
+	position: absolute;
+	left: 0.66rem;
+	z-index: 2;
+	font-size: 1.2rem;
+}
+
+html.katelya-art-theme .katelya-search-input {
+	width: 100%;
+	height: 100%;
+	padding: 0 0.75rem 0 2.35rem;
+	color: var(--katelya-text);
+	font-size: 0.86rem;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	opacity: 0;
+	pointer-events: none;
+}
+
+html.katelya-art-theme .katelya-search-trigger.is-expanded .katelya-search-input {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+html.katelya-art-theme .katelya-search-panel {
+	position: fixed !important;
+	top: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 0.35rem) !important;
+	right: max(1rem, calc((100vw - var(--page-width)) / 2 + 1rem)) !important;
+	left: auto !important;
+	z-index: 90;
+	width: min(30rem, calc(100vw - 2rem));
+	max-height: calc(100dvh - 7rem);
+	padding: 0.55rem;
+	overflow-x: hidden;
+	overflow-y: auto;
+	border: 1px solid var(--katelya-border-bright);
+	border-radius: var(--katelya-card-radius);
+	background: var(--katelya-surface-strong);
+	box-shadow: var(--katelya-art-shadow-strong);
+	backdrop-filter: blur(20px);
+}
+
+html.katelya-art-theme .katelya-search-mobile-row {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	min-height: 2.75rem;
+	padding: 0 0.8rem;
+	border: 1px solid var(--katelya-border);
+	border-radius: 0.9rem;
+	background: var(--katelya-surface-soft);
+}
+
+html.katelya-art-theme .katelya-search-result {
+	display: block;
+	padding: 0.72rem 0.8rem;
+	color: inherit;
+	text-decoration: none;
+	border-radius: 0.9rem;
+}
+
+html.katelya-art-theme .katelya-search-result:hover {
+	background: var(--katelya-surface-soft);
+}
+
+/* Home hero and content geometry */
+html.katelya-art-theme .katelya-orbit-hero {
+	top: 0 !important;
+	height: var(--katelya-home-hero-height) !important;
+	min-height: 0 !important;
+	padding-top: calc(var(--katelya-gallery-header-height) + 2.2rem);
+	overflow: hidden !important;
+}
+
+html.katelya-art-theme .katelya-hero-copy {
+	width: min(78vw, 56rem) !important;
+	margin-top: 0.8rem !important;
+}
+
+html.katelya-art-theme .katelya-hero-title {
+	font-size: clamp(3.15rem, 5.1vw, 5.8rem) !important;
+	line-height: 0.98 !important;
+	letter-spacing: 0.015em !important;
+	text-shadow:
+		0 2px 0 rgba(26, 55, 54, 0.28),
+		0 11px 28px rgba(10, 40, 42, 0.24) !important;
+}
+
+html.katelya-art-theme.dark .katelya-hero-title {
+	color: #f7efcf !important;
+	text-shadow:
+		0 2px 0 rgba(242, 200, 91, 0.18),
+		0 12px 34px rgba(0, 5, 28, 0.64) !important;
+}
+
+html.katelya-art-theme .katelya-orbit-stage {
+	top: 55% !important;
+	height: min(36vw, 32rem) !important;
+}
+
+html.katelya-art-theme .katelya-orbit-card {
+	border-color: var(--katelya-border-bright) !important;
+	background: color-mix(in srgb, var(--katelya-surface) 78%, transparent) !important;
+	box-shadow: var(--katelya-art-shadow) !important;
+}
+
+html.katelya-art-theme .katelya-main-shell {
+	margin-top: 0 !important;
+}
+
+html.katelya-art-theme .katelya-main-shell.is-home-layout {
+	top: var(--katelya-home-hero-height) !important;
+}
+
+html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
+	top: var(--katelya-article-banner-height) !important;
+}
+
+html.katelya-art-theme #main-grid {
+	transform: none !important;
+}
+
+html.katelya-art-theme #banner-credit {
+	top: -3.25rem !important;
+	max-width: calc(100vw - 2rem);
+}
+
+/* Theme-aware overlay wallpaper */
+html.katelya-art-theme .katelya-wallpaper-canvas {
+	isolation: isolate;
+	background: var(--page-bg);
+}
+
+html.katelya-art-theme .katelya-wallpaper-layer {
+	transition: opacity 420ms ease;
+	transform: scale(1.015);
+}
+
+html.katelya-art-theme .katelya-wallpaper--day {
+	opacity: 1;
+}
+
+html.katelya-art-theme .katelya-wallpaper--night {
+	opacity: 0;
+}
+
+html.katelya-art-theme.dark .katelya-wallpaper--day {
+	opacity: 0;
+}
+
+html.katelya-art-theme.dark .katelya-wallpaper--night {
+	opacity: 1;
+}
+
+html.katelya-art-theme .katelya-wallpaper-canvas::after {
+	position: absolute;
+	inset: 0;
+	content: "";
+	background: linear-gradient(180deg, rgba(246, 245, 226, 0.08), rgba(24, 64, 62, 0.18));
+}
+
+html.katelya-art-theme.dark .katelya-wallpaper-canvas::after {
+	background: linear-gradient(180deg, rgba(2, 11, 34, 0.12), rgba(2, 15, 39, 0.42));
+}
+
+/* Shared art-canvas components */
+html.katelya-art-theme .card-base,
+html.katelya-art-theme .card-base-transparent,
+html.katelya-art-theme #left-sidebar > *,
+html.katelya-art-theme #right-sidebar > *,
+html.katelya-art-theme .right-sidebar-container .card-base,
+html.katelya-art-theme .float-panel,
+html.katelya-art-theme .music-player {
+	border: 1px solid var(--katelya-border) !important;
+	border-radius: var(--katelya-card-radius) !important;
+	background:
+		linear-gradient(135deg, color-mix(in srgb, var(--katelya-surface-strong) 94%, transparent), color-mix(in srgb, var(--katelya-surface) 88%, transparent)) !important;
+	box-shadow:
+		inset 0 1px 0 color-mix(in srgb, var(--katelya-cream) 42%, transparent),
+		var(--katelya-art-shadow) !important;
+	backdrop-filter: blur(14px) saturate(1.03);
+	-webkit-backdrop-filter: blur(14px) saturate(1.03);
+}
+
+html.katelya-art-theme.dark .card-base,
+html.katelya-art-theme.dark .card-base-transparent,
+html.katelya-art-theme.dark #left-sidebar > *,
+html.katelya-art-theme.dark #right-sidebar > *,
+html.katelya-art-theme.dark .right-sidebar-container .card-base,
+html.katelya-art-theme.dark .float-panel,
+html.katelya-art-theme.dark .music-player {
+	box-shadow:
+		inset 0 1px 0 rgba(139, 196, 200, 0.1),
+		var(--katelya-art-shadow) !important;
+}
+
+html.katelya-art-theme .card-base::after {
+	position: absolute;
+	inset: 0.35rem;
+	z-index: -1;
+	pointer-events: none;
+	content: "";
+	border: 1px solid color-mix(in srgb, var(--katelya-border-bright) 48%, transparent);
+	border-radius: calc(var(--radius-large) - 0.25rem);
+	opacity: 0.44;
+}
+
+html.katelya-art-theme #left-sidebar,
+html.katelya-art-theme #right-sidebar {
+	min-width: 0;
+}
+
+html.katelya-art-theme #sidebar-sticky,
+html.katelya-art-theme #left-sidebar-sticky,
+html.katelya-art-theme #right-sidebar-sticky {
+	top: calc(var(--katelya-gallery-header-height) + 1.8rem) !important;
+}
+
+html.katelya-art-theme .widget-title::before,
+html.katelya-art-theme .card-base h2::before,
+html.katelya-art-theme .card-base h3::before {
+	background: linear-gradient(var(--katelya-iris), var(--katelya-cyan)) !important;
+}
+
+html.katelya-art-theme.dark .widget-title::before,
+html.katelya-art-theme.dark .card-base h2::before,
+html.katelya-art-theme.dark .card-base h3::before {
+	background: linear-gradient(var(--katelya-gold), var(--katelya-cyan)) !important;
+}
+
+/* Post card repair */
+html.katelya-art-theme .katelya-post-card {
+	isolation: isolate;
+	min-width: 0;
+}
+
+html.katelya-art-theme .katelya-post-card-content {
+	min-height: 100%;
+}
+
+html.katelya-art-theme .katelya-post-card-title {
+	text-wrap: balance;
+}
+
+html.katelya-art-theme .katelya-post-card-arrow {
+	position: absolute;
+	right: 1rem;
+	bottom: 1rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.45rem;
+	height: 2.45rem;
+	color: var(--primary);
+	font-size: 1.55rem;
+	text-decoration: none;
+	border: 1px solid var(--katelya-border-bright);
+	border-radius: 64% 44% 62% 46%;
+	background: var(--katelya-surface-soft);
+	box-shadow: 0 8px 18px color-mix(in srgb, var(--katelya-forest) 18%, transparent);
+	transform: rotate(-3deg);
+	transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+html.katelya-art-theme .katelya-post-card-arrow:hover,
+html.katelya-art-theme .katelya-post-card-arrow:focus-visible {
+	color: var(--katelya-text);
+	background: color-mix(in srgb, var(--katelya-gold) 34%, var(--katelya-surface-soft));
+	transform: translateX(0.18rem) rotate(2deg);
+}
+
+html.katelya-art-theme .katelya-post-cover {
+	border: 1px solid var(--katelya-border-bright);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--katelya-cream) 28%, transparent);
+}
+
+/* Floating panels and controls */
+html.katelya-art-theme #display-setting,
+html.katelya-art-theme #nav-menu-panel {
+	position: fixed !important;
+	top: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 0.35rem) !important;
+	right: max(1rem, calc((100vw - var(--page-width)) / 2 + 1rem)) !important;
+	left: auto !important;
+	max-width: calc(100vw - 2rem) !important;
+	max-height: calc(100dvh - 7rem) !important;
+	overflow-x: hidden !important;
+	overflow-y: auto !important;
+}
+
+html.katelya-art-theme #l2d-iframe {
+	left: max(0.5rem, calc((100vw - var(--page-width)) / 2 - 13rem)) !important;
+	width: 220px !important;
+	max-width: 24vw !important;
+}
+
+html.katelya-art-theme .floating-controls,
+html.katelya-art-theme [class*="floating-control"] {
+	max-width: calc(100vw - 1rem);
+}
+
+@media (max-width: 1180px) {
+	html.katelya-art-theme .katelya-navbar-shell {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	html.katelya-art-theme .katelya-navbar-links {
+		display: none !important;
+	}
+
+	html.katelya-art-theme .katelya-menu-switch {
+		display: inline-flex;
+	}
+
+	html.katelya-art-theme #l2d-iframe {
+		display: none !important;
+	}
+}
+
+@media (max-width: 767px) {
+	html.katelya-art-theme {
+		--katelya-gallery-header-height: 3.75rem;
+		--katelya-header-offset: 0.5rem;
+		--katelya-home-hero-height: max(68vh, 33rem);
+		--katelya-article-banner-height: 18rem;
+	}
+
+	html.katelya-art-theme body {
+		background-attachment: scroll !important;
+		background-size: auto 100% !important;
+	}
+
+	html.katelya-art-theme .katelya-header-stage {
+		padding-inline: 0.55rem;
+	}
+
+	html.katelya-art-theme .katelya-navbar-shell {
+		gap: 0.25rem;
+		padding-inline: 0.4rem;
+		border-radius: 1rem 0.78rem 1.05rem 0.82rem;
+	}
+
+	html.katelya-art-theme .katelya-navbar-brand {
+		max-width: calc(100vw - 11.5rem);
+		padding-inline: 0.4rem;
+		font-size: 0.9rem;
+	}
+
+	html.katelya-art-theme .katelya-navbar-logo {
+		width: 1.38rem;
+		height: 1.38rem;
+		margin-right: 0.35rem;
+	}
+
+	html.katelya-art-theme .katelya-navbar-tools {
+		gap: 0;
+	}
+
+	html.katelya-art-theme .katelya-navbar-tools > * {
+		transform: scale(0.92);
+	}
+
+	html.katelya-art-theme .katelya-orbit-hero {
+		padding-top: 5rem;
+	}
+
+	html.katelya-art-theme .katelya-hero-copy {
+		width: min(90vw, 34rem) !important;
+		margin-top: 0 !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		font-size: clamp(2.45rem, 10vw, 4rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-stage {
+		display: none;
+	}
+
+	html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
+		top: var(--katelya-article-banner-height) !important;
+	}
+
+	html.katelya-art-theme .katelya-post-card-content {
+		padding-right: 1.5rem !important;
+	}
+
+	html.katelya-art-theme .katelya-post-card-arrow {
+		position: static;
+		width: 2.3rem;
+		height: 2.3rem;
+		margin-top: 0.75rem;
+		margin-left: auto;
+	}
+
+	html.katelya-art-theme .katelya-search-panel,
+	html.katelya-art-theme #display-setting,
+	html.katelya-art-theme #nav-menu-panel {
+		top: 4.75rem !important;
+		right: 0.65rem !important;
+		width: calc(100vw - 1.3rem) !important;
+		max-width: calc(100vw - 1.3rem) !important;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.katelya-art-theme *,
+	html.katelya-art-theme *::before,
+	html.katelya-art-theme *::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+
+	html.katelya-art-theme .katelya-wallpaper-layer,
+	html.katelya-art-theme .katelya-orbit-stage,
+	html.katelya-art-theme .katelya-paint-aura {
+		transform: none !important;
+	}
+}
