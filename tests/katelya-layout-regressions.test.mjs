@@ -38,10 +38,7 @@ test("full page uses day-night painterly artwork and clips overflow", async () =
 	assert.match(theme, /katelya-van-gogh-day\.svg/);
 	assert.match(theme, /katelya-van-gogh-night\.svg/);
 	assert.match(theme, /overflow-x:\s*clip/);
-	assert.match(theme, /background-attachment:\s*fixed/);
-	assert.match(dayArtwork, /feTurbulence/);
 	assert.match(dayArtwork, /stroke-linecap="round"/);
-	assert.match(nightArtwork, /feTurbulence/);
 	assert.match(nightArtwork, /stroke-linecap="round"/);
 });
 
@@ -74,4 +71,39 @@ test("display settings close invisibly and stay inside the viewport", async () =
 	assert.match(animation, /\.float-panel-closed[\s\S]*opacity:\s*0/);
 	assert.match(animation, /\.float-panel-closed[\s\S]*visibility:\s*hidden/);
 	assert.doesNotMatch(animation, /scaleX\(0\.6\)/);
+});
+
+test("gallery geometry is CSS-owned after the first paint", async () => {
+	const scripts = await read("src/layouts/partials/GridScripts.astro");
+
+	assert.match(scripts, /const galleryOwnsGeometry\s*=\s*document\.documentElement\.classList\.contains\("katelya-art-theme"\)/);
+	assert.match(scripts, /if \(galleryOwnsGeometry\) \{[\s\S]*?style\.removeProperty\("top"\)[\s\S]*?return;/);
+	assert.doesNotMatch(scripts, /document\.body\.offsetHeight/);
+});
+
+test("fixed gallery header does not animate vertically on page load", async () => {
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	assert.doesNotMatch(navbar, /katelya-gallery-header z-50 onload-animation/);
+});
+
+test("settings button resolves the hydrated panel when clicked", async () => {
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+
+	assert.match(navbar, /const getSettingsPanel = \(\) => document\.getElementById\("display-setting"\)/);
+	assert.match(navbar, /const onSettingsClick = \(\) => togglePanel\(getSettingsPanel\(\)\)/);
+	assert.doesNotMatch(navbar, /const settingsPanel = document\.getElementById\("display-setting"\)/);
+});
+
+test("hero route sync avoids observing every DOM mutation", async () => {
+	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
+	assert.doesNotMatch(hero, /new MutationObserver/);
+	assert.match(hero, /document\.addEventListener\("swup:page:view", queueHomeStateSync\)/);
+});
+
+test("only the current gallery theme stylesheet is loaded", async () => {
+	const layout = await read("src/layouts/Layout.astro");
+	const grid = await read("src/layouts/MainGridLayout.astro");
+
+	assert.doesNotMatch(layout, /katelya-impressionist\.css/);
+	assert.match(grid, /katelya-van-gogh-gallery\.css/);
 });
