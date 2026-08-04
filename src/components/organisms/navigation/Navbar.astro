@@ -117,9 +117,14 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 </div>
 
 <script>
+	type KatelyaHeaderWindow = Window & {
+		__katelyaHeaderCleanup?: () => void;
+	};
+
 	function initKatelyaGalleryHeader() {
-		if (window.__katelyaHeaderCleanup) {
-			window.__katelyaHeaderCleanup();
+		const katelyaWindow = window as KatelyaHeaderWindow;
+		if (katelyaWindow.__katelyaHeaderCleanup) {
+			katelyaWindow.__katelyaHeaderCleanup();
 		}
 
 		const navbar = document.getElementById("navbar");
@@ -176,7 +181,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		window.addEventListener("scroll", onScroll, { passive: true });
 		updateScrollState();
 
-		window.__katelyaHeaderCleanup = () => {
+		katelyaWindow.__katelyaHeaderCleanup = () => {
 			settingsButton?.removeEventListener("click", onSettingsClick);
 			menuButton?.removeEventListener("click", onMenuClick);
 			document.removeEventListener("click", onDocumentClick);
