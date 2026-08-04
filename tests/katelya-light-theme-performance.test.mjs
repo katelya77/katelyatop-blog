@@ -36,6 +36,36 @@ test("desktop search is a fixed trigger with an independent overlay dialog", asy
 	);
 });
 
+test("search overlay is anchored to the trigger and isolated from navbar links", async () => {
+	const search = await read("src/components/organisms/navigation/Search.svelte");
+	const performanceCss = await read("src/styles/katelya-light-performance.css");
+	const geometryCss = await read("src/styles/impasto-geometry.css");
+
+	assert.match(search, /const positionSearchPanel/);
+	assert.match(search, /getBoundingClientRect\(\)/);
+	assert.match(search, /--katelya-search-panel-top/);
+	assert.match(search, /--katelya-search-panel-left/);
+	assert.match(search, /window\.addEventListener\("resize", scheduleSearchPanelPosition/);
+	assert.match(search, /window\.addEventListener\("scroll", scheduleSearchPanelPosition/);
+	assert.match(search, /data-search-close/);
+	assert.match(
+		performanceCss,
+		/top:\s*var\(--katelya-search-panel-top\)\s*!important/,
+	);
+	assert.match(
+		performanceCss,
+		/left:\s*var\(--katelya-search-panel-left\)\s*!important/,
+	);
+	assert.doesNotMatch(
+		performanceCss,
+		/top:\s*calc\(var\(--katelya-gallery-header-height\)/,
+	);
+	assert.match(
+		geometryCss,
+		/#search-container[\s\S]*inline-size:\s*2\.5rem[\s\S]*flex:\s*0 0 2\.5rem/,
+	);
+});
+
 test("theme switching uses one lightweight 180ms transition path", async () => {
 	const controller = await read("src/utils/lightweight-theme.ts");
 	const optimizer = await read("src/scripts/theme-optimizer.js");
