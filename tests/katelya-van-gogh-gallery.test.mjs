@@ -36,7 +36,9 @@ test("gallery header is independent and desktop search is click driven", async (
 	assert.match(navbar, /katelya-navbar-tools/);
 	assert.doesNotMatch(navbar, /hideLinks/);
 	assert.doesNotMatch(search, /onmouseenter=/);
-	assert.match(search, /onclick=\{toggleDesktopSearch\}/);
+	assert.match(search, /onclick=\{toggleSearch\}/);
+	assert.match(search, /data-search-trigger/);
+	assert.match(search, /data-search-dialog/);
 	assert.match(layout, /katelya-header-stage/);
 	assert.doesNotMatch(layout, /id="top-row"/);
 });
