@@ -112,7 +112,7 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 	display: flex !important;
 	align-items: center !important;
 	justify-self: end !important;
-	gap: 0.08rem !important;
+	gap: 0.16rem !important;
 	min-width: 0 !important;
 	padding: 0 !important;
 	background: transparent !important;
@@ -121,6 +121,44 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 	box-shadow: none !important;
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
+	isolation: isolate;
+}
+
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools::before {
+	width: 1px;
+	height: 1.45rem;
+	margin: 0 0.24rem 0 0.1rem;
+	content: "";
+	background: linear-gradient(
+		to bottom,
+		transparent,
+		color-mix(in srgb, var(--katelya-border-bright) 60%, var(--katelya-border)),
+		transparent
+	);
+	opacity: 0.72;
+}
+
+html.katelya-art-theme #navbar.katelya-navbar-shell #search-container {
+	position: relative !important;
+	display: grid !important;
+	place-items: center !important;
+	inline-size: 2.5rem !important;
+	block-size: 2.5rem !important;
+	min-inline-size: 2.5rem !important;
+	max-inline-size: 2.5rem !important;
+	flex: 0 0 2.5rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	overflow: visible !important;
+	contain: layout style;
+}
+
+html.katelya-art-theme #search-container > astro-island {
+	display: grid !important;
+	place-items: center !important;
+	width: 100% !important;
+	height: 100% !important;
+	overflow: visible !important;
 }
 
 html.katelya-art-theme .katelya-main-shell,
@@ -241,6 +279,10 @@ html.katelya-art-theme .post-card:hover {
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
 		grid-column: 2 !important;
+	}
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools::before {
+		display: none;
 	}
 }
 
