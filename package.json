@@ -22,6 +22,7 @@
     "type-check": "tsc --noEmit",
     "test": "node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs && node --test tests/katelya-branding.test.mjs && node --test tests/katelya-layout-regressions.test.mjs && node --test tests/katelya-van-gogh-gallery.test.mjs && node --test tests/katelya-impasto-engine.test.mjs && node --test tests/katelya-light-theme-performance.test.mjs && node --test tests/katelya-native-overlay.test.mjs",
     "new-post": "node scripts/new-post.js",
+    "test:e2e": "playwright test",
     "format": "biome format --write ./src",
     "lint": "biome check --write ./src",
     "preinstall": "npx only-allow pnpm"
@@ -89,6 +90,7 @@
     "@iconify-json/material-symbols": "^1.2.86",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.91",
+    "@playwright/test": "^1.62.1",
     "@rollup/plugin-yaml": "^5.0.0",
     "@types/hast": "^3.0.5",
     "@types/markdown-it": "^14.1.2",
