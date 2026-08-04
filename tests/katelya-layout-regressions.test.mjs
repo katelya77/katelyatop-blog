@@ -38,6 +38,7 @@ test("full page uses day-night painterly artwork and clips overflow", async () =
 	assert.match(theme, /katelya-van-gogh-day\.svg/);
 	assert.match(theme, /katelya-van-gogh-night\.svg/);
 	assert.match(theme, /overflow-x:\s*clip/);
+	assert.match(theme, /background-attachment:\s*scroll\s*!important/);
 	assert.match(dayArtwork, /stroke-linecap="round"/);
 	assert.match(nightArtwork, /stroke-linecap="round"/);
 });
@@ -73,12 +74,14 @@ test("display settings close invisibly and stay inside the viewport", async () =
 	assert.doesNotMatch(animation, /scaleX\(0\.6\)/);
 });
 
-test("gallery geometry is CSS-owned after the first paint", async () => {
-	const scripts = await read("src/layouts/partials/GridScripts.astro");
+test("gallery content geometry stays in normal flow after hydration", async () => {
+	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
 
-	assert.match(scripts, /const galleryOwnsGeometry\s*=\s*document\.documentElement\.classList\.contains\("katelya-art-theme"\)/);
-	assert.match(scripts, /if \(galleryOwnsGeometry\) \{[\s\S]*?style\.removeProperty\("top"\)[\s\S]*?return;/);
-	assert.doesNotMatch(scripts, /document\.body\.offsetHeight/);
+	assert.match(theme, /\.katelya-main-shell\s*\{[\s\S]*?position:\s*static\s*!important/);
+	assert.match(theme, /\.katelya-main-shell::before\s*\{[\s\S]*?display:\s*block[\s\S]*?height:\s*var\(--katelya-article-banner-height\)/);
+	assert.match(theme, /\.katelya-main-shell\.is-home-layout::before\s*\{[\s\S]*?height:\s*var\(--katelya-home-hero-height\)/);
+	assert.match(theme, /body\.fullscreen-banner \.katelya-main-shell::before[\s\S]*?height:\s*100dvh/);
+	assert.match(theme, /body\.no-banner-mode \.katelya-main-shell::before[\s\S]*?height:\s*calc\(/);
 });
 
 test("fixed gallery header does not animate vertically on page load", async () => {
