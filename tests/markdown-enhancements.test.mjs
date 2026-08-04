@@ -150,14 +150,14 @@ describe("Markdown AST enhancements", () => {
 			children: [
 				{
 					type: "paragraph",
-					children: [{ type: "text", value: "[[markdown-extended]]" }],
+					children: [{ type: "text", value: "[[katelya-space-online]]" }],
 				},
 				{
 					type: "paragraph",
 					children: [
 						{
 							type: "text",
-							value: "See [[markdown-extended|extended syntax]].",
+							value: "阅读 [[katelya-space-online|建站记录]]。",
 						},
 					],
 				},
@@ -169,7 +169,7 @@ describe("Markdown AST enhancements", () => {
 		assert.equal(tree.children[1].children[1].type, "link");
 		assert.equal(
 			tree.children[1].children[1].children[0].value,
-			"extended syntax",
+			"建站记录",
 		);
 	});
 });
