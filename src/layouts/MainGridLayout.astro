@@ -19,11 +19,12 @@ import {
 } from "../constants/constants";
 import "../styles/katelya-van-gogh-gallery.css";
 import "../styles/katelya-van-gogh-safety.css";
+import "../styles/impasto-backdrop.css";
+import "../styles/impasto-geometry.css";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import {
 	calculateGridLayout,
 	getBannerImages,
-	getMainPanelTop,
 	getTransparencyClass,
 	shouldEnableTransparency,
 } from "../utils/grid-layout-utils";
@@ -64,12 +65,6 @@ const hasBannerCredit = siteConfig.banner.credit.enable;
 const hasBannerLink = Boolean(siteConfig.banner.credit.url);
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 const mobileNonHomeBannerClass = !isHomePage ? "mobile-hide-banner" : "";
-
-const finalMainPanelTop = getMainPanelTop(
-	siteConfig.wallpaperMode.defaultMode,
-	BANNER_HEIGHT,
-	BANNER_HEIGHT_FULLSCREEN,
-);
 
 const {
 	gridCols,
@@ -123,6 +118,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 			<Navbar />
 		</div>
 	</div>
+	<div id="overlay-root" aria-live="polite"></div>
 
 	<Banner
 		bannerImages={bannerImages}
@@ -143,7 +139,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 
 	<div
 		class:list={[
-			"katelya-main-shell absolute w-full z-30 pointer-events-none",
+			"katelya-main-shell w-full z-30 pointer-events-none",
 			{
 				"is-home-layout": isHomePage,
 				"mobile-main-no-banner": Boolean(mobileNonHomeBannerClass),
@@ -151,7 +147,6 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 			},
 			transparentClass,
 		]}
-		style={`top: ${finalMainPanelTop}`}
 	>
 		<div class="relative max-w-(--page-width) mx-auto pointer-events-auto">
 			<div
@@ -168,7 +163,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							rel="noopener"
 							aria-label="查看画境说明"
 							class:list={[
-								"group onload-animation transition-all absolute flex justify-center items-center rounded-full px-3 right-4 -top-13 bg-black/60 hover:bg-black/70 h-9",
+								"group transition-all absolute flex justify-center items-center rounded-full px-3 right-4 -top-13 bg-black/60 hover:bg-black/70 h-9",
 								{ "hover:pr-9 active:bg-black/80": hasBannerLink },
 							]}
 						>
@@ -217,7 +212,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 					id="swup-container"
 					class={`${mainContentClass} transition-main`}
 				>
-					<div id="content-wrapper" class="onload-animation transition-leaving">
+					<div id="content-wrapper" class="transition-leaving">
 						<div
 							id="page-overlay-data"
 							data-title={title || ""}
@@ -232,13 +227,13 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							class="hidden"
 						/>
 						<slot />
-						<div class="footer col-span-full onload-animation hidden lg:block">
+						<div class="footer col-span-full hidden lg:block">
 							<Footer />
 						</div>
 					</div>
 				</main>
 
-				<div class="footer col-span-full onload-animation block lg:hidden">
+				<div class="footer col-span-full block lg:hidden">
 					<Footer />
 				</div>
 			</div>
