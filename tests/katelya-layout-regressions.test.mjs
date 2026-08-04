@@ -4,11 +4,12 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readTheme = async () => {
-	const [gallery, safety] = await Promise.all([
+	const [gallery, safety, geometry] = await Promise.all([
 		read("src/styles/katelya-van-gogh-gallery.css"),
 		read("src/styles/katelya-van-gogh-safety.css"),
+		read("src/styles/impasto-geometry.css"),
 	]);
-	return `${gallery}\n${safety}`;
+	return `${gallery}\n${safety}\n${geometry}`;
 };
 
 test("legacy banner title cannot reappear over the gallery hero", async () => {
@@ -62,7 +63,7 @@ test("desktop navigation is centered and keeps a stable primary order", async ()
 	assert.match(navbar, /katelya-gallery-header/);
 	assert.match(navbar, /katelya-navbar-links/);
 	assert.doesNotMatch(navbar, /hideLinks/);
-	assert.match(theme, /grid-template-columns:\s*minmax\(12rem,\s*1fr\)\s+auto\s+minmax\(12rem,\s*1fr\)/);
+	assert.match(theme, /grid-template-columns:\s*minmax\(11\.5rem,\s*1fr\)\s+auto\s+minmax\(11\.5rem,\s*1fr\)/);
 	assert.match(theme, /\.katelya-navbar-links[\s\S]*?opacity:\s*1\s*!important/);
 });
 
@@ -81,14 +82,30 @@ test("display settings close invisibly and stay inside the viewport", async () =
 	assert.doesNotMatch(animation, /scaleX\(0\.6\)/);
 });
 
-test("gallery content geometry stays in normal flow after hydration", async () => {
-	const theme = await readTheme();
+test("gallery reserves banner height exactly once", async () => {
+	const safety = await read("src/styles/katelya-van-gogh-safety.css");
+	const geometry = await read("src/styles/impasto-geometry.css");
 
-	assert.match(theme, /\.katelya-main-shell\s*\{[\s\S]*?position:\s*static\s*!important/);
-	assert.match(theme, /\.katelya-main-shell::before\s*\{[\s\S]*?display:\s*block[\s\S]*?height:\s*var\(--katelya-article-banner-height\)/);
-	assert.match(theme, /\.katelya-main-shell\.is-home-layout::before\s*\{[\s\S]*?height:\s*var\(--katelya-home-hero-height\)/);
-	assert.match(theme, /body\.fullscreen-banner \.katelya-main-shell::before[\s\S]*?height:\s*100dvh/);
-	assert.match(theme, /body\.no-banner-mode \.katelya-main-shell::before[\s\S]*?height:\s*calc\(/);
+	assert.doesNotMatch(safety, /\.katelya-main-shell::before/);
+	assert.doesNotMatch(safety, /\.katelya-main-shell\.is-home-layout::before/);
+	assert.match(geometry, /\.katelya-main-shell\s*\{[\s\S]*?padding-top:\s*var\(--impasto-article-space\)\s*!important/);
+	assert.match(geometry, /\.katelya-main-shell\.is-home-layout\s*\{[\s\S]*?padding-top:\s*var\(--impasto-home-space\)\s*!important/);
+	assert.match(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*?padding-top:\s*100dvh\s*!important/);
+});
+
+test("navbar panel and content use one DOM grid", async () => {
+	const layout = await read("src/layouts/Layout.astro");
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	const geometry = await read("src/styles/impasto-geometry.css");
+
+	assert.doesNotMatch(layout, /mobile-navbar\.css/);
+	assert.doesNotMatch(layout, /wallpaper-navbar-transparent\.css/);
+	assert.match(navbar, /id="navbar"[\s\S]*class="katelya-gallery-header katelya-navbar-shell z-50"/);
+	assert.doesNotMatch(navbar, /<div class:list=\{\[className, "katelya-navbar-shell"\]\}>/);
+	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*\{[\s\S]*?display:\s*grid\s*!important/);
+	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-brand/);
+	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-links/);
+	assert.match(geometry, /#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-tools/);
 });
 
 test("fixed gallery header does not animate vertically on page load", async () => {
