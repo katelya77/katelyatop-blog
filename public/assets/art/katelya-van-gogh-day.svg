@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Katelya daylight iris garden</title>
+  <desc id="desc">Original programmatic blue-green and violet oil-brush landscape with a quiet central text zone.</desc>
+  <defs>
+    <linearGradient id="daySky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dbeee5"/>
+      <stop offset="0.42" stop-color="#8bbcb2"/>
+      <stop offset="0.74" stop-color="#4f8f87"/>
+      <stop offset="1" stop-color="#2e6666"/>
+    </linearGradient>
+    <radialGradient id="dayGlow" cx="56%" cy="42%" r="62%">
+      <stop offset="0" stop-color="#fff8d8" stop-opacity=".82"/>
+      <stop offset=".32" stop-color="#edf4dc" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#7aafa5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="iris" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#493675"/>
+      <stop offset=".5" stop-color="#6f55a8"/>
+      <stop offset="1" stop-color="#9a7ac5"/>
+    </linearGradient>
+    <filter id="canvas" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency=".012 .085" numOctaves="3" seed="31" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feBlend in="SourceGraphic" in2="mono" mode="soft-light"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#daySky)"/>
+  <rect width="1920" height="1080" fill="url(#dayGlow)"/>
+
+  <g fill="none" stroke-linecap="round" filter="url(#canvas)" opacity=".94">
+    <path d="M-80 260 C260 40 520 120 790 244 S1330 390 2020 70" stroke="#cde5dc" stroke-width="84"/>
+    <path d="M-60 354 C240 160 520 186 808 302 S1390 456 2000 192" stroke="#a9d2c7" stroke-width="52"/>
+    <path d="M-20 470 C330 248 570 278 824 394 S1360 526 1980 322" stroke="#6ba59c" stroke-width="74"/>
+    <path d="M30 646 C320 454 592 424 842 520 S1390 714 1908 520" stroke="#3f817c" stroke-width="108"/>
+    <path d="M-80 824 C280 624 566 628 822 726 S1344 910 2010 688" stroke="#2d6868" stroke-width="150"/>
+    <path d="M-40 978 C300 794 620 814 940 886 S1450 1030 1990 858" stroke="#1e5359" stroke-width="170"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round" opacity=".74">
+    <path d="M160 188 C274 82 410 74 542 144" stroke="#f7eed1" stroke-width="18"/>
+    <path d="M1320 170 C1450 62 1610 78 1766 164" stroke="#fff3c8" stroke-width="16"/>
+    <path d="M118 560 C220 498 326 486 432 520" stroke="#d9efe4" stroke-width="19"/>
+    <path d="M1480 562 C1600 488 1740 492 1868 566" stroke="#d4ebdf" stroke-width="22"/>
+    <path d="M96 716 C212 652 346 646 478 704" stroke="#8fc2b6" stroke-width="24"/>
+    <path d="M1392 732 C1538 644 1712 650 1878 740" stroke="#75aa9e" stroke-width="26"/>
+  </g>
+
+  <g opacity=".88">
+    <path d="M128 1080 C148 850 160 640 202 448" stroke="#173f44" stroke-width="40" fill="none" stroke-linecap="round"/>
+    <path d="M1740 1080 C1718 824 1720 632 1684 396" stroke="#244f50" stroke-width="46" fill="none" stroke-linecap="round"/>
+    <g fill="url(#iris)">
+      <path d="M118 682 C28 590 88 492 186 556 C248 456 338 548 266 646 C212 720 168 728 118 682Z"/>
+      <path d="M1650 612 C1562 518 1620 414 1716 482 C1784 384 1872 486 1794 580 C1740 646 1684 654 1650 612Z"/>
+      <path d="M226 826 C144 742 196 658 282 710 C336 626 420 712 352 796 C308 850 260 862 226 826Z"/>
+      <path d="M1536 844 C1452 754 1514 664 1604 724 C1664 634 1754 728 1680 812 C1628 870 1572 878 1536 844Z"/>
+    </g>
+    <g fill="#f4d77b">
+      <circle cx="184" cy="612" r="13"/><circle cx="1728" cy="534" r="13"/>
+      <circle cx="286" cy="770" r="11"/><circle cx="1614" cy="786" r="11"/>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#f7efd4" stroke-linecap="round" opacity=".82">
+    <path d="M1120 164 C1226 112 1302 118 1392 164" stroke-width="13"/>
+    <path d="M1268 108 C1300 44 1354 34 1406 72" stroke-width="10"/>
+    <path d="M488 178 C570 106 660 104 748 158" stroke-width="12"/>
+  </g>
+
+  <g fill="#fff5dc" opacity=".88">
+    <circle cx="1168" cy="138" r="11"/><circle cx="1252" cy="122" r="9"/><circle cx="1352" cy="118" r="12"/>
+    <circle cx="542" cy="150" r="10"/><circle cx="634" cy="126" r="8"/><circle cx="706" cy="148" r="11"/>
+  </g>
+
+  <ellipse cx="960" cy="500" rx="410" ry="250" fill="#eff6e9" opacity=".13" filter="url(#soft)"/>
+  <rect x="20" y="20" width="1880" height="1040" rx="44" fill="none" stroke="#f3e6b1" stroke-opacity=".28" stroke-width="3"/>
+</svg>
