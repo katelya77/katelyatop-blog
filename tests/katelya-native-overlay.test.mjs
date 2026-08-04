@@ -24,7 +24,7 @@ test("fullscreen content overlaps the closing edge of the hero instead of leavin
 	assert.match(runtime, /--katelya-fullscreen-content-overlap:/);
 	assert.match(
 		runtime,
-		/body\.fullscreen-banner \.katelya-main-shell[\s\S]*padding-top:\s*calc\(var\(--katelya-active-hero-height\)\s*-\s*var\(--katelya-fullscreen-content-overlap\)\)/,
+		/body\.fullscreen-banner \.katelya-main-shell[\s\S]*padding-top:\s*calc\(\s*var\(--katelya-active-hero-height\)\s*-\s*var\(--katelya-fullscreen-content-overlap\)\s*\)/,
 	);
 	assert.match(runtime, /body\.fullscreen-banner #main-grid[\s\S]*position:\s*relative/);
 });
