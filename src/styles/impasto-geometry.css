@@ -1,9 +1,9 @@
 html.katelya-art-theme {
-	--impasto-header-top: clamp(.55rem,1.2vw,.9rem);
+	--impasto-header-top: clamp(0.55rem, 1.2vw, 0.9rem);
 	--impasto-header-height: 4.15rem;
-	--impasto-home-space: max(65vh,38rem);
-	--impasto-article-space: clamp(20rem,39vh,28rem);
-	--impasto-page-gutter: clamp(.5rem,1.4vw,1.25rem);
+	--impasto-home-space: max(65vh, 38rem);
+	--impasto-article-space: clamp(20rem, 39vh, 28rem);
+	--impasto-page-gutter: clamp(0.5rem, 1.4vw, 1.25rem);
 	isolation: isolate;
 }
 
@@ -13,86 +13,150 @@ html.katelya-art-theme .katelya-header-stage {
 	left: 0 !important;
 	z-index: 90 !important;
 	width: 100% !important;
-	height: calc(var(--impasto-header-height) + var(--impasto-header-top) * 2) !important;
+	height: auto !important;
 	padding: var(--impasto-header-top) var(--impasto-page-gutter) !important;
+	background: transparent !important;
+	box-shadow: none !important;
 	transform: none !important;
+	contain: layout style;
 }
 
 html.katelya-art-theme #navbar-wrapper,
 html.katelya-art-theme #navbar-wrapper.navbar-hidden,
 html.katelya-art-theme #navbar,
+html.katelya-art-theme #navbar.navbar-hidden,
 html.katelya-art-theme #navbar.scrolled {
 	top: auto !important;
+	bottom: auto !important;
+	left: auto !important;
+	right: auto !important;
 	opacity: 1 !important;
 	visibility: visible !important;
 	transform: none !important;
 }
 
 html.katelya-art-theme #navbar-wrapper {
-	width: min(var(--page-width),calc(100vw - var(--impasto-page-gutter) * 2)) !important;
+	width: min(var(--page-width), calc(100vw - var(--impasto-page-gutter) * 2)) !important;
 	margin-inline: auto !important;
+	background: transparent !important;
+	border: 0 !important;
+	box-shadow: none !important;
 }
 
-html.katelya-art-theme .katelya-navbar-shell {
-	position: relative;
+html.katelya-art-theme #navbar.katelya-navbar-shell {
+	position: relative !important;
 	display: grid !important;
-	grid-template-columns: minmax(11.5rem,1fr) auto minmax(11.5rem,1fr) !important;
+	grid-template-columns: minmax(11.5rem, 1fr) auto minmax(11.5rem, 1fr) !important;
+	grid-template-rows: minmax(0, 1fr) !important;
 	align-items: center !important;
-	gap: .45rem !important;
+	gap: 0.45rem !important;
+	width: 100% !important;
 	height: var(--impasto-header-height) !important;
-	padding: .38rem .58rem !important;
-	border: 1px solid color-mix(in srgb,var(--katelya-border-bright) 82%,transparent) !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0.38rem 0.58rem !important;
+	overflow: visible !important;
+	box-sizing: border-box !important;
+	border: 1px solid color-mix(in srgb, var(--katelya-border-bright) 82%, transparent) !important;
 	border-radius: 1.28rem 1.05rem 1.36rem 1.08rem !important;
-	background: color-mix(in srgb,var(--katelya-surface-strong) 84%,transparent) !important;
-	box-shadow: inset 0 1px 0 rgba(255,255,255,.54),0 14px 38px rgba(24,68,65,.14) !important;
+	background: color-mix(in srgb, var(--katelya-surface-strong) 84%, transparent) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.54),
+		0 14px 38px rgba(24, 68, 65, 0.14) !important;
 	backdrop-filter: blur(14px) saturate(1.04) !important;
 	-webkit-backdrop-filter: blur(14px) saturate(1.04) !important;
 }
 
-html.katelya-art-theme.dark .katelya-navbar-shell {
-	box-shadow: inset 0 1px 0 rgba(151,204,209,.1),0 18px 48px rgba(0,8,28,.42) !important;
+html.katelya-art-theme.dark #navbar.katelya-navbar-shell {
+	box-shadow:
+		inset 0 1px 0 rgba(151, 204, 209, 0.1),
+		0 18px 48px rgba(0, 8, 28, 0.42) !important;
 }
 
-html.katelya-art-theme .katelya-gallery-header.scrolled .katelya-navbar-shell {
-	background: color-mix(in srgb,var(--katelya-surface-strong) 94%,transparent) !important;
+html.katelya-art-theme #navbar.katelya-navbar-shell.scrolled {
+	background: color-mix(in srgb, var(--katelya-surface-strong) 94%, transparent) !important;
 }
 
-html.katelya-art-theme .katelya-navbar-links {
-	position: static !important;
-	justify-self: center !important;
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand,
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links,
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
+	position: relative !important;
+	top: auto !important;
+	bottom: auto !important;
+	left: auto !important;
+	right: auto !important;
+	align-self: center !important;
+	margin: 0 !important;
 	transform: none !important;
 }
 
-html.katelya-art-theme .katelya-navbar-tools {
-	position: relative;
-	justify-self: end;
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand {
+	grid-column: 1 !important;
+	justify-self: start !important;
+	min-width: 0 !important;
+	max-width: 100% !important;
 }
 
-html.katelya-art-theme .katelya-main-shell {
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
+	grid-column: 2 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-self: center !important;
+	gap: 0.08rem !important;
+	white-space: nowrap !important;
+	opacity: 1 !important;
+}
+
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
+	grid-column: 3 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-self: end !important;
+	gap: 0.08rem !important;
+	min-width: 0 !important;
+	padding: 0 !important;
+	background: transparent !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+html.katelya-art-theme .katelya-main-shell,
+html.katelya-art-theme .katelya-main-shell:not(.is-home-layout) {
 	position: relative !important;
 	top: auto !important;
+	bottom: auto !important;
 	left: auto !important;
+	right: auto !important;
 	z-index: 30 !important;
 	width: 100% !important;
+	margin-top: 0 !important;
 	padding-top: var(--impasto-article-space) !important;
 	transform: none !important;
 }
 
 html.katelya-art-theme .katelya-main-shell.is-home-layout {
+	top: auto !important;
 	padding-top: var(--impasto-home-space) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
+	top: auto !important;
 	padding-top: 100dvh !important;
 }
 
 html.katelya-art-theme .katelya-main-shell.no-banner-layout,
 html.katelya-art-theme body.no-banner-mode .katelya-main-shell {
+	top: auto !important;
 	padding-top: calc(var(--impasto-header-height) + var(--impasto-header-top) * 2 + 1rem) !important;
 }
 
 html.katelya-art-theme #main-grid,
-html.katelya-art-theme #content-wrapper { transform: none !important; }
+html.katelya-art-theme #content-wrapper {
+	transform: none !important;
+}
 
 #overlay-root {
 	position: fixed;
@@ -101,15 +165,24 @@ html.katelya-art-theme #content-wrapper { transform: none !important; }
 	pointer-events: none;
 }
 
-#overlay-root > *,#display-setting,#nav-menu-panel,.katelya-search-panel { pointer-events: auto; }
+#overlay-root > *,
+#display-setting,
+#nav-menu-panel,
+.katelya-search-panel {
+	pointer-events: auto;
+}
 
 html.katelya-art-theme .card-base,
 html.katelya-art-theme .card-base-transparent,
 html.katelya-art-theme .post-card,
 html.katelya-art-theme .widget-component {
-	background-color: color-mix(in srgb,var(--katelya-surface-strong) 96%,transparent) !important;
-	background-image: repeating-linear-gradient(11deg,rgba(255,255,255,.035) 0 1px,transparent 1px 11px),linear-gradient(118deg,rgba(255,255,255,.1),transparent 46%) !important;
-	box-shadow: inset 0 1px 0 rgba(255,255,255,.46),0 13px 36px rgba(25,67,63,.12) !important;
+	background-color: color-mix(in srgb, var(--katelya-surface-strong) 96%, transparent) !important;
+	background-image:
+		repeating-linear-gradient(11deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 11px),
+		linear-gradient(118deg, rgba(255, 255, 255, 0.1), transparent 46%) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.46),
+		0 13px 36px rgba(25, 67, 63, 0.12) !important;
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
 }
@@ -118,44 +191,74 @@ html.katelya-art-theme.dark .card-base,
 html.katelya-art-theme.dark .card-base-transparent,
 html.katelya-art-theme.dark .post-card,
 html.katelya-art-theme.dark .widget-component {
-	background-image: repeating-linear-gradient(9deg,rgba(153,204,210,.025) 0 1px,transparent 1px 12px),linear-gradient(118deg,rgba(126,189,193,.055),transparent 48%) !important;
-	box-shadow: inset 0 1px 0 rgba(151,204,209,.08),0 16px 42px rgba(0,8,28,.32) !important;
+	background-image:
+		repeating-linear-gradient(9deg, rgba(153, 204, 210, 0.025) 0 1px, transparent 1px 12px),
+		linear-gradient(118deg, rgba(126, 189, 193, 0.055), transparent 48%) !important;
+	box-shadow:
+		inset 0 1px 0 rgba(151, 204, 209, 0.08),
+		0 16px 42px rgba(0, 8, 28, 0.32) !important;
 }
 
 html.katelya-art-theme .post-card {
-	transition: border-color 180ms ease,box-shadow 180ms ease,background-color 180ms ease !important;
+	transition:
+		border-color 180ms ease,
+		box-shadow 180ms ease,
+		background-color 180ms ease !important;
 }
+
 html.katelya-art-theme .post-card:hover {
 	transform: none !important;
-	border-color: color-mix(in srgb,var(--primary) 45%,var(--katelya-border)) !important;
+	border-color: color-mix(in srgb, var(--primary) 45%, var(--katelya-border)) !important;
 }
 
-@media (max-width:1179px) {
-	html.katelya-art-theme .katelya-navbar-shell {
-		grid-template-columns: minmax(9rem,1fr) auto minmax(9rem,1fr) !important;
-		gap: .15rem !important;
+@media (max-width: 1179px) {
+	html.katelya-art-theme #navbar.katelya-navbar-shell {
+		grid-template-columns: minmax(9rem, 1fr) auto minmax(9rem, 1fr) !important;
+		gap: 0.15rem !important;
 	}
-	html.katelya-art-theme .katelya-navbar-brand { max-width: 12rem; }
-	html.katelya-art-theme .katelya-navbar-links { gap: 0 !important; }
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand {
+		max-width: 12rem !important;
+	}
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
+		gap: 0 !important;
+	}
 }
 
-@media (max-width:979px) {
-	html.katelya-art-theme .katelya-navbar-shell { grid-template-columns: minmax(0,1fr) auto !important; }
-	html.katelya-art-theme .katelya-navbar-links { display: none !important; }
-	html.katelya-art-theme .katelya-menu-switch { display: inline-grid !important; }
-	html.katelya-art-theme .katelya-navbar-tools { grid-column: 2; }
+@media (max-width: 979px) {
+	html.katelya-art-theme #navbar.katelya-navbar-shell {
+		grid-template-columns: minmax(0, 1fr) auto !important;
+	}
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
+		display: none !important;
+	}
+
+	html.katelya-art-theme .katelya-menu-switch {
+		display: inline-grid !important;
+	}
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-tools {
+		grid-column: 2 !important;
+	}
 }
 
-@media (max-width:767px) {
+@media (max-width: 767px) {
 	html.katelya-art-theme {
 		--impasto-header-height: 3.7rem;
-		--impasto-home-space: max(34rem,72svh);
+		--impasto-home-space: max(34rem, 72svh);
 		--impasto-article-space: 18rem;
 	}
-	html.katelya-art-theme .katelya-navbar-brand span { max-width: 9.5rem; }
+
+	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand span {
+		max-width: 9.5rem;
+	}
 }
 
 @media print {
 	html.katelya-art-theme .katelya-main-shell,
-	html.katelya-art-theme .katelya-main-shell.is-home-layout { padding-top: 0 !important; }
+	html.katelya-art-theme .katelya-main-shell.is-home-layout {
+		padding-top: 0 !important;
+	}
 }

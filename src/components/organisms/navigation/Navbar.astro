@@ -12,7 +12,6 @@ import DropdownMenu from "./DropdownMenu.astro";
 import NavMenuPanel from "./NavMenuPanel.astro";
 import Search from "./Search.svelte";
 
-const className = Astro.props.class;
 const navbarTransparentMode =
 	siteConfig.banner?.navbar?.transparentMode || "semi";
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
@@ -60,63 +59,62 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		: "";
 ---
 
-<div
+<nav
 	id="navbar"
-	class="katelya-gallery-header z-50"
+	class="katelya-gallery-header katelya-navbar-shell z-50"
 	data-transparent-mode={navbarTransparentMode}
 	data-is-home={isHomePage}
+	aria-label="主导航栏"
 >
-	<div class:list={[className, "katelya-navbar-shell"]}>
-		<a href={url("/")} class="katelya-navbar-brand" aria-label="返回首页">
-			{iconSrc ? (
-				<img src={iconSrc} alt="" class="katelya-navbar-logo" loading="eager" />
-			) : (
-				<Icon name="material-symbols:palette-outline" class="text-[1.5rem]" />
-			)}
-			<span>{siteConfig.navbarTitle?.text || siteConfig.title}</span>
-		</a>
+	<a href={url("/")} class="katelya-navbar-brand" aria-label="返回首页">
+		{iconSrc ? (
+			<img src={iconSrc} alt="" class="katelya-navbar-logo" loading="eager" />
+		) : (
+			<Icon name="material-symbols:palette-outline" class="text-[1.5rem]" />
+		)}
+		<span>{siteConfig.navbarTitle?.text || siteConfig.title}</span>
+	</a>
 
-		<nav
-			id="navbar-links-container"
-			class="katelya-navbar-links"
-			aria-label="主导航"
-		>
-			{links.map((link) => <DropdownMenu link={link} />)}
-		</nav>
-
-		<div class="katelya-navbar-tools">
-			<div id="search-container" data-katelya-overlay-trigger="search">
-				<Search client:only="svelte" />
-			</div>
-			{
-				siteConfig.toc.enable && siteConfig.toc.mobileTop && (
-					<MobileTOC client:only="svelte" />
-				)
-			}
-			<button
-				aria-label="显示设置"
-				class="btn-plain scale-animation rounded-lg h-10 w-10 active:scale-90"
-				id="display-settings-switch"
-				data-katelya-overlay-trigger="settings"
-			>
-				<Icon name="material-symbols:palette-outline" class="text-[1.2rem]" />
-			</button>
-			<ThemeSwitch client:only="svelte" />
-			<button
-				aria-label="导航菜单"
-				name="Nav Menu"
-				class="btn-plain scale-animation rounded-lg w-10 h-10 active:scale-90 katelya-menu-switch"
-				id="nav-menu-switch"
-				data-katelya-overlay-trigger="menu"
-			>
-				<Icon name="material-symbols:menu-rounded" class="text-[1.25rem]" />
-			</button>
-		</div>
-
-		<NavMenuPanel links={links} />
-		<SettingsPanel client:only="svelte" />
+	<div
+		id="navbar-links-container"
+		class="katelya-navbar-links"
+		aria-label="主导航"
+	>
+		{links.map((link) => <DropdownMenu link={link} />)}
 	</div>
-</div>
+
+	<div class="katelya-navbar-tools">
+		<div id="search-container" data-katelya-overlay-trigger="search">
+			<Search client:only="svelte" />
+		</div>
+		{
+			siteConfig.toc.enable && siteConfig.toc.mobileTop && (
+				<MobileTOC client:only="svelte" />
+			)
+		}
+		<button
+			aria-label="显示设置"
+			class="btn-plain scale-animation rounded-lg h-10 w-10 active:scale-90"
+			id="display-settings-switch"
+			data-katelya-overlay-trigger="settings"
+		>
+			<Icon name="material-symbols:palette-outline" class="text-[1.2rem]" />
+		</button>
+		<ThemeSwitch client:only="svelte" />
+		<button
+			aria-label="导航菜单"
+			name="Nav Menu"
+			class="btn-plain scale-animation rounded-lg w-10 h-10 active:scale-90 katelya-menu-switch"
+			id="nav-menu-switch"
+			data-katelya-overlay-trigger="menu"
+		>
+			<Icon name="material-symbols:menu-rounded" class="text-[1.25rem]" />
+		</button>
+	</div>
+</nav>
+
+<NavMenuPanel links={links} />
+<SettingsPanel client:only="svelte" />
 
 <script>
 	type KatelyaHeaderWindow = Window & {
@@ -143,11 +141,13 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 			}
 			return panels.every(Boolean);
 		};
-		portalPanels();
+
 		const portalObserver = new MutationObserver(() => {
 			if (portalPanels()) portalObserver.disconnect();
 		});
-		if (navbar) portalObserver.observe(navbar, { childList: true, subtree: true });
+		if (!portalPanels()) {
+			portalObserver.observe(document.body, { childList: true, subtree: true });
+		}
 
 		const togglePanel = (panel: HTMLElement | null) => {
 			panel?.classList.toggle("float-panel-closed");

@@ -61,26 +61,11 @@ html.katelya-art-theme ::selection {
 	background: var(--selection-bg);
 }
 
-/*
- * The legacy wallpaper runtime still writes inline top values after hydration.
- * Keep the gallery shell in normal flow so those values cannot move the page.
- */
+/* Inline values written by the legacy wallpaper runtime cannot move this shell. */
 html.katelya-art-theme .katelya-main-shell {
-	position: static !important;
+	position: relative !important;
 	inset: auto !important;
 	width: 100%;
-}
-
-html.katelya-art-theme .katelya-main-shell::before {
-	display: block;
-	width: 100%;
-	height: var(--katelya-article-banner-height);
-	pointer-events: none;
-	content: "";
-}
-
-html.katelya-art-theme .katelya-main-shell.is-home-layout::before {
-	height: var(--katelya-home-hero-height);
 }
 
 html.katelya-art-theme body.fullscreen-banner #banner-wrapper,
@@ -88,18 +73,8 @@ html.katelya-art-theme body.fullscreen-banner .katelya-orbit-hero {
 	height: 100dvh !important;
 }
 
-html.katelya-art-theme body.fullscreen-banner .katelya-main-shell::before {
-	height: 100dvh;
-}
-
 html.katelya-art-theme body.no-banner-mode .katelya-orbit-hero {
 	display: none !important;
-}
-
-html.katelya-art-theme body.no-banner-mode .katelya-main-shell::before {
-	height: calc(
-		var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 1rem
-	);
 }
 
 html.katelya-art-theme #main-grid {
