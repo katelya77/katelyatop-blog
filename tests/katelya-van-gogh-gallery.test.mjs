@@ -49,7 +49,7 @@ test("post cards use one contained entry affordance", async () => {
 });
 
 test("day night design tokens style shared components without overflow", async () => {
-	const theme = await read("src/styles/katelya-impressionist.css");
+	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
 	assert.match(theme, /--katelya-day-canvas:/);
 	assert.match(theme, /--katelya-night-canvas:/);
 	assert.match(theme, /--katelya-gallery-header-height:/);
