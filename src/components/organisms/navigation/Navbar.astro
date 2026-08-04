@@ -84,14 +84,6 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 	</div>
 
 	<div class="katelya-navbar-tools">
-		<div id="search-container" data-katelya-overlay-trigger="search">
-			<Search client:only="svelte" />
-		</div>
-		{
-			siteConfig.toc.enable && siteConfig.toc.mobileTop && (
-				<MobileTOC client:only="svelte" />
-			)
-		}
 		<button
 			aria-label="显示设置"
 			class="btn-plain scale-animation rounded-lg h-10 w-10 active:scale-90"
@@ -101,6 +93,14 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 			<Icon name="material-symbols:palette-outline" class="text-[1.2rem]" />
 		</button>
 		<ThemeSwitch client:only="svelte" />
+		<div id="search-container" data-katelya-overlay-trigger="search">
+			<Search client:only="svelte" />
+		</div>
+		{
+			siteConfig.toc.enable && siteConfig.toc.mobileTop && (
+				<MobileTOC client:only="svelte" />
+			)
+		}
 		<button
 			aria-label="导航菜单"
 			name="Nav Menu"
@@ -120,6 +120,8 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 	type KatelyaHeaderWindow = Window & {
 		__katelyaHeaderCleanup?: () => void;
 	};
+
+	type OverlayId = "search" | "settings" | "menu";
 
 	function initKatelyaGalleryHeader() {
 		const katelyaWindow = window as KatelyaHeaderWindow;
@@ -141,7 +143,6 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 			}
 			return panels.every(Boolean);
 		};
-
 		const portalObserver = new MutationObserver(() => {
 			if (portalPanels()) portalObserver.disconnect();
 		});
@@ -149,11 +150,32 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 			portalObserver.observe(document.body, { childList: true, subtree: true });
 		}
 
+		const closePanel = (panel: HTMLElement | null) => {
+			panel?.classList.add("float-panel-closed");
+		};
 		const togglePanel = (panel: HTMLElement | null) => {
 			panel?.classList.toggle("float-panel-closed");
 		};
-		const onSettingsClick = () => togglePanel(getSettingsPanel());
-		const onMenuClick = () => togglePanel(getMenuPanel());
+		const announceOverlay = (id: OverlayId) => {
+			document.dispatchEvent(
+				new CustomEvent("katelya:overlay-open", { detail: { id } }),
+			);
+		};
+		const onSettingsClick = () => {
+			const panel = getSettingsPanel();
+			if (panel?.classList.contains("float-panel-closed")) announceOverlay("settings");
+			togglePanel(panel);
+		};
+		const onMenuClick = () => {
+			const panel = getMenuPanel();
+			if (panel?.classList.contains("float-panel-closed")) announceOverlay("menu");
+			togglePanel(panel);
+		};
+		const onOverlayOpen = (event: Event) => {
+			const overlayEvent = event as CustomEvent<{ id?: OverlayId }>;
+			if (overlayEvent.detail?.id !== "settings") closePanel(getSettingsPanel());
+			if (overlayEvent.detail?.id !== "menu") closePanel(getMenuPanel());
+		};
 		const onDocumentClick = (event: MouseEvent) => {
 			const target = event.target;
 			if (!(target instanceof Node)) return;
@@ -166,7 +188,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 				!settingsPanel.contains(target) &&
 				!settingsButton.contains(target)
 			) {
-				settingsPanel.classList.add("float-panel-closed");
+				closePanel(settingsPanel);
 			}
 			if (
 				menuPanel &&
@@ -175,7 +197,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 				!menuPanel.contains(target) &&
 				!menuButton.contains(target)
 			) {
-				menuPanel.classList.add("float-panel-closed");
+				closePanel(menuPanel);
 			}
 		};
 
@@ -194,6 +216,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 
 		settingsButton?.addEventListener("click", onSettingsClick);
 		menuButton?.addEventListener("click", onMenuClick);
+		document.addEventListener("katelya:overlay-open", onOverlayOpen);
 		document.addEventListener("click", onDocumentClick);
 		window.addEventListener("scroll", onScroll, { passive: true });
 		updateScrollState();
@@ -202,6 +225,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 			portalObserver.disconnect();
 			settingsButton?.removeEventListener("click", onSettingsClick);
 			menuButton?.removeEventListener("click", onMenuClick);
+			document.removeEventListener("katelya:overlay-open", onOverlayOpen);
 			document.removeEventListener("click", onDocumentClick);
 			window.removeEventListener("scroll", onScroll);
 		};
