@@ -34,10 +34,23 @@ const visibleTrigger = (): HTMLElement | null => {
 	return triggers.find((trigger) => trigger.getClientRects().length > 0) ?? triggers[0] ?? null;
 };
 
+const clearSearchPanelGeometry = (): void => {
+	const target = panel();
+	if (!target) return;
+	for (const property of [
+		"--katelya-search-panel-top",
+		"--katelya-search-panel-left",
+		"--katelya-search-panel-width",
+		"--katelya-search-panel-max-height",
+	]) {
+		target.style.removeProperty(property);
+	}
+};
+
 const positionSearchPanel = (): void => {
 	const target = panel();
 	const trigger = visibleTrigger();
-	if (!target || !trigger) return;
+	if (!target || !trigger || !isOpen) return;
 
 	const triggerRect = trigger.getBoundingClientRect();
 	const viewportWidth = document.documentElement.clientWidth;
@@ -78,10 +91,12 @@ const scheduleSearchPanelPosition = (): void => {
 const syncPanel = (): void => {
 	const target = panel();
 	if (!target) return;
-	if (isOpen) positionSearchPanel();
+	target.hidden = !isOpen;
 	target.classList.toggle("float-panel-closed", !isOpen);
 	target.classList.toggle("is-open", isOpen);
 	target.setAttribute("aria-hidden", isOpen ? "false" : "true");
+	if (isOpen) positionSearchPanel();
+	else clearSearchPanelGeometry();
 };
 
 const ensurePagefind = (): void => {
@@ -89,6 +104,9 @@ const ensurePagefind = (): void => {
 };
 
 const openSearch = (): void => {
+	document.dispatchEvent(
+		new CustomEvent("katelya:overlay-open", { detail: { id: "search" } }),
+	);
 	isOpen = true;
 	syncPanel();
 	ensurePagefind();
@@ -100,6 +118,10 @@ const openSearch = (): void => {
 
 const closeSearch = (clear = false, restoreFocus = false): void => {
 	isOpen = false;
+	if (panelPositionFrame) {
+		cancelAnimationFrame(panelPositionFrame);
+		panelPositionFrame = 0;
+	}
 	if (clear) {
 		keyword = "";
 		result = [];
@@ -167,6 +189,10 @@ onMount(() => {
 		}
 	};
 	const onPageView = () => closeSearch(true);
+	const onOverlayOpen = (event: Event) => {
+		const overlayEvent = event as CustomEvent<{ id?: string }>;
+		if (overlayEvent.detail?.id !== "search" && isOpen) closeSearch();
+	};
 
 	if (import.meta.env.DEV) initializeSearch();
 	else {
@@ -180,6 +206,7 @@ onMount(() => {
 	document.addEventListener("pointerdown", onOutsidePointer);
 	document.addEventListener("keydown", onDocumentKeydown);
 	document.addEventListener("swup:page:view", onPageView);
+	document.addEventListener("katelya:overlay-open", onOverlayOpen);
 	window.addEventListener("resize", scheduleSearchPanelPosition, { passive: true });
 	window.addEventListener("scroll", scheduleSearchPanelPosition, { passive: true });
 	syncPanel();
@@ -190,6 +217,7 @@ onMount(() => {
 		document.removeEventListener("pointerdown", onOutsidePointer);
 		document.removeEventListener("keydown", onDocumentKeydown);
 		document.removeEventListener("swup:page:view", onPageView);
+		document.removeEventListener("katelya:overlay-open", onOverlayOpen);
 		window.removeEventListener("resize", scheduleSearchPanelPosition);
 		window.removeEventListener("scroll", scheduleSearchPanelPosition);
 	};
@@ -209,7 +237,12 @@ $effect(() => {
 onDestroy(() => {
 	clearTimeout(debounceTimer);
 	if (panelPositionFrame) cancelAnimationFrame(panelPositionFrame);
-	panel()?.classList.add("float-panel-closed");
+	clearSearchPanelGeometry();
+	const target = panel();
+	if (target) {
+		target.hidden = true;
+		target.classList.add("float-panel-closed");
+	}
 });
 </script>
 
@@ -249,7 +282,8 @@ onDestroy(() => {
 	data-search-dialog
 	role="dialog"
 	aria-label="站内搜索"
-	aria-hidden="true"
+	aria-hidden={isOpen ? "false" : "true"}
+	hidden={!isOpen}
 	class="float-panel float-panel-closed katelya-search-panel katelya-search-desktop-panel search-panel"
 >
 	<div class="katelya-search-panel-header">
