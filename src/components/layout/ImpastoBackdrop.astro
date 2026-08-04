@@ -1,0 +1,14 @@
+---
+---
+
+<div class="impasto-backdrop" aria-hidden="true">
+	<canvas data-impasto-canvas></canvas>
+	<div class="impasto-static-fallback"></div>
+</div>
+
+<script>
+	import { initImpastoRenderer } from "../../scripts/impasto-renderer";
+
+	initImpastoRenderer();
+	document.addEventListener("astro:page-load", initImpastoRenderer);
+</script>

@@ -85,7 +85,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		</nav>
 
 		<div class="katelya-navbar-tools">
-			<div id="search-container">
+			<div id="search-container" data-katelya-overlay-trigger="search">
 				<Search client:only="svelte" />
 			</div>
 			{
@@ -97,6 +97,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 				aria-label="显示设置"
 				class="btn-plain scale-animation rounded-lg h-10 w-10 active:scale-90"
 				id="display-settings-switch"
+				data-katelya-overlay-trigger="settings"
 			>
 				<Icon name="material-symbols:palette-outline" class="text-[1.2rem]" />
 			</button>
@@ -106,6 +107,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 				name="Nav Menu"
 				class="btn-plain scale-animation rounded-lg w-10 h-10 active:scale-90 katelya-menu-switch"
 				id="nav-menu-switch"
+				data-katelya-overlay-trigger="menu"
 			>
 				<Icon name="material-symbols:menu-rounded" class="text-[1.25rem]" />
 			</button>
@@ -123,20 +125,33 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 
 	function initKatelyaGalleryHeader() {
 		const katelyaWindow = window as KatelyaHeaderWindow;
-		if (katelyaWindow.__katelyaHeaderCleanup) {
-			katelyaWindow.__katelyaHeaderCleanup();
-		}
+		katelyaWindow.__katelyaHeaderCleanup?.();
 
 		const navbar = document.getElementById("navbar");
 		const settingsButton = document.getElementById("display-settings-switch");
 		const menuButton = document.getElementById("nav-menu-switch");
 		const getSettingsPanel = () => document.getElementById("display-setting");
 		const getMenuPanel = () => document.getElementById("nav-menu-panel");
+		const getSearchPanel = () => document.getElementById("search-panel");
+		const overlayRoot = document.getElementById("overlay-root");
+
+		const portalPanels = () => {
+			if (!overlayRoot) return false;
+			const panels = [getSettingsPanel(), getMenuPanel(), getSearchPanel()];
+			for (const panel of panels) {
+				if (panel && panel.parentElement !== overlayRoot) overlayRoot.append(panel);
+			}
+			return panels.every(Boolean);
+		};
+		portalPanels();
+		const portalObserver = new MutationObserver(() => {
+			if (portalPanels()) portalObserver.disconnect();
+		});
+		if (navbar) portalObserver.observe(navbar, { childList: true, subtree: true });
 
 		const togglePanel = (panel: HTMLElement | null) => {
 			panel?.classList.toggle("float-panel-closed");
 		};
-
 		const onSettingsClick = () => togglePanel(getSettingsPanel());
 		const onMenuClick = () => togglePanel(getMenuPanel());
 		const onDocumentClick = (event: MouseEvent) => {
@@ -184,6 +199,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		updateScrollState();
 
 		katelyaWindow.__katelyaHeaderCleanup = () => {
+			portalObserver.disconnect();
 			settingsButton?.removeEventListener("click", onSettingsClick);
 			menuButton?.removeEventListener("click", onMenuClick);
 			document.removeEventListener("click", onDocumentClick);
