@@ -29,11 +29,15 @@ test("Katelya profile links are present", async () => {
 });
 
 test("impressionist hero and accessibility fallbacks exist", async () => {
-	const banner = await read("src/components/layout/Banner.astro");
+	const gridLayout = await read("src/layouts/MainGridLayout.astro");
+	const layout = await read("src/layouts/Layout.astro");
 	const theme = await read("src/styles/katelya-impressionist.css");
 	const artwork = await read("public/assets/art/katelya-impression.svg");
 
-	assert.match(banner, /KatelyaOrbitHero/);
+	assert.match(gridLayout, /KatelyaOrbitHero/);
+	assert.match(gridLayout, /showTextOverlay=\{false\}/);
+	assert.match(layout, /katelya-impressionist\.css/);
+	assert.match(layout, /katelya-art-theme/);
 	assert.match(theme, /prefers-reduced-motion:\s*reduce/);
 	assert.match(theme, /max-width:\s*767px/);
 	assert.match(artwork, /<filter/);
