@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Katelya 星夜柏树印章</title>
+  <desc id="desc">由柏树竖向笔触、旋涡星轨、鸢尾紫与矿物金构成的抽象梵高式品牌徽章，负形中隐藏字母 K。</desc>
+  <defs>
+    <linearGradient id="seal-sky" x1="34" y1="22" x2="220" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#75c8bd"/>
+      <stop offset="0.34" stop-color="#315f91"/>
+      <stop offset="0.7" stop-color="#463b83"/>
+      <stop offset="1" stop-color="#171f49"/>
+    </linearGradient>
+    <linearGradient id="cypress-paint" x1="70" y1="214" x2="116" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a343c"/>
+      <stop offset="0.48" stop-color="#123f55"/>
+      <stop offset="1" stop-color="#081b3b"/>
+    </linearGradient>
+    <linearGradient id="iris-track" x1="94" y1="154" x2="222" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#765cb4"/>
+      <stop offset="0.52" stop-color="#9a76cf"/>
+      <stop offset="1" stop-color="#63c6c1"/>
+    </linearGradient>
+    <linearGradient id="mineral-gold" x1="80" y1="48" x2="210" y2="182" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff1a8"/>
+      <stop offset="0.45" stop-color="#e5c45c"/>
+      <stop offset="1" stop-color="#a8782e"/>
+    </linearGradient>
+    <mask id="k-negative" maskUnits="userSpaceOnUse" x="16" y="16" width="224" height="224">
+      <rect x="16" y="16" width="224" height="224" fill="white"/>
+      <path d="M105 62C101 96 101 135 104 193" fill="none" stroke="black" stroke-width="15" stroke-linecap="round"/>
+      <path d="M108 132C133 111 152 91 172 66" fill="none" stroke="black" stroke-width="13" stroke-linecap="round"/>
+      <path d="M109 134C137 149 158 169 181 194" fill="none" stroke="black" stroke-width="13" stroke-linecap="round"/>
+    </mask>
+    <clipPath id="seal-clip">
+      <path d="M128 13C178 11 221 45 238 92C254 139 235 194 193 224C151 253 91 247 49 215C7 184 1 126 19 80C38 35 78 15 128 13Z"/>
+    </clipPath>
+  </defs>
+
+  <path d="M128 13C178 11 221 45 238 92C254 139 235 194 193 224C151 253 91 247 49 215C7 184 1 126 19 80C38 35 78 15 128 13Z" fill="#f5efc8" fill-opacity="0.92"/>
+  <path d="M128 19C175 17 214 48 230 93C246 137 227 187 188 215C149 242 95 237 56 207C18 178 13 127 30 84C47 43 83 21 128 19Z" fill="url(#seal-sky)" mask="url(#k-negative)"/>
+
+  <g clip-path="url(#seal-clip)">
+    <path data-motif="cypress" d="M82 222C75 198 77 179 80 162C72 151 74 137 82 126C74 113 78 96 88 86C83 70 90 51 101 39C109 29 116 21 121 17C122 31 121 45 126 58C135 82 126 104 117 121C126 143 120 169 111 190C106 203 103 216 101 231Z" fill="url(#cypress-paint)"/>
+    <path d="M91 211C88 185 91 162 99 143C92 127 96 108 108 94C105 80 109 62 118 50" fill="none" stroke="#2b7b79" stroke-width="8" stroke-linecap="round" opacity="0.75"/>
+    <path d="M75 205C66 178 68 154 76 135" fill="none" stroke="#89c9ad" stroke-width="4" stroke-linecap="round" opacity="0.46"/>
+
+    <path data-motif="star-track" d="M81 113C108 78 155 53 199 61C222 65 231 82 220 98C207 116 174 113 163 98C153 84 170 72 186 78C201 84 197 97 185 103" fill="none" stroke="url(#iris-track)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <path data-motif="star-track" d="M87 147C119 142 152 151 180 172C199 186 214 207 219 227" fill="none" stroke="#64c6be" stroke-width="11" stroke-linecap="round" opacity="0.86"/>
+    <path d="M92 148C123 150 150 164 172 185" fill="none" stroke="#e8d06b" stroke-width="3.5" stroke-linecap="round" opacity="0.92"/>
+    <path d="M41 104C60 73 88 51 120 37" fill="none" stroke="#9b83d1" stroke-width="6" stroke-linecap="round" opacity="0.78"/>
+    <path d="M39 174C59 201 89 219 121 225" fill="none" stroke="#67bcb6" stroke-width="5" stroke-linecap="round" opacity="0.64"/>
+
+    <g fill="url(#mineral-gold)">
+      <circle cx="197" cy="58" r="9"/>
+      <circle cx="223" cy="126" r="5.5"/>
+      <circle cx="159" cy="37" r="4.5"/>
+      <circle cx="52" cy="77" r="4"/>
+      <circle cx="189" cy="207" r="4"/>
+    </g>
+    <g fill="none" stroke="#fff3a8" stroke-linecap="round">
+      <path d="M197 41V50M197 66V75M180 58H188M206 58H215" stroke-width="3"/>
+      <path d="M223 115V120M223 132V137M212 126H217M229 126H234" stroke-width="2.2"/>
+    </g>
+  </g>
+
+  <path d="M128 13C178 11 221 45 238 92C254 139 235 194 193 224C151 253 91 247 49 215C7 184 1 126 19 80C38 35 78 15 128 13Z" fill="none" stroke="#f1d976" stroke-width="5" stroke-linecap="round" stroke-dasharray="104 14 62 11"/>
+  <path d="M126 24C170 22 207 51 221 94C234 134 218 178 184 204" fill="none" stroke="#d5eff0" stroke-width="2.5" stroke-linecap="round" opacity="0.66"/>
+</svg>
