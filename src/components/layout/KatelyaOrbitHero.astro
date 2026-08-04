@@ -190,8 +190,6 @@ const orbitItems = [
 			queueTiltRender();
 		}
 
-		var observer = new MutationObserver(queueHomeStateSync);
-		observer.observe(document.body, { childList: true, subtree: true });
 		document.addEventListener("swup:page:view", queueHomeStateSync);
 		window.addEventListener("popstate", queueHomeStateSync);
 		queueHomeStateSync();
@@ -207,7 +205,6 @@ const orbitItems = [
 		window.__katelyaOrbitCleanup = function () {
 			if (animationFrame) cancelAnimationFrame(animationFrame);
 			if (syncFrame) cancelAnimationFrame(syncFrame);
-			observer.disconnect();
 			document.removeEventListener("swup:page:view", queueHomeStateSync);
 			window.removeEventListener("popstate", queueHomeStateSync);
 			hero.removeEventListener("pointermove", onPointerMove);

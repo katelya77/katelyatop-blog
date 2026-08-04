@@ -3,6 +3,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
+const readTheme = async () => {
+	const [gallery, safety] = await Promise.all([
+		read("src/styles/katelya-van-gogh-gallery.css"),
+		read("src/styles/katelya-van-gogh-safety.css"),
+	]);
+	return `${gallery}\n${safety}`;
+};
 
 test("legacy banner title cannot reappear over the gallery hero", async () => {
 	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
@@ -16,7 +23,7 @@ test("legacy banner title cannot reappear over the gallery hero", async () => {
 test("hero follows route state and uses shared gallery geometry", async () => {
 	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
 	const grid = await read("src/layouts/MainGridLayout.astro");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 
 	assert.match(hero, /active\??:\s*boolean/);
 	assert.match(hero, /is-home-active/);
@@ -31,24 +38,22 @@ test("hero follows route state and uses shared gallery geometry", async () => {
 });
 
 test("full page uses day-night painterly artwork and clips overflow", async () => {
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 	const dayArtwork = await read("public/assets/art/katelya-van-gogh-day.svg");
 	const nightArtwork = await read("public/assets/art/katelya-van-gogh-night.svg");
 
 	assert.match(theme, /katelya-van-gogh-day\.svg/);
 	assert.match(theme, /katelya-van-gogh-night\.svg/);
 	assert.match(theme, /overflow-x:\s*clip/);
-	assert.match(theme, /background-attachment:\s*fixed/);
-	assert.match(dayArtwork, /feTurbulence/);
+	assert.match(theme, /background-attachment:\s*scroll\s*!important/);
 	assert.match(dayArtwork, /stroke-linecap="round"/);
-	assert.match(nightArtwork, /feTurbulence/);
 	assert.match(nightArtwork, /stroke-linecap="round"/);
 });
 
 test("desktop navigation is centered and keeps a stable primary order", async () => {
 	const navConfig = await read("src/config/navBarConfig.ts");
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 
 	assert.match(navConfig, /LinkPreset\.Home[\s\S]*LinkPreset\.Archive/);
 	assert.match(navConfig, /name:\s*"项目"/);
@@ -63,7 +68,7 @@ test("desktop navigation is centered and keeps a stable primary order", async ()
 
 test("display settings close invisibly and stay inside the viewport", async () => {
 	const config = await read("src/config/siteConfig.ts");
-	const theme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const theme = await readTheme();
 	const animation = await read("src/styles/panel-animations.css");
 
 	assert.match(config, /themeColor:\s*\{[\s\S]*?fixed:\s*true/);
@@ -74,4 +79,41 @@ test("display settings close invisibly and stay inside the viewport", async () =
 	assert.match(animation, /\.float-panel-closed[\s\S]*opacity:\s*0/);
 	assert.match(animation, /\.float-panel-closed[\s\S]*visibility:\s*hidden/);
 	assert.doesNotMatch(animation, /scaleX\(0\.6\)/);
+});
+
+test("gallery content geometry stays in normal flow after hydration", async () => {
+	const theme = await readTheme();
+
+	assert.match(theme, /\.katelya-main-shell\s*\{[\s\S]*?position:\s*static\s*!important/);
+	assert.match(theme, /\.katelya-main-shell::before\s*\{[\s\S]*?display:\s*block[\s\S]*?height:\s*var\(--katelya-article-banner-height\)/);
+	assert.match(theme, /\.katelya-main-shell\.is-home-layout::before\s*\{[\s\S]*?height:\s*var\(--katelya-home-hero-height\)/);
+	assert.match(theme, /body\.fullscreen-banner \.katelya-main-shell::before[\s\S]*?height:\s*100dvh/);
+	assert.match(theme, /body\.no-banner-mode \.katelya-main-shell::before[\s\S]*?height:\s*calc\(/);
+});
+
+test("fixed gallery header does not animate vertically on page load", async () => {
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+	assert.doesNotMatch(navbar, /katelya-gallery-header z-50 onload-animation/);
+});
+
+test("settings button resolves the hydrated panel when clicked", async () => {
+	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
+
+	assert.match(navbar, /const getSettingsPanel = \(\) => document\.getElementById\("display-setting"\)/);
+	assert.match(navbar, /const onSettingsClick = \(\) => togglePanel\(getSettingsPanel\(\)\)/);
+	assert.doesNotMatch(navbar, /const settingsPanel = document\.getElementById\("display-setting"\)/);
+});
+
+test("hero route sync avoids observing every DOM mutation", async () => {
+	const hero = await read("src/components/layout/KatelyaOrbitHero.astro");
+	assert.doesNotMatch(hero, /new MutationObserver/);
+	assert.match(hero, /document\.addEventListener\("swup:page:view", queueHomeStateSync\)/);
+});
+
+test("only the current gallery theme stylesheet is loaded", async () => {
+	const layout = await read("src/layouts/Layout.astro");
+	const grid = await read("src/layouts/MainGridLayout.astro");
+
+	assert.doesNotMatch(layout, /katelya-impressionist\.css/);
+	assert.match(grid, /katelya-van-gogh-gallery\.css/);
 });

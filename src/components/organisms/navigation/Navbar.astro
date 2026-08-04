@@ -62,7 +62,7 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 
 <div
 	id="navbar"
-	class="katelya-gallery-header z-50 onload-animation"
+	class="katelya-gallery-header z-50"
 	data-transparent-mode={navbarTransparentMode}
 	data-is-home={isHomePage}
 >
@@ -130,18 +130,20 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		const navbar = document.getElementById("navbar");
 		const settingsButton = document.getElementById("display-settings-switch");
 		const menuButton = document.getElementById("nav-menu-switch");
-		const settingsPanel = document.getElementById("display-setting");
-		const menuPanel = document.getElementById("nav-menu-panel");
+		const getSettingsPanel = () => document.getElementById("display-setting");
+		const getMenuPanel = () => document.getElementById("nav-menu-panel");
 
 		const togglePanel = (panel: HTMLElement | null) => {
 			panel?.classList.toggle("float-panel-closed");
 		};
 
-		const onSettingsClick = () => togglePanel(settingsPanel);
-		const onMenuClick = () => togglePanel(menuPanel);
+		const onSettingsClick = () => togglePanel(getSettingsPanel());
+		const onMenuClick = () => togglePanel(getMenuPanel());
 		const onDocumentClick = (event: MouseEvent) => {
 			const target = event.target;
 			if (!(target instanceof Node)) return;
+			const settingsPanel = getSettingsPanel();
+			const menuPanel = getMenuPanel();
 			if (
 				settingsPanel &&
 				settingsButton &&
