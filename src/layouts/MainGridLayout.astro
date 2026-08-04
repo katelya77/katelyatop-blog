@@ -17,6 +17,8 @@ import {
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_FULLSCREEN,
 } from "../constants/constants";
+import "../styles/katelya-van-gogh-gallery.css";
+import "../styles/katelya-van-gogh-safety.css";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import {
 	calculateGridLayout,
@@ -44,7 +46,6 @@ interface Props {
 }
 
 const bannerImages = await getBannerImages(siteConfig);
-
 const {
 	title,
 	banner,
@@ -58,9 +59,9 @@ const {
 	category,
 	wordCount,
 } = Astro.props;
-const hasBannerCredit = siteConfig.banner.credit.enable;
-const hasBannerLink = !!siteConfig.banner.credit.url;
 
+const hasBannerCredit = siteConfig.banner.credit.enable;
+const hasBannerLink = Boolean(siteConfig.banner.credit.url);
 const isHomePage = Astro.url.pathname === "/" || Astro.url.pathname === "";
 const mobileNonHomeBannerClass = !isHomePage ? "mobile-hide-banner" : "";
 
@@ -79,19 +80,14 @@ const {
 	mobileShowSidebar,
 	tabletShowSidebar,
 	desktopShowSidebar,
-} = calculateGridLayout({
-	siteConfig,
-	widgetManager,
-});
+} = calculateGridLayout({ siteConfig, widgetManager });
 
 const { hasRightSidebarComponents, hasMobileDrawerComponents } =
 	sidebarPresence;
-
 const shouldEnable = shouldEnableTransparency(
 	siteConfig.wallpaperMode.defaultMode,
 );
 const transparentClass = getTransparencyClass(shouldEnable);
-
 const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 ---
 
@@ -108,7 +104,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 		navbarTransparentMode={siteConfig.banner?.navbar?.transparentMode ||
 			"semi"}
 		defaultWallpaperMode={siteConfig.wallpaperMode.defaultMode}
-		defaultPostListLayout={siteConfig.postListLayout?.defaultMode || "list"}
+		defaultPostListLayout={defaultPostListLayout}
 		BANNER_HEIGHT={BANNER_HEIGHT}
 		BANNER_HEIGHT_FULLSCREEN={BANNER_HEIGHT_FULLSCREEN}
 		pageScaling={siteConfig.pageScaling}
@@ -120,17 +116,10 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 
 	<FullscreenWallpaper config={fullscreenWallpaperConfig} />
 	<IconifyLoader />
-
 	<slot slot="head" name="head" />
-	<div
-		id="top-row"
-		class="z-50 pointer-events-none relative transition-all duration-700 max-w-(--page-width) px-0 md:px-4 mx-auto"
-		class:list={[""]}
-	>
-		<div
-			id="navbar-wrapper"
-			class="pointer-events-auto sticky top-0 transition-all"
-		>
+
+	<div id="katelya-header-stage" class="katelya-header-stage pointer-events-none">
+		<div id="navbar-wrapper" class="pointer-events-auto">
 			<Navbar />
 		</div>
 	</div>
@@ -142,17 +131,26 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 	/>
 
 	{
-		isHomePage && siteConfig.banner.homeText?.enable && (
+		siteConfig.banner.homeText?.enable && (
 			<KatelyaOrbitHero
 				title={siteConfig.banner.homeText.title}
 				subtitle={siteConfig.banner.homeText.subtitle}
 				typewriterConfig={siteConfig.banner.homeText.typewriter}
+				active={isHomePage}
 			/>
 		)
 	}
 
 	<div
-		class={`absolute w-full z-30 pointer-events-none ${mobileNonHomeBannerClass ? "mobile-main-no-banner" : ""} ${siteConfig.wallpaperMode.defaultMode === "none" ? "no-banner-layout" : ""} ${transparentClass}`}
+		class:list={[
+			"katelya-main-shell absolute w-full z-30 pointer-events-none",
+			{
+				"is-home-layout": isHomePage,
+				"mobile-main-no-banner": Boolean(mobileNonHomeBannerClass),
+				"no-banner-layout": siteConfig.wallpaperMode.defaultMode === "none",
+			},
+			transparentClass,
+		]}
 		style={`top: ${finalMainPanelTop}`}
 	>
 		<div class="relative max-w-(--page-width) mx-auto pointer-events-auto">
@@ -168,14 +166,10 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							id="banner-credit"
 							target="_blank"
 							rel="noopener"
-							aria-label="Visit image source"
+							aria-label="查看画境说明"
 							class:list={[
-								"group onload-animation transition-all absolute flex justify-center items-center rounded-full " +
-									"px-3 right-4 -top-13 bg-black/60 hover:bg-black/70 h-9",
-								{
-									"hover:pr-9 active:bg-black/80":
-										hasBannerLink,
-								},
+								"group onload-animation transition-all absolute flex justify-center items-center rounded-full px-3 right-4 -top-13 bg-black/60 hover:bg-black/70 h-9",
+								{ "hover:pr-9 active:bg-black/80": hasBannerLink },
 							]}
 						>
 							<Icon
@@ -188,10 +182,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							<Icon
 								class:list={[
 									"transition absolute text-[oklch(0.75_0.14_var(--hue))] right-4 text-[0.75rem] opacity-0",
-									{
-										"group-hover:opacity-100":
-											hasBannerLink,
-									},
+									{ "group-hover:opacity-100": hasBannerLink },
 								]}
 								name="fa7-solid:arrow-up-right-from-square"
 							/>
@@ -226,10 +217,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 					id="swup-container"
 					class={`${mainContentClass} transition-main`}
 				>
-					<div
-						id="content-wrapper"
-						class="onload-animation transition-leaving"
-					>
+					<div id="content-wrapper" class="onload-animation transition-leaving">
 						<div
 							id="page-overlay-data"
 							data-title={title || ""}
@@ -242,20 +230,15 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							data-is-home={isHomePage ? "true" : "false"}
 							data-wallpaper-mode={siteConfig.wallpaperMode.defaultMode}
 							class="hidden"
-						>
-						</div>
+						/>
 						<slot />
-						<div
-							class="footer col-span-full onload-animation hidden lg:block"
-						>
+						<div class="footer col-span-full onload-animation hidden lg:block">
 							<Footer />
 						</div>
 					</div>
 				</main>
 
-				<div
-					class="footer col-span-full onload-animation block lg:hidden"
-				>
+				<div class="footer col-span-full onload-animation block lg:hidden">
 					<Footer />
 				</div>
 			</div>
@@ -282,12 +265,10 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 					<div
 						id="toc-wrapper"
 						class:list={[
-							"hidden lg:block transition absolute top-0 w-(--toc-width) items-center",
-							"-right-(--toc-width)",
+							"hidden lg:block transition absolute top-0 w-(--toc-width) items-center -right-(--toc-width)",
 							{
 								"toc-hide":
-									siteConfig.wallpaperMode.defaultMode ===
-									"banner",
+									siteConfig.wallpaperMode.defaultMode === "banner",
 							},
 						]}
 					>
@@ -314,8 +295,3 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 		)
 	}
 </Layout>
-
-<!--
-  Banner 和网格布局样式已提取到 src/styles/banner.css
-  该文件通过 src/styles/main.css 导入
--->

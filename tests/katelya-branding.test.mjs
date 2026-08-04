@@ -15,9 +15,13 @@ const userFacingFiles = [
 
 test("Katelya branding and canonical domain are configured", async () => {
 	const siteConfig = await read("src/config/siteConfig.ts");
+	const wallpaper = await read("src/config/backgroundWallpaper.ts");
 	assert.match(siteConfig, /Katelya · 思囿随笔/);
 	assert.match(siteConfig, /https:\/\/blog\.katelya\.top\//);
-	assert.match(siteConfig, /katelya-impression\.svg/);
+	assert.match(siteConfig, /katelya-van-gogh-day\.svg/);
+	assert.match(siteConfig, /katelya-van-gogh-night\.svg/);
+	assert.match(wallpaper, /katelya-van-gogh-day\.svg/);
+	assert.match(wallpaper, /katelya-van-gogh-night\.svg/);
 });
 
 test("Katelya profile links are present", async () => {
@@ -28,20 +32,23 @@ test("Katelya profile links are present", async () => {
 	assert.match(profile, /mailto:katelya77@gmail\.com/);
 });
 
-test("impressionist hero and accessibility fallbacks exist", async () => {
+test("day-night gallery hero and accessibility fallbacks exist", async () => {
 	const gridLayout = await read("src/layouts/MainGridLayout.astro");
 	const layout = await read("src/layouts/Layout.astro");
-	const theme = await read("src/styles/katelya-impressionist.css");
-	const artwork = await read("public/assets/art/katelya-impression.svg");
+	const galleryTheme = await read("src/styles/katelya-van-gogh-gallery.css");
+	const dayArtwork = await read("public/assets/art/katelya-van-gogh-day.svg");
+	const nightArtwork = await read("public/assets/art/katelya-van-gogh-night.svg");
 
 	assert.match(gridLayout, /KatelyaOrbitHero/);
 	assert.match(gridLayout, /showTextOverlay=\{false\}/);
-	assert.match(layout, /katelya-impressionist\.css/);
+	assert.match(gridLayout, /katelya-van-gogh-gallery\.css/);
 	assert.match(layout, /katelya-art-theme/);
-	assert.match(theme, /prefers-reduced-motion:\s*reduce/);
-	assert.match(theme, /max-width:\s*767px/);
-	assert.match(artwork, /<filter/);
-	assert.match(artwork, /feTurbulence/);
+	assert.match(galleryTheme, /prefers-reduced-motion:\s*reduce/);
+	assert.match(galleryTheme, /max-width:\s*767px/);
+	assert.match(dayArtwork, /<filter/);
+	assert.match(dayArtwork, /feTurbulence/);
+	assert.match(nightArtwork, /<filter/);
+	assert.match(nightArtwork, /feTurbulence/);
 });
 
 test("legacy demo identity is removed from edited user-facing files", async () => {

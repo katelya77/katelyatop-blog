@@ -15,111 +15,82 @@ let pagefindLoaded = false;
 let initialized = $state(false);
 let isDesktopSearchExpanded = $state(false);
 let debounceTimer: ReturnType<typeof setTimeout>;
-let windowJustFocused = false;
-let focusTimer: ReturnType<typeof setTimeout>;
 let blurTimer: ReturnType<typeof setTimeout>;
 
 const fakeResult: SearchResult[] = [
 	{
 		url: url("/"),
-		meta: {
-			title: "This Is a Fake Search Result",
-		},
-		excerpt:
-			"Because the search cannot work in the <mark>dev</mark> environment.",
-	},
-	{
-		url: url("/"),
-		meta: {
-			title: "If You Want to Test the Search",
-		},
-		excerpt: "Try running <mark>npm build && npm preview</mark> instead.",
+		meta: { title: "开发环境搜索示例" },
+		excerpt: "生产构建后将使用 <mark>Pagefind</mark> 返回真实文章。",
 	},
 ];
 
+const panel = () => document.getElementById("search-panel");
+
+const setPanelVisibility = (show: boolean): void => {
+	const target = panel();
+	if (!target) return;
+	target.classList.toggle("float-panel-closed", !show);
+};
+
 const togglePanel = () => {
-	const panel = document.getElementById("search-panel");
-	panel?.classList.toggle("float-panel-closed");
+	const target = panel();
+	if (!target) return;
+	target.classList.toggle("float-panel-closed");
 	if (
-		!panel?.classList.contains("float-panel-closed") &&
+		!target.classList.contains("float-panel-closed") &&
 		typeof window.loadPagefind === "function"
 	) {
 		window.loadPagefind();
 	}
 };
 
-const toggleDesktopSearch = () => {
-	// 如果窗口刚获得焦点，不自动展开搜索框
-	if (windowJustFocused) {
-		return;
-	}
+const toggleDesktopSearch = (event?: MouseEvent) => {
+	if (event?.target instanceof HTMLInputElement) return;
 	isDesktopSearchExpanded = !isDesktopSearchExpanded;
 	if (isDesktopSearchExpanded) {
-		if (typeof window.loadPagefind === "function") {
-			window.loadPagefind();
-		}
+		if (typeof window.loadPagefind === "function") window.loadPagefind();
 		setTimeout(() => {
-			const input = document.getElementById(
-				"search-input-desktop",
-			) as HTMLInputElement;
-			input?.focus();
+			document.getElementById("search-input-desktop")?.focus();
 		}, 0);
+	} else if (!keywordDesktop) {
+		setPanelVisibility(false);
 	}
 };
 
-const collapseDesktopSearch = () => {
-	if (!keywordDesktop) {
-		isDesktopSearchExpanded = false;
-	}
+const closeDesktopSearch = () => {
+	isDesktopSearchExpanded = false;
+	if (!keywordDesktop) setPanelVisibility(false);
 };
 
 const handleBlur = () => {
-	// 延迟处理以允许搜索结果的点击事件先于折叠逻辑执行
 	blurTimer = setTimeout(() => {
-		isDesktopSearchExpanded = false;
-		// 仅隐藏面板并折叠，保留搜索关键词和结果以便下次展开时查看
-		setPanelVisibility(false, true);
-	}, 200);
-};
-
-const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
-	const panel = document.getElementById("search-panel");
-	if (!panel || !isDesktop) {
-		return;
-	}
-	if (show) {
-		panel.classList.remove("float-panel-closed");
-	} else {
-		panel.classList.add("float-panel-closed");
-	}
+		closeDesktopSearch();
+	}, 180);
 };
 
 const closeSearchPanel = (): void => {
-	const panel = document.getElementById("search-panel");
-	if (panel) {
-		panel.classList.add("float-panel-closed");
-	}
-	// 清空搜索关键词和结果
+	setPanelVisibility(false);
+	isDesktopSearchExpanded = false;
 	keywordDesktop = "";
 	keywordMobile = "";
 	result = [];
 };
 
-const handleResultClick = (event: Event, url: string): void => {
+const handleResultClick = (event: Event, destination: string): void => {
 	event.preventDefault();
 	closeSearchPanel();
-	navigateToPage(url);
+	navigateToPage(destination);
 };
 
-const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
+const search = async (keyword: string): Promise<void> => {
 	if (!keyword) {
-		setPanelVisibility(false, isDesktop);
 		result = [];
+		setPanelVisibility(false);
 		return;
 	}
-	if (!initialized) {
-		return;
-	}
+	if (!initialized) return;
+
 	try {
 		let searchResults: SearchResult[] = [];
 		if (import.meta.env.PROD && pagefindLoaded && window.pagefind) {
@@ -129,235 +100,139 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 			);
 		} else if (import.meta.env.DEV) {
 			searchResults = fakeResult;
-		} else {
-			searchResults = [];
-			console.error("Pagefind is not available in production environment.");
 		}
 		result = searchResults;
-		setPanelVisibility(result.length > 0, isDesktop);
+		setPanelVisibility(result.length > 0);
 	} catch (error) {
 		console.error("Search error:", error);
 		result = [];
-		setPanelVisibility(false, isDesktop);
+		setPanelVisibility(false);
 	}
 };
 
 onMount(() => {
 	const initializeSearch = () => {
 		initialized = true;
-		pagefindLoaded =
-			typeof window !== "undefined" &&
-			!!window.pagefind &&
-			typeof window.pagefind.search === "function";
-		console.log("Pagefind status on init:", pagefindLoaded);
-	};
-	const cleanupCallbacks: (() => void)[] = [];
-	if (import.meta.env.DEV) {
-		console.log(
-			"Pagefind is not available in development mode. Using mock data.",
+		pagefindLoaded = Boolean(
+			window.pagefind && typeof window.pagefind.search === "function",
 		);
-		initializeSearch();
-	} else {
-		const handlePagefindReady = () => {
-			console.log("Pagefind ready event received.");
-			initializeSearch();
-		};
-		const handlePagefindError = () => {
-			console.warn(
-				"Pagefind load error event received. Search functionality will be limited.",
-			);
-			initializeSearch();
-		};
+	};
+	const onReady = () => initializeSearch();
+	const onError = () => initializeSearch();
+	const onOutsidePointer = (event: PointerEvent) => {
+		const target = event.target;
+		const container = document.getElementById("search-container");
+		const searchPanel = panel();
+		if (!(target instanceof Node)) return;
+		if (
+			isDesktopSearchExpanded &&
+			!container?.contains(target) &&
+			!searchPanel?.contains(target)
+		) {
+			closeDesktopSearch();
+		}
+	};
 
-		document.addEventListener("pagefindready", handlePagefindReady);
-		document.addEventListener("pagefindloaderror", handlePagefindError);
-
-		// Fallback in case events are not caught or pagefind is already loaded by the time this script runs
+	if (import.meta.env.DEV) initializeSearch();
+	else {
+		document.addEventListener("pagefindready", onReady);
+		document.addEventListener("pagefindloaderror", onError);
 		setTimeout(() => {
-			if (!initialized) {
-				console.log("Fallback: Initializing search after timeout.");
-				initializeSearch();
-			}
+			if (!initialized) initializeSearch();
 		}, 2000);
-
-		cleanupCallbacks.push(
-			() => document.removeEventListener("pagefindready", handlePagefindReady),
-			() =>
-				document.removeEventListener("pagefindloaderror", handlePagefindError),
-		);
 	}
-
-	// 监听窗口焦点事件，防止切换窗口时自动展开搜索框
-	const handleFocus = () => {
-		windowJustFocused = true;
-		clearTimeout(focusTimer);
-		focusTimer = setTimeout(() => {
-			windowJustFocused = false;
-		}, 500); // 500ms 后才允许 mouseenter 触发展开
-	};
-
-	window.addEventListener("focus", handleFocus);
+	document.addEventListener("pointerdown", onOutsidePointer);
 
 	return () => {
-		window.removeEventListener("focus", handleFocus);
-		for (const cb of cleanupCallbacks) {
-			cb();
-		}
+		document.removeEventListener("pagefindready", onReady);
+		document.removeEventListener("pagefindloaderror", onError);
+		document.removeEventListener("pointerdown", onOutsidePointer);
 	};
 });
 
 $effect(() => {
-	if (initialized) {
-		const keyword = keywordDesktop || keywordMobile;
-		const isDesktop = !!keywordDesktop || isDesktopSearchExpanded;
-
-		clearTimeout(debounceTimer);
-		if (keyword) {
-			debounceTimer = setTimeout(() => {
-				search(keyword, isDesktop);
-			}, 300);
-		} else {
-			result = [];
-			setPanelVisibility(false, isDesktop);
-		}
+	if (!initialized) return;
+	const keyword = keywordDesktop || keywordMobile;
+	clearTimeout(debounceTimer);
+	if (keyword) {
+		debounceTimer = setTimeout(() => search(keyword), 280);
+	} else {
+		result = [];
+		setPanelVisibility(false);
 	}
 });
 
 $effect(() => {
-	if (typeof document !== "undefined") {
-		const navbar = document.getElementById("navbar");
-		if (isDesktopSearchExpanded) {
-			navbar?.classList.add("is-searching");
-		} else {
-			navbar?.classList.remove("is-searching");
-		}
-	}
+	const navbar = document.getElementById("navbar");
+	navbar?.classList.toggle("is-searching", isDesktopSearchExpanded);
 });
 
 onDestroy(() => {
-	if (typeof document !== "undefined") {
-		const navbar = document.getElementById("navbar");
-		navbar?.classList.remove("is-searching");
-	}
+	document.getElementById("navbar")?.classList.remove("is-searching");
 	clearTimeout(debounceTimer);
-	clearTimeout(focusTimer);
+	clearTimeout(blurTimer);
 });
 </script>
 
-<!-- search bar for desktop view (collapsed by default) -->
-<div class="hidden lg:block relative w-11 h-11 shrink-0">
+<div class="hidden lg:block relative w-10 h-10 shrink-0 katelya-search-desktop">
 	<button
 		id="search-bar"
-		class="flex transition-all items-center h-11 rounded-lg absolute right-0 top-0 shrink-0 border-0 bg-transparent cursor-pointer
-            {isDesktopSearchExpanded
-			? 'bg-black/4 hover:bg-black/6 focus-within:bg-black/6 dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10'
-			: 'btn-plain active:scale-90'}
-            {isDesktopSearchExpanded ? 'w-48' : 'w-11'}"
-		aria-label="Search"
-		onmouseenter={() => {
-			if (!isDesktopSearchExpanded) {
-				toggleDesktopSearch();
-			}
-		}}
-		onmouseleave={collapseDesktopSearch}
-		onclick={() => {
-			const input = document.getElementById(
-				"search-input-desktop",
-			) as HTMLInputElement;
-			input?.focus();
-		}}
+		type="button"
+		class:is-expanded={isDesktopSearchExpanded}
+		class="katelya-search-trigger"
+		aria-label="搜索"
+		aria-expanded={isDesktopSearchExpanded}
+		onclick={toggleDesktopSearch}
 	>
-		<Icon
-			icon="material-symbols:search"
-			class="absolute text-[1.25rem] pointer-events-none {isDesktopSearchExpanded
-				? 'left-3'
-				: 'left-1/2 -translate-x-1/2'} transition top-1/2 -translate-y-1/2 {isDesktopSearchExpanded
-				? 'text-black/30 dark:text-white/30'
-				: ''}"
-		></Icon>
+		<Icon icon="material-symbols:search" class="katelya-search-icon" />
 		<input
 			id="search-input-desktop"
 			placeholder={i18n(I18nKey.search)}
 			bind:value={keywordDesktop}
 			onfocus={() => {
 				clearTimeout(blurTimer);
-				if (!isDesktopSearchExpanded) {
-					toggleDesktopSearch();
-				}
-				search(keywordDesktop, true);
+				isDesktopSearchExpanded = true;
+				search(keywordDesktop);
 			}}
 			onblur={handleBlur}
-			class="transition-all pl-10 text-sm bg-transparent outline-0
-                h-full {isDesktopSearchExpanded
-				? 'w-36'
-				: 'w-0'} text-black/50 dark:text-white/50"
+			class="katelya-search-input"
 		/>
 	</button>
 </div>
 
-<!-- toggle btn for phone/tablet view -->
 <button
 	onclick={togglePanel}
-	aria-label="Search Panel"
+	aria-label="打开搜索"
 	id="search-switch"
-	class="btn-plain scale-animation lg:hidden! rounded-lg w-11 h-11 active:scale-90"
+	class="btn-plain scale-animation lg:hidden! rounded-lg w-10 h-10 active:scale-90"
 >
-	<Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
+	<Icon icon="material-symbols:search" class="text-[1.2rem]" />
 </button>
 
-<!-- search panel -->
 <div
 	id="search-panel"
-	class="float-panel float-panel-closed absolute md:w-120 top-20 left-4 md:left-[unset] right-4 z-50 search-panel shadow-2xl rounded-2xl p-2"
+	class="float-panel float-panel-closed katelya-search-panel search-panel"
 >
-	<!-- search bar inside panel for phone/tablet -->
-	<div
-		id="search-bar-inside"
-		class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
-      bg-black/4 hover:bg-black/6 focus-within:bg-black/6
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-  "
-	>
-		<Icon
-			icon="material-symbols:search"
-			class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"
-		></Icon>
+	<div id="search-bar-inside" class="katelya-search-mobile-row lg:hidden">
+		<Icon icon="material-symbols:search" class="text-[1.2rem] opacity-50" />
 		<input
 			placeholder={i18n(I18nKey.search)}
 			bind:value={keywordMobile}
-			class="pl-10 absolute inset-0 text-sm bg-transparent outline-0
-               focus:w-60 text-black/50 dark:text-white/50"
+			class="min-w-0 flex-1 bg-transparent outline-0 text-sm"
 		/>
 	</div>
-	<!-- search results -->
+
 	{#each result as item}
 		<a
 			href={item.url}
-			onclick={(e) => handleResultClick(e, item.url)}
-			class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
-       rounded-xl text-lg px-3 py-2 hover:bg-(--btn-plain-bg-hover) active:bg-(--btn-plain-bg-active)"
+			onclick={(event) => handleResultClick(event, item.url)}
+			class="katelya-search-result"
 		>
-			<div
-				class="transition text-90 inline-flex font-bold group-hover:text-(--primary)"
-			>
-				{item.meta.title}<Icon
-					icon="fa7-solid:chevron-right"
-					class="transition text-[0.75rem] translate-x-1 my-auto text-(--primary)"
-				></Icon>
+			<div class="font-bold text-90 flex items-center gap-1">
+				{item.meta.title}
+				<Icon icon="fa7-solid:chevron-right" class="text-xs text-(--primary)" />
 			</div>
-			<div class="transition text-sm text-50">
-				{@html item.excerpt}
-			</div>
+			<div class="text-sm text-50">{@html item.excerpt}</div>
 		</a>
 	{/each}
 </div>
-
-<style>
-	input:focus {
-		outline: 0;
-	}
-	:global(.search-panel) {
-		max-height: calc(100vh - 100px);
-		overflow-y: auto;
-	}
-</style>
