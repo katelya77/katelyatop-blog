@@ -132,12 +132,11 @@ const iconSrc = rawIcon?.match(/^(http|https|\/\/)/)
 		const menuButton = document.getElementById("nav-menu-switch");
 		const getSettingsPanel = () => document.getElementById("display-setting");
 		const getMenuPanel = () => document.getElementById("nav-menu-panel");
-		const getSearchPanel = () => document.getElementById("search-panel");
 		const overlayRoot = document.getElementById("overlay-root");
 
 		const portalPanels = () => {
 			if (!overlayRoot) return false;
-			const panels = [getSettingsPanel(), getMenuPanel(), getSearchPanel()];
+			const panels = [getSettingsPanel(), getMenuPanel()];
 			for (const panel of panels) {
 				if (panel && panel.parentElement !== overlayRoot) overlayRoot.append(panel);
 			}

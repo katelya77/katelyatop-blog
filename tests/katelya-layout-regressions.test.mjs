@@ -139,14 +139,19 @@ test("only the current gallery theme stylesheet is loaded", async () => {
 test("closed search leaves no composited rectangle and overlays are exclusive", async () => {
 	const search = await read("src/components/organisms/navigation/Search.svelte");
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
-	const geometry = await read("src/styles/impasto-geometry.css");
+	const runtime = await read("src/styles/katelya-runtime-repair.css");
 
-	assert.match(search, /hidden=\{!isOpen\}/);
-	assert.match(search, /target\.hidden = !isOpen/);
+	assert.match(search, /popover="auto"/);
+	assert.match(search, /showPopover\(\)/);
+	assert.match(search, /hidePopover\(\)/);
 	assert.match(search, /clearSearchPanelGeometry/);
 	assert.match(search, /katelya:overlay-open/);
 	assert.match(navbar, /katelya:overlay-open/);
-	assert.match(geometry, /\.katelya-search-desktop-panel\[hidden\][\s\S]*?display:\s*none\s*!important/);
+	assert.doesNotMatch(navbar, /getSearchPanel/);
+	assert.match(
+		runtime,
+		/\.katelya-search-desktop-panel:not\(:popover-open\):not\(\[data-fallback-open="true"\]\)[\s\S]*?display:\s*none\s*!important/,
+	);
 });
 
 test("navbar tools keep search away from More at every desktop width", async () => {

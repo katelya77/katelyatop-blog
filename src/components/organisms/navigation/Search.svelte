@@ -8,6 +8,16 @@ import { onDestroy, onMount } from "svelte";
 
 import type { SearchResult } from "@/global";
 import "@/styles/katelya-light-performance.css";
+import "@/styles/katelya-runtime-repair.css";
+
+type PopoverPanel = HTMLDivElement & {
+	showPopover?: () => void;
+	hidePopover?: () => void;
+};
+
+type PopoverToggleEvent = Event & {
+	newState?: "open" | "closed";
+};
 
 let keyword = $state("");
 let result: SearchResult[] = $state([]);
@@ -16,6 +26,9 @@ let initialized = $state(false);
 let isOpen = $state(false);
 let debounceTimer: ReturnType<typeof setTimeout>;
 let panelPositionFrame = 0;
+let panelElement = $state<PopoverPanel | null>(null);
+let desktopTrigger = $state<HTMLButtonElement | null>(null);
+let mobileTrigger = $state<HTMLButtonElement | null>(null);
 
 const fakeResult: SearchResult[] = [
 	{
@@ -25,32 +38,28 @@ const fakeResult: SearchResult[] = [
 	},
 ];
 
-const panel = () => document.getElementById("search-panel");
 const input = () => document.getElementById("search-input") as HTMLInputElement | null;
-const visibleTrigger = (): HTMLElement | null => {
-	const triggers = Array.from(
-		document.querySelectorAll<HTMLElement>("[data-search-trigger]"),
-	);
-	return triggers.find((trigger) => trigger.getClientRects().length > 0) ?? triggers[0] ?? null;
+const visibleTrigger = (): HTMLButtonElement | null => {
+	if (desktopTrigger?.getClientRects().length) return desktopTrigger;
+	if (mobileTrigger?.getClientRects().length) return mobileTrigger;
+	return desktopTrigger ?? mobileTrigger;
 };
 
 const clearSearchPanelGeometry = (): void => {
-	const target = panel();
-	if (!target) return;
+	if (!panelElement) return;
 	for (const property of [
 		"--katelya-search-panel-top",
 		"--katelya-search-panel-left",
 		"--katelya-search-panel-width",
 		"--katelya-search-panel-max-height",
 	]) {
-		target.style.removeProperty(property);
+		panelElement.style.removeProperty(property);
 	}
 };
 
 const positionSearchPanel = (): void => {
-	const target = panel();
 	const trigger = visibleTrigger();
-	if (!target || !trigger || !isOpen) return;
+	if (!panelElement || !trigger || !isOpen) return;
 
 	const triggerRect = trigger.getBoundingClientRect();
 	const viewportWidth = document.documentElement.clientWidth;
@@ -71,10 +80,19 @@ const positionSearchPanel = (): void => {
 	const panelTop = Math.max(viewportMargin, triggerRect.bottom + panelGap);
 	const panelMaxHeight = Math.max(220, viewportHeight - panelTop - viewportMargin);
 
-	target.style.setProperty("--katelya-search-panel-top", `${Math.round(panelTop)}px`);
-	target.style.setProperty("--katelya-search-panel-left", `${Math.round(panelLeft)}px`);
-	target.style.setProperty("--katelya-search-panel-width", `${Math.round(panelWidth)}px`);
-	target.style.setProperty(
+	panelElement.style.setProperty(
+		"--katelya-search-panel-top",
+		`${Math.round(panelTop)}px`,
+	);
+	panelElement.style.setProperty(
+		"--katelya-search-panel-left",
+		`${Math.round(panelLeft)}px`,
+	);
+	panelElement.style.setProperty(
+		"--katelya-search-panel-width",
+		`${Math.round(panelWidth)}px`,
+	);
+	panelElement.style.setProperty(
 		"--katelya-search-panel-max-height",
 		`${Math.round(panelMaxHeight)}px`,
 	);
@@ -88,27 +106,22 @@ const scheduleSearchPanelPosition = (): void => {
 	});
 };
 
-const syncPanel = (): void => {
-	const target = panel();
-	if (!target) return;
-	target.hidden = !isOpen;
-	target.classList.toggle("float-panel-closed", !isOpen);
-	target.classList.toggle("is-open", isOpen);
-	target.setAttribute("aria-hidden", isOpen ? "false" : "true");
-	if (isOpen) positionSearchPanel();
-	else clearSearchPanelGeometry();
-};
-
 const ensurePagefind = (): void => {
 	if (typeof window.loadPagefind === "function") window.loadPagefind();
 };
 
 const openSearch = (): void => {
+	if (!panelElement) return;
 	document.dispatchEvent(
 		new CustomEvent("katelya:overlay-open", { detail: { id: "search" } }),
 	);
 	isOpen = true;
-	syncPanel();
+	positionSearchPanel();
+	if (typeof panelElement.showPopover === "function") {
+		if (!panelElement.matches(":popover-open")) panelElement.showPopover();
+	} else {
+		panelElement.dataset.fallbackOpen = "true";
+	}
 	ensurePagefind();
 	requestAnimationFrame(() => {
 		positionSearchPanel();
@@ -117,29 +130,31 @@ const openSearch = (): void => {
 };
 
 const closeSearch = (clear = false, restoreFocus = false): void => {
-	isOpen = false;
 	if (panelPositionFrame) {
 		cancelAnimationFrame(panelPositionFrame);
 		panelPositionFrame = 0;
 	}
+	if (panelElement) {
+		if (
+			typeof panelElement.hidePopover === "function" &&
+			panelElement.matches(":popover-open")
+		) {
+			panelElement.hidePopover();
+		}
+		delete panelElement.dataset.fallbackOpen;
+	}
+	isOpen = false;
+	clearSearchPanelGeometry();
 	if (clear) {
 		keyword = "";
 		result = [];
 	}
-	syncPanel();
 	if (restoreFocus) requestAnimationFrame(() => visibleTrigger()?.focus());
 };
 
 const toggleSearch = (): void => {
 	if (isOpen) closeSearch(false, true);
 	else openSearch();
-};
-
-const handleDesktopKeydown = (event: KeyboardEvent): void => {
-	if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
-		event.preventDefault();
-		openSearch();
-	}
 };
 
 const handleResultClick = (event: Event, destination: string): void => {
@@ -174,24 +189,19 @@ onMount(() => {
 	};
 	const onReady = () => initializeSearch();
 	const onError = () => initializeSearch();
-	const onOutsidePointer = (event: PointerEvent) => {
-		const target = event.target;
-		const searchPanel = panel();
-		const triggers = document.querySelectorAll("[data-search-trigger]");
-		if (!(target instanceof Node) || !isOpen) return;
-		const insideTrigger = Array.from(triggers).some((trigger) => trigger.contains(target));
-		if (!insideTrigger && !searchPanel?.contains(target)) closeSearch();
-	};
-	const onDocumentKeydown = (event: KeyboardEvent) => {
-		if (event.key === "Escape" && isOpen) {
-			event.preventDefault();
-			closeSearch(false, true);
-		}
-	};
 	const onPageView = () => closeSearch(true);
 	const onOverlayOpen = (event: Event) => {
 		const overlayEvent = event as CustomEvent<{ id?: string }>;
 		if (overlayEvent.detail?.id !== "search" && isOpen) closeSearch();
+	};
+	const onPopoverToggle = (event: Event) => {
+		const toggleEvent = event as PopoverToggleEvent;
+		const nextOpen =
+			toggleEvent.newState === "open" ||
+			Boolean(panelElement?.matches(":popover-open"));
+		isOpen = nextOpen;
+		if (nextOpen) scheduleSearchPanelPosition();
+		else clearSearchPanelGeometry();
 	};
 
 	if (import.meta.env.DEV) initializeSearch();
@@ -203,19 +213,16 @@ onMount(() => {
 		}, 2000);
 	}
 
-	document.addEventListener("pointerdown", onOutsidePointer);
-	document.addEventListener("keydown", onDocumentKeydown);
+	panelElement?.addEventListener("toggle", onPopoverToggle);
 	document.addEventListener("swup:page:view", onPageView);
 	document.addEventListener("katelya:overlay-open", onOverlayOpen);
 	window.addEventListener("resize", scheduleSearchPanelPosition, { passive: true });
 	window.addEventListener("scroll", scheduleSearchPanelPosition, { passive: true });
-	syncPanel();
 
 	return () => {
 		document.removeEventListener("pagefindready", onReady);
 		document.removeEventListener("pagefindloaderror", onError);
-		document.removeEventListener("pointerdown", onOutsidePointer);
-		document.removeEventListener("keydown", onDocumentKeydown);
+		panelElement?.removeEventListener("toggle", onPopoverToggle);
 		document.removeEventListener("swup:page:view", onPageView);
 		document.removeEventListener("katelya:overlay-open", onOverlayOpen);
 		window.removeEventListener("resize", scheduleSearchPanelPosition);
@@ -230,24 +237,17 @@ $effect(() => {
 	else result = [];
 });
 
-$effect(() => {
-	syncPanel();
-});
-
 onDestroy(() => {
 	clearTimeout(debounceTimer);
 	if (panelPositionFrame) cancelAnimationFrame(panelPositionFrame);
+	if (panelElement?.matches(":popover-open")) panelElement.hidePopover?.();
 	clearSearchPanelGeometry();
-	const target = panel();
-	if (target) {
-		target.hidden = true;
-		target.classList.add("float-panel-closed");
-	}
 });
 </script>
 
 <div class="hidden lg:block katelya-search-desktop">
 	<button
+		bind:this={desktopTrigger}
 		id="search-bar"
 		type="button"
 		class="katelya-search-trigger"
@@ -257,15 +257,14 @@ onDestroy(() => {
 		aria-haspopup="dialog"
 		aria-expanded={isOpen}
 		onclick={toggleSearch}
-		onkeydown={handleDesktopKeydown}
 	>
 		<Icon icon="material-symbols:search" class="katelya-search-icon" />
 	</button>
 </div>
 
 <button
+	bind:this={mobileTrigger}
 	onclick={toggleSearch}
-	onkeydown={handleDesktopKeydown}
 	aria-label="打开站内搜索"
 	aria-controls="search-panel"
 	aria-haspopup="dialog"
@@ -278,13 +277,14 @@ onDestroy(() => {
 </button>
 
 <div
+	bind:this={panelElement}
 	id="search-panel"
+	popover="auto"
 	data-search-dialog
 	role="dialog"
 	aria-label="站内搜索"
 	aria-hidden={isOpen ? "false" : "true"}
-	hidden={!isOpen}
-	class="float-panel float-panel-closed katelya-search-panel katelya-search-desktop-panel search-panel"
+	class="float-panel katelya-search-panel katelya-search-desktop-panel search-panel"
 >
 	<div class="katelya-search-panel-header">
 		<div class="katelya-search-panel-heading">

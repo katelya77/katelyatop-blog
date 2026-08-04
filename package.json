@@ -20,7 +20,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "tsc --noEmit",
-    "test": "node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs && node --test tests/katelya-branding.test.mjs && node --test tests/katelya-layout-regressions.test.mjs && node --test tests/katelya-van-gogh-gallery.test.mjs && node --test tests/katelya-impasto-engine.test.mjs && node --test tests/katelya-light-theme-performance.test.mjs",
+    "test": "node --test tests/markdown-enhancements.test.mjs && node tests/crypto.test.mjs && node --test tests/katelya-branding.test.mjs && node --test tests/katelya-layout-regressions.test.mjs && node --test tests/katelya-van-gogh-gallery.test.mjs && node --test tests/katelya-impasto-engine.test.mjs && node --test tests/katelya-light-theme-performance.test.mjs && node --test tests/katelya-native-overlay.test.mjs",
     "new-post": "node scripts/new-post.js",
     "format": "biome format --write ./src",
     "lint": "biome check --write ./src",
