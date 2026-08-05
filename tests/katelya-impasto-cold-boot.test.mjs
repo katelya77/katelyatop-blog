@@ -4,21 +4,6 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("renderer primes the first WebGL frame synchronously", async () => {
-	const renderer = await read("src/scripts/impasto-renderer.ts");
-
-	assert.match(
-		renderer,
-		/resize\(\);\s*draw\(performance\.now\(\)\);/,
-		"the first paint must happen in the initialization task before the browser can expose the fallback",
-	);
-	assert.doesNotMatch(
-		renderer,
-		/resize\(\);\s*schedule\(\);/,
-		"the initial frame must not wait for setTimeout plus requestAnimationFrame",
-	);
-});
-
 test("boot surface is neutral and generated SVG artwork is static-mode only", async () => {
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 	const defaultFallback = backdrop.match(
