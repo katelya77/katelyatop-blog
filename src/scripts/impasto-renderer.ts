@@ -21,9 +21,9 @@ const POINTER_BURST_MS = 650;
 const MAX_DPR = 1.4;
 const MIN_DPR = 0.85;
 const MAX_RENDER_PIXELS = 3_200_000;
-const POINTER_FPS = 40;
-const THEME_FPS = 30;
-const IDLE_FPS = 8;
+const POINTER_FPS = 48;
+const THEME_FPS = 36;
+const IDLE_FPS = 14;
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -137,58 +137,86 @@ void main() {
 	float coherence = tensor.b;
 	float energy = tensor.a;
 	float time = uTime * uMotion;
+	float flowTime = time * 0.18;
 
+	vec2 vortexCenterA = vec2(
+		0.22 * aspect + sin(flowTime * 0.73 + 0.4) * 0.026 * aspect,
+		0.29 + cos(flowTime * 0.61 + 1.7) * 0.021
+	);
+	vec2 vortexCenterB = vec2(
+		0.73 * aspect + cos(flowTime * 0.47 + 2.1) * 0.031 * aspect,
+		0.20 + sin(flowTime * 0.83 + 0.9) * 0.018
+	);
+	vec2 vortexCenterC = vec2(
+		0.61 * aspect + sin(flowTime * 0.39 + 3.4) * 0.022 * aspect,
+		0.73 + cos(flowTime * 0.67 + 2.6) * 0.026
+	);
 	vec2 localWarp =
-		vortexWarp(aspectUv, vec2(0.22 * aspect, 0.29), 0.25, 0.38) +
-		vortexWarp(aspectUv, vec2(0.73 * aspect, 0.20), -0.18, 0.29) +
-		vortexWarp(aspectUv, vec2(0.61 * aspect, 0.73), 0.13, 0.24);
-	float curl = curlNoise(aspectUv * 1.37 + vec2(3.1, -1.8));
-	float curlAngle = curl * mix(0.42, 0.78, uDark);
+		vortexWarp(aspectUv, vortexCenterA, 0.24, 0.39) +
+		vortexWarp(aspectUv, vortexCenterB, -0.17, 0.31) +
+		vortexWarp(aspectUv, vortexCenterC, 0.14, 0.25);
+	float curl = curlNoise(
+		aspectUv * 1.31 + vec2(3.1, -1.8) + vec2(flowTime * 0.017, -flowTime * 0.011)
+	);
+	float curlAngle = curl * mix(0.48, 0.84, uDark);
 	vec2 curlVector = vec2(cos(curlAngle), sin(curlAngle));
 	vec2 tensorDirection = normalize(tensor.rg * 2.0 - 1.0 + vec2(0.0001));
 	vec2 direction = normalize(
-		tensorDirection * (0.72 + coherence * 0.30) +
-		localWarp * mix(0.48, 0.82, uDark) +
-		curlVector * (0.08 + (1.0 - coherence) * 0.18)
+		tensorDirection * (0.56 + coherence * 0.24) +
+		localWarp * mix(0.54, 0.88, uDark) +
+		curlVector * (0.14 + (1.0 - coherence) * 0.22)
 	);
 	vec2 tangent = vec2(-direction.y, direction.x);
-	vec2 drift = direction * sin(time * 0.12 + energy * 5.7) * 0.0015;
-	vec2 scaled = aspectUv + drift + localWarp * 0.045;
+	vec2 drift =
+		direction * sin(flowTime * 0.71 + energy * 5.7) * 0.0021 +
+		tangent * cos(flowTime * 0.43 + coherence * 4.9) * 0.0013;
+	vec2 scaled = aspectUv + drift + localWarp * 0.042;
 	vec2 brushSpace = vec2(dot(scaled, direction), dot(scaled, tangent));
 
-	float broad = fbm(scaled * 2.35 + direction * 1.57);
-	float secondary = fbm(scaled * 5.8 - tangent * 2.1 + vec2(8.2, -4.7));
-	float ridges = fbm(scaled * 12.4 + tangent * broad * 2.7 + direction * secondary);
+	vec2 broadFlow = vec2(flowTime * 0.026, -flowTime * 0.014);
+	vec2 secondaryFlow = vec2(-flowTime * 0.041, flowTime * 0.023);
+	vec2 ridgeFlow = vec2(flowTime * 0.061, flowTime * 0.037);
+	float broad = fbm(scaled * 2.18 + direction * 1.43 + broadFlow);
+	float secondary = fbm(
+		scaled * 5.15 - tangent * 1.92 + vec2(8.2, -4.7) + secondaryFlow
+	);
+	float ridges = fbm(
+		scaled * 10.7 + tangent * broad * 2.15 + direction * secondary + ridgeFlow
+	);
 	float cellSeed = hash21(floor(brushSpace * vec2(6.1, 13.7)) + vec2(2.7, 11.3));
 	float brokenMask = brokenStroke(
-		brushSpace + vec2(time * 0.006, broad * 0.08),
+		brushSpace + vec2(flowTime * 0.021, broad * 0.08),
 		cellSeed
 	) * mix(0.58, 1.0, coherence);
-	float strokeSegment = smoothstep(0.18, 0.86, brokenMask + ridges * 0.20);
+	float strokeSegment = smoothstep(0.18, 0.86, brokenMask + ridges * 0.15);
 	float bristleRidge = pow(
-		1.0 - abs(sin(brushSpace.y * (82.0 + cellSeed * 71.0) + ridges * 7.2)),
+		1.0 - abs(sin(brushSpace.y * (82.0 + cellSeed * 71.0) + ridges * 6.1)),
 		5.2
 	) * mix(0.48, 1.0, coherence);
-	float chippedPigment = smoothstep(0.34, 0.76, noise(scaled * 31.0 + cellSeed * 9.0));
+	float chippedPigment = smoothstep(0.34, 0.76, noise(scaled * 29.0 + cellSeed * 9.0));
 	float edgeMask = paintEdge(fract(brushSpace.x * (2.8 + cellSeed * 3.5)), 0.17);
 	float shortStroke = strokeSegment * mix(0.64, 1.0, chippedPigment);
 	float pigmentGlaze = smoothstep(
 		0.22,
 		0.90,
-		broad * 0.46 + secondary * 0.30 + ridges * 0.24
+		broad * 0.50 + secondary * 0.32 + ridges * 0.18
 	);
 	float pigment = clamp(
-		0.10 + broad * 0.35 + secondary * 0.18 + energy * 0.23 +
-		shortStroke * 0.21 + bristleRidge * 0.08 + edgeMask * 0.05,
+		0.10 + broad * 0.38 + secondary * 0.21 + energy * 0.20 +
+		shortStroke * 0.22 + bristleRidge * 0.075 + edgeMask * 0.04,
 		0.0,
 		1.0
 	);
 	float goldDeposit = smoothstep(
 		0.79,
 		0.985,
-		energy * 0.46 + ridges * 0.24 + shortStroke * 0.18 + cellSeed * 0.19
+		energy * 0.47 + ridges * 0.16 + shortStroke * 0.20 + cellSeed * 0.19
 	) * mix(0.45, 1.0, coherence);
-	float violetDeposit = smoothstep(0.64, 0.94, secondary * 0.58 + curl * 0.16 + cellSeed * 0.25);
+	float violetDeposit = smoothstep(
+		0.64,
+		0.94,
+		secondary * 0.60 + curl * 0.15 + cellSeed * 0.25
+	);
 
 	vec3 base = mix(
 		dayPalette(pigment, goldDeposit, violetDeposit),
@@ -200,31 +228,35 @@ void main() {
 		vec3(0.006, 0.035, 0.13),
 		uDark
 	);
-	base = mix(underpaint, base, 0.65 + pigmentGlaze * 0.29);
+	base = mix(underpaint, base, 0.66 + pigmentGlaze * 0.28);
 	vec3 mineralGold = mix(vec3(0.94, 0.78, 0.35), vec3(1.0, 0.65, 0.12), uDark);
-	base = mix(base, mineralGold, goldDeposit * mix(0.09, 0.18, uDark));
+	base = mix(base, mineralGold, goldDeposit * mix(0.08, 0.17, uDark));
 
 	float height =
-		broad * 0.23 +
-		secondary * 0.16 +
-		ridges * 0.15 +
-		shortStroke * 0.27 +
-		bristleRidge * 0.13 +
-		edgeMask * 0.06;
-	vec3 normal = normalize(vec3(-dFdx(height) * 31.0, -dFdy(height) * 31.0, 1.0));
+		broad * 0.18 +
+		secondary * 0.13 +
+		ridges * 0.08 +
+		shortStroke * 0.32 +
+		bristleRidge * 0.16 +
+		edgeMask * 0.05;
+	vec3 normal = normalize(vec3(-dFdx(height) * 22.0, -dFdy(height) * 22.0, 1.0));
 	vec3 lightDirection = normalize(vec3(
 		(uPointer.x - 0.5) * 1.18 + 0.18,
 		(0.5 - uPointer.y) * 0.94 - 0.12,
 		0.90
 	));
 	float diffuse = max(dot(normal, lightDirection), 0.0);
-	float roughness = clamp(0.86 - coherence * 0.28 - shortStroke * 0.22 + ridges * 0.10, 0.30, 0.90);
+	float roughness = clamp(
+		0.86 - coherence * 0.25 - shortStroke * 0.24 + ridges * 0.06,
+		0.31,
+		0.91
+	);
 	vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
 	float specular = pow(max(dot(normal, halfVector), 0.0), mix(7.0, 34.0, 1.0 - roughness));
 	vec3 lightColour = mix(vec3(1.0, 0.94, 0.76), vec3(1.0, 0.73, 0.23), uDark);
-	base *= 0.70 + diffuse * 0.42;
+	base *= 0.72 + diffuse * 0.38;
 	base += lightColour * specular *
-		(0.055 + energy * 0.12 + bristleRidge * 0.06 + edgeMask * 0.04);
+		(0.05 + energy * 0.11 + bristleRidge * 0.07 + edgeMask * 0.035);
 
 	vec2 center = vec2((uv.x - 0.5) / 0.37, (uv.y - 0.43) / 0.28);
 	float readingProtection = exp(-dot(center, center) * 1.78);
@@ -446,7 +478,7 @@ export function initImpastoRenderer(): void {
 		gl.uniform2f(uniforms.pointer, pointerX, pointerY);
 		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
 		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
-		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.46 : 0.10);
+		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.58 : 0.22);
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		if (!firstFrameReady) markFirstFrameReady();
 		schedule(1000 / fps);
