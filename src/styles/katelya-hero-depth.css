@@ -1,0 +1,202 @@
+html.katelya-art-theme .katelya-orbit-hero {
+	--hero-shallow-x: 0px;
+	--hero-shallow-y: 0px;
+	--hero-mid-x: 0px;
+	--hero-mid-y: 0px;
+	--hero-deep-x: 0px;
+	--hero-deep-y: 0px;
+	--hero-light-x: 50%;
+	--hero-light-y: 42%;
+	perspective: 1450px;
+	transform-style: preserve-3d;
+}
+
+html.katelya-art-theme .katelya-paint-aura {
+	transform: translate3d(
+		calc(0px - var(--hero-shallow-x)),
+		calc(0px - var(--hero-shallow-y)),
+		-24px
+	);
+	transition: transform 180ms ease-out;
+}
+
+html.katelya-art-theme .katelya-aura-ring {
+	border: 0;
+	box-shadow: none;
+	animation: none;
+	filter: blur(22px);
+	opacity: 0.42;
+	mix-blend-mode: soft-light;
+}
+
+html.katelya-art-theme .katelya-aura-ring--outer {
+	width: min(70vw, 64rem);
+	height: min(23vw, 19rem);
+	border-radius: 63% 37% 58% 42% / 46% 61% 39% 54%;
+	background:
+		linear-gradient(
+			164deg,
+			transparent 3%,
+			rgba(100, 187, 180, 0.18) 27%,
+			rgba(240, 218, 146, 0.10) 52%,
+			rgba(110, 84, 166, 0.16) 76%,
+			transparent 96%
+		);
+	transform: translate(-52%, -47%) rotate(-7deg) skewX(-5deg);
+}
+
+html.katelya-art-theme .katelya-aura-ring--inner {
+	width: min(47vw, 42rem);
+	height: min(17vw, 13rem);
+	border-radius: 41% 59% 35% 65% / 57% 38% 62% 43%;
+	background:
+		linear-gradient(
+			18deg,
+			transparent 2%,
+			rgba(237, 229, 184, 0.16) 31%,
+			rgba(90, 171, 167, 0.13) 59%,
+			transparent 94%
+		);
+	transform: translate(-46%, -54%) rotate(11deg) skewY(4deg) translateZ(28px);
+}
+
+html.katelya-art-theme.dark .katelya-aura-ring--outer {
+	background:
+		linear-gradient(
+			164deg,
+			transparent 4%,
+			rgba(41, 116, 159, 0.22) 25%,
+			rgba(88, 65, 145, 0.16) 55%,
+			rgba(239, 190, 72, 0.10) 78%,
+			transparent 96%
+		);
+}
+
+html.katelya-art-theme.dark .katelya-aura-ring--inner {
+	background:
+		linear-gradient(
+			18deg,
+			transparent 2%,
+			rgba(55, 148, 161, 0.16) 30%,
+			rgba(235, 185, 65, 0.10) 63%,
+			transparent 94%
+		);
+}
+
+html.katelya-art-theme .katelya-orbit-stage {
+	transform-style: preserve-3d;
+}
+
+html.katelya-art-theme .katelya-hero-copy {
+	transform: translate3d(var(--hero-mid-x), var(--hero-mid-y), 44px);
+	transform-style: preserve-3d;
+	transition: transform 150ms ease-out;
+}
+
+html.katelya-art-theme .katelya-hero-title {
+	transform: translateZ(32px);
+	transform-style: preserve-3d;
+	filter:
+		drop-shadow(0 4px 2px rgba(4, 26, 37, 0.24))
+		drop-shadow(0 18px 28px rgba(5, 33, 44, 0.2));
+}
+
+html.katelya-art-theme .katelya-hero-title > span {
+	color: transparent;
+	background:
+		radial-gradient(
+			circle at var(--hero-light-x) var(--hero-light-y),
+			rgba(255, 255, 244, 1) 0,
+			rgba(255, 255, 244, 0.98) 8%,
+			transparent 28%
+		),
+		linear-gradient(150deg, #fffdf0 8%, #e6eadc 47%, #fff9df 78%);
+	background-clip: text;
+	-webkit-background-clip: text;
+	text-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.64),
+		0 3px 0 rgba(39, 72, 70, 0.18);
+}
+
+html.katelya-art-theme.dark .katelya-hero-title > span {
+	background:
+		radial-gradient(
+			circle at var(--hero-light-x) var(--hero-light-y),
+			#fff8c8 0,
+			#f7e9b5 10%,
+			transparent 29%
+		),
+		linear-gradient(150deg, #fff8d7 10%, #e9ebdf 48%, #e8d99a 82%);
+	background-clip: text;
+	-webkit-background-clip: text;
+}
+
+html.katelya-art-theme .katelya-hero-subtitle,
+html.katelya-art-theme .katelya-hero-links {
+	transform: translateZ(22px);
+}
+
+html.katelya-art-theme .katelya-orbit-card {
+	transform-style: preserve-3d;
+	transition:
+		transform 160ms ease-out,
+		box-shadow 180ms ease,
+		border-color 180ms ease;
+	box-shadow:
+		0 18px 34px rgba(8, 43, 48, 0.18),
+		inset 0 1px rgba(255, 255, 255, 0.38);
+}
+
+html.katelya-art-theme .katelya-orbit-card::after {
+	content: "";
+	position: absolute;
+	inset: 1px;
+	pointer-events: none;
+	border-radius: inherit;
+	background: radial-gradient(
+		circle at var(--hero-light-x) var(--hero-light-y),
+		rgba(255, 250, 210, 0.22),
+		transparent 42%
+	);
+	mix-blend-mode: screen;
+}
+
+html.katelya-art-theme .katelya-orbit-card--1 {
+	transform: translate3d(var(--hero-deep-x), var(--hero-deep-y), 68px)
+		rotate(-4deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--2 {
+	transform: translate3d(var(--hero-mid-x), var(--hero-deep-y), 88px)
+		rotate(3deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--3 {
+	transform: translate3d(var(--hero-shallow-x), var(--hero-mid-y), 38px)
+		rotate(2deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card--4 {
+	transform: translate3d(var(--hero-mid-x), var(--hero-shallow-y), 56px)
+		rotate(-3deg);
+}
+
+html.katelya-art-theme .katelya-orbit-card:hover {
+	border-color: color-mix(in srgb, var(--katelya-gold) 46%, transparent);
+	box-shadow:
+		0 24px 44px rgba(5, 40, 47, 0.25),
+		inset 0 1px rgba(255, 255, 255, 0.48);
+}
+
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+	html.katelya-art-theme .katelya-paint-aura,
+	html.katelya-art-theme .katelya-hero-copy,
+	html.katelya-art-theme .katelya-orbit-card {
+		transition: none !important;
+	}
+
+	html.katelya-art-theme .katelya-paint-aura,
+	html.katelya-art-theme .katelya-hero-copy {
+		transform: none !important;
+	}
+}

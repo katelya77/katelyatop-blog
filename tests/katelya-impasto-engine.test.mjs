@@ -40,16 +40,57 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.doesNotMatch(packageJson, /["']three["']/);
 });
 
-test("shader builds directional impasto without extra network textures", async () => {
+test("first painted frame owns readiness and static fallback has one owner", async () => {
+	const renderer = await read("src/scripts/impasto-renderer.ts");
+	const backdrop = await read("src/styles/impasto-backdrop.css");
+
+	assert.match(renderer, /impasto-booting/);
+	assert.match(renderer, /function markFirstFrameReady|const markFirstFrameReady/);
+	const firstDraw = renderer.indexOf("gl.drawArrays");
+	const readyMutation = renderer.indexOf('classList.add("impasto-ready")');
+	assert.ok(firstDraw >= 0, "renderer must draw a first frame");
+	assert.ok(
+		readyMutation > firstDraw,
+		"impasto-ready must only be set after a successful first draw",
+	);
+	assert.doesNotMatch(
+		backdrop,
+		/html\.katelya-art-theme body\s*\{[^}]*impasto-day\.svg/s,
+		"the component fallback must be the only static painted surface",
+	);
+	assert.match(backdrop, /transition:\s*opacity 260ms/);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/s,
+	);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark #banner-wrapper\s*\{[^}]*background-image:\s*none !important/s,
+	);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark body::before,[\s\S]*display:\s*none !important/,
+	);
+});
+
+test("shader builds irregular tensor-guided impasto instead of formulaic arcs", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 
-	assert.match(renderer, /vec2 direction = normalize\(tensor\.rg/);
+	assert.match(
+		renderer,
+		/vec2 tensorDirection = normalize\(tensor\.rg[\s\S]*vec2 direction = normalize\(/,
+	);
+	assert.match(renderer, /localWarp \* mix\(/);
 	assert.match(renderer, /float strokeSegment/);
 	assert.match(renderer, /float bristleRidge/);
 	assert.match(renderer, /vec3 underpaint/);
 	assert.match(renderer, /float canvasWeave/);
 	assert.match(renderer, /float pigmentGlaze/);
 	assert.match(renderer, /float readingProtection/);
+	assert.match(renderer, /float curlNoise/);
+	assert.match(renderer, /vec2 vortexWarp/);
+	assert.match(renderer, /float brokenStroke/);
+	assert.match(renderer, /float paintEdge/);
 	assert.doesNotMatch(renderer, /new Image\(/);
 	assert.doesNotMatch(renderer, /fetch\(/);
 });
@@ -124,7 +165,7 @@ test("renderer and CSS expose static mobile and accessible fallbacks", async () 
 	assert.match(backdrop, /\.impasto-backdrop::after/);
 	assert.match(
 		backdrop,
-		/html\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/,
+		/html\.katelya-art-theme\.impasto-ready body,[\s\S]*background-image:\s*none !important/,
 	);
 	assert.match(
 		backdrop,
