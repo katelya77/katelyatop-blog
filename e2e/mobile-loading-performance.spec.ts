@@ -4,6 +4,10 @@ import { expect, test } from "@playwright/test";
 const ARTIFACT_DIR = "artifacts/ui";
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
+type MediaProbeWindow = Window & {
+	__katelyaMediaPlayCalls?: string[];
+};
+
 test.describe("mobile loading performance", () => {
 	test.use({
 		viewport: MOBILE_VIEWPORT,
@@ -58,6 +62,26 @@ test.describe("mobile loading performance", () => {
 			if (url.includes("pan.katelya.eu.org/file/")) audioRequests.push(url);
 		});
 
+		await page.addInitScript(() => {
+			const calls: string[] = [];
+			Object.defineProperty(window, "__katelyaMediaPlayCalls", {
+				configurable: true,
+				value: calls,
+			});
+			const nativePlay = HTMLMediaElement.prototype.play;
+			HTMLMediaElement.prototype.play = function () {
+				(window as MediaProbeWindow).__katelyaMediaPlayCalls?.push(
+					this.currentSrc || this.src,
+				);
+				return nativePlay.call(this);
+			};
+		});
+
+		const readPlayCalls = () =>
+			page.evaluate(
+				() => (window as MediaProbeWindow).__katelyaMediaPlayCalls ?? [],
+			);
+
 		await page.goto("/", { waitUntil: "domcontentloaded" });
 		const playButtons = page.getByRole("button", { name: "播放" });
 		await expect(playButtons.last()).toBeVisible();
@@ -67,10 +91,14 @@ test.describe("mobile loading performance", () => {
 			audioRequests,
 			"idle hydration must not keep the mobile browser loading a remote song",
 		).toHaveLength(0);
+		expect(await readPlayCalls()).toHaveLength(0);
 
 		await playButtons.last().click();
 		await expect
-			.poll(() => audioRequests.length, { timeout: 5000 })
+			.poll(async () => (await readPlayCalls()).length, { timeout: 5000 })
 			.toBeGreaterThan(0);
+
+		const calls = await readPlayCalls();
+		expect(calls.at(-1)).toContain("pan.katelya.eu.org/file/");
 	});
 });
