@@ -19,9 +19,11 @@ type ThemeChangeDetail = {
 const THEME_BURST_MS = 220;
 const POINTER_BURST_MS = 650;
 const MAX_DPR = 1.4;
+const MIN_DPR = 0.85;
+const MAX_RENDER_PIXELS = 3_200_000;
 const POINTER_FPS = 40;
 const THEME_FPS = 30;
-const IDLE_FPS = 10;
+const IDLE_FPS = 8;
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -73,23 +75,23 @@ float fbm(vec2 point) {
 }
 
 vec3 dayPalette(float value, float accent) {
-	vec3 deep = vec3(0.07, 0.28, 0.30);
-	vec3 teal = vec3(0.20, 0.57, 0.54);
-	vec3 mint = vec3(0.58, 0.80, 0.72);
-	vec3 cream = vec3(0.95, 0.93, 0.80);
-	vec3 colour = mix(deep, teal, smoothstep(0.10, 0.48, value));
-	colour = mix(colour, mint, smoothstep(0.42, 0.75, value));
+	vec3 deep = vec3(0.055, 0.255, 0.29);
+	vec3 teal = vec3(0.16, 0.55, 0.51);
+	vec3 mint = vec3(0.55, 0.79, 0.69);
+	vec3 cream = vec3(0.96, 0.93, 0.77);
+	vec3 colour = mix(deep, teal, smoothstep(0.08, 0.46, value));
+	colour = mix(colour, mint, smoothstep(0.40, 0.75, value));
 	colour = mix(colour, cream, smoothstep(0.73, 1.0, value));
-	return mix(colour, vec3(0.43, 0.31, 0.67), accent * 0.24);
+	return mix(colour, vec3(0.44, 0.30, 0.67), accent * 0.28);
 }
 
 vec3 nightPalette(float value, float accent) {
-	vec3 navy = vec3(0.018, 0.075, 0.21);
-	vec3 cobalt = vec3(0.045, 0.22, 0.43);
-	vec3 cyan = vec3(0.10, 0.48, 0.56);
-	vec3 colour = mix(navy, cobalt, smoothstep(0.08, 0.58, value));
-	colour = mix(colour, cyan, smoothstep(0.52, 0.92, value));
-	return mix(colour, vec3(0.94, 0.72, 0.22), accent * 0.28);
+	vec3 navy = vec3(0.014, 0.055, 0.18);
+	vec3 cobalt = vec3(0.035, 0.19, 0.42);
+	vec3 cyan = vec3(0.075, 0.43, 0.54);
+	vec3 colour = mix(navy, cobalt, smoothstep(0.06, 0.56, value));
+	colour = mix(colour, cyan, smoothstep(0.50, 0.93, value));
+	return mix(colour, vec3(0.96, 0.70, 0.20), accent * 0.32);
 }
 
 void main() {
@@ -101,35 +103,74 @@ void main() {
 	float energy = tensor.a;
 	vec2 tangent = vec2(-direction.y, direction.x);
 	float time = uTime * uMotion;
-	vec2 drift = direction * sin(time * 0.16 + energy * 5.0) * 0.0020;
+	vec2 drift = direction * sin(time * 0.14 + energy * 5.2) * 0.0018;
 	vec2 scaled = vec2((uv.x + drift.x) * aspect, uv.y + drift.y);
-	float broad = fbm(scaled * 2.7 + direction * 1.9);
-	float strokeWave = sin(dot(scaled * vec2(31.0, 23.0), tangent) + broad * 8.0 + time * 0.18);
-	float shortStroke = smoothstep(-0.55, 0.92, strokeWave) * coherence;
-	float ridges = fbm(scaled * 10.5 + tangent * broad * 2.0);
-	float pigment = clamp(0.18 + broad * 0.52 + energy * 0.32 + shortStroke * 0.12, 0.0, 1.0);
-	float accent = smoothstep(0.76, 0.98, energy * 0.72 + ridges * 0.38) * coherence;
+	vec2 brushSpace = vec2(dot(scaled, direction), dot(scaled, tangent));
+
+	float broad = fbm(scaled * 2.65 + direction * 1.85);
+	float ridges = fbm(scaled * 9.6 + tangent * broad * 2.15);
+	float strokeWave = sin(brushSpace.y * 43.0 + broad * 7.6 + time * 0.16);
+	float strokeBand = 1.0 - smoothstep(0.18, 0.92, abs(strokeWave));
+	float strokeSegment = smoothstep(
+		0.30,
+		0.76,
+		noise(vec2(brushSpace.x * 5.2 + time * 0.012, floor(brushSpace.y * 2.4) + energy * 2.0))
+	);
+	float bristleRidge = pow(
+		1.0 - abs(sin(brushSpace.y * 118.0 + ridges * 5.4)),
+		4.5
+	) * coherence;
+	float shortStroke = strokeBand * strokeSegment * coherence;
+	float pigmentGlaze = smoothstep(0.26, 0.88, broad * 0.62 + ridges * 0.38);
+	float pigment = clamp(
+		0.14 + broad * 0.48 + energy * 0.30 + shortStroke * 0.16 + bristleRidge * 0.07,
+		0.0,
+		1.0
+	);
+	float accent = smoothstep(
+		0.73,
+		0.98,
+		energy * 0.66 + ridges * 0.28 + bristleRidge * 0.20
+	) * coherence;
+
 	vec3 base = mix(dayPalette(pigment, accent), nightPalette(pigment, accent), uDark);
+	vec3 underpaint = mix(
+		vec3(0.075, 0.31, 0.30),
+		vec3(0.012, 0.065, 0.20),
+		uDark
+	);
+	base = mix(underpaint, base, 0.72 + pigmentGlaze * 0.22);
+	vec3 mineralGold = mix(vec3(0.95, 0.79, 0.39), vec3(1.0, 0.69, 0.16), uDark);
+	base = mix(base, mineralGold, accent * mix(0.075, 0.14, uDark));
 
-	float height = broad * 0.45 + ridges * 0.28 + shortStroke * 0.27;
-	vec3 normal = normalize(vec3(-dFdx(height) * 24.0, -dFdy(height) * 24.0, 1.0));
-	vec3 lightDirection = normalize(vec3((uPointer.x - 0.5) * 1.1, (0.5 - uPointer.y) * 0.9, 0.9));
+	float height =
+		broad * 0.38 +
+		ridges * 0.23 +
+		shortStroke * 0.25 +
+		bristleRidge * 0.14;
+	vec3 normal = normalize(vec3(-dFdx(height) * 25.0, -dFdy(height) * 25.0, 1.0));
+	vec3 lightDirection = normalize(vec3((uPointer.x - 0.5) * 1.05, (0.5 - uPointer.y) * 0.86, 0.92));
 	float diffuse = max(dot(normal, lightDirection), 0.0);
-	float roughness = mix(0.78, 0.36, coherence * energy);
+	float roughness = mix(0.82, 0.34, coherence * energy);
 	vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
-	float specular = pow(max(dot(normal, halfVector), 0.0), mix(10.0, 34.0, 1.0 - roughness));
-	vec3 lightColour = mix(vec3(1.0, 0.94, 0.78), vec3(1.0, 0.78, 0.30), uDark);
-	base *= 0.77 + diffuse * 0.33;
-	base += lightColour * specular * (0.09 + energy * 0.14);
+	float specular = pow(max(dot(normal, halfVector), 0.0), mix(9.0, 32.0, 1.0 - roughness));
+	vec3 lightColour = mix(vec3(1.0, 0.94, 0.76), vec3(1.0, 0.75, 0.26), uDark);
+	base *= 0.75 + diffuse * 0.36;
+	base += lightColour * specular * (0.075 + energy * 0.13 + bristleRidge * 0.035);
 
-	vec2 center = vec2((uv.x - 0.5) / 0.36, (uv.y - 0.43) / 0.28);
-	float protection = exp(-dot(center, center) * 1.65);
-	vec3 calm = mix(vec3(0.84, 0.91, 0.87), vec3(0.055, 0.14, 0.25), uDark);
-	base = mix(base, calm, protection * mix(0.30, 0.22, uDark));
-	float grain = hash21(gl_FragCoord.xy + floor(uTime * 4.0)) - 0.5;
-	base += grain * 0.015;
-	float vignette = smoothstep(1.05, 0.24, length((uv - 0.5) * vec2(1.0, 0.78)));
-	base *= 0.84 + vignette * 0.16;
+	vec2 center = vec2((uv.x - 0.5) / 0.37, (uv.y - 0.43) / 0.29);
+	float readingProtection = exp(-dot(center, center) * 1.72);
+	vec3 calm = mix(vec3(0.84, 0.91, 0.85), vec3(0.045, 0.13, 0.24), uDark);
+	base = mix(base, calm, readingProtection * mix(0.25, 0.18, uDark));
+
+	float canvasWeave =
+		sin(gl_FragCoord.x * 1.57 + broad * 2.0) *
+		sin(gl_FragCoord.y * 1.43 - broad * 1.4);
+	base += canvasWeave * mix(0.008, 0.011, uDark) * (1.0 - readingProtection * 0.35);
+	float pigmentGrain = hash21(gl_FragCoord.xy * 0.73) - 0.5;
+	base += pigmentGrain * 0.009;
+	float vignette = smoothstep(1.08, 0.25, length((uv - 0.5) * vec2(1.0, 0.78)));
+	base *= 0.83 + vignette * 0.17;
 	outColor = vec4(base, 1.0);
 }`;
 
@@ -184,6 +225,15 @@ function shouldUseStaticMode(): boolean {
 	return reducedMotion || saveData || (coarsePointer && window.innerWidth < 900);
 }
 
+function getAdaptiveDpr(cssWidth: number, cssHeight: number): number {
+	const cssPixels = Math.max(1, cssWidth * cssHeight);
+	const pixelBudgetDpr = Math.sqrt(MAX_RENDER_PIXELS / Math.max(cssPixels, 1));
+	return Math.max(
+		MIN_DPR,
+		Math.min(window.devicePixelRatio || 1, MAX_DPR, pixelBudgetDpr),
+	);
+}
+
 export function initImpastoRenderer(): void {
 	const impastoWindow = window as ImpastoWindow;
 	impastoWindow.__katelyaImpastoCleanup?.();
@@ -226,6 +276,7 @@ export function initImpastoRenderer(): void {
 	const vao = gl.createVertexArray();
 	const texture = gl.createTexture();
 	if (!vao || !texture) {
+		gl.deleteProgram(program);
 		setStatic();
 		return;
 	}
@@ -274,9 +325,11 @@ export function initImpastoRenderer(): void {
 
 	const resize = () => {
 		resizeFrame = 0;
-		const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-		const width = Math.max(1, Math.round(window.innerWidth * dpr));
-		const height = Math.max(1, Math.round(window.innerHeight * dpr));
+		const cssWidth = Math.max(1, document.documentElement.clientWidth);
+		const cssHeight = Math.max(1, document.documentElement.clientHeight);
+		const dpr = getAdaptiveDpr(cssWidth, cssHeight);
+		const width = Math.max(1, Math.round(cssWidth * dpr));
+		const height = Math.max(1, Math.round(cssHeight * dpr));
 		if (canvas.width === width && canvas.height === height) return;
 		canvas.width = width;
 		canvas.height = height;
@@ -309,8 +362,8 @@ export function initImpastoRenderer(): void {
 		const pointerActive = now < pointerActiveUntil;
 		const themeActive = now < themeBurstUntil;
 		const fps = pointerActive ? POINTER_FPS : themeActive ? THEME_FPS : IDLE_FPS;
-		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.045);
-		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.045);
+		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.04);
+		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.04);
 
 		gl.useProgram(program);
 		gl.bindVertexArray(vao);
@@ -318,7 +371,7 @@ export function initImpastoRenderer(): void {
 		gl.uniform2f(uniforms.pointer, pointerX, pointerY);
 		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
 		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
-		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.5 : 0.18);
+		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.46 : 0.12);
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		schedule(1000 / fps);
 	};
@@ -352,11 +405,19 @@ export function initImpastoRenderer(): void {
 		schedule();
 	};
 
+	const onContextLost = (event: Event) => {
+		event.preventDefault();
+		visible = false;
+		clearSchedule();
+		setStatic();
+	};
+
 	window.addEventListener("pointermove", onPointerMove, { passive: true });
 	window.addEventListener("resize", queueResize, { passive: true });
 	window.addEventListener("katelya-theme-change", onThemeChange);
 	document.addEventListener("visibilitychange", onVisibilityChange);
 	document.addEventListener("swup:page:view", onPageView);
+	canvas.addEventListener("webglcontextlost", onContextLost);
 	root.classList.remove("impasto-static");
 	root.classList.add("impasto-ready");
 	resize();
@@ -370,6 +431,7 @@ export function initImpastoRenderer(): void {
 		window.removeEventListener("katelya-theme-change", onThemeChange);
 		document.removeEventListener("visibilitychange", onVisibilityChange);
 		document.removeEventListener("swup:page:view", onPageView);
+		canvas.removeEventListener("webglcontextlost", onContextLost);
 		gl.deleteTexture(texture);
 		gl.deleteVertexArray(vao);
 		gl.deleteProgram(program);
