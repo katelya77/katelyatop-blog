@@ -4,8 +4,14 @@ import { expect, test } from "@playwright/test";
 const ARTIFACT_DIR = "artifacts/ui";
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
 
+type MusicProbeState = {
+	currentSong?: { url?: string };
+	playlist?: unknown[];
+};
+
 type MediaProbeWindow = Window & {
 	__katelyaMediaPlayCalls?: string[];
+	__katelyaMusicState?: MusicProbeState | null;
 };
 
 test.describe("mobile loading performance", () => {
@@ -63,16 +69,26 @@ test.describe("mobile loading performance", () => {
 		});
 
 		await page.addInitScript(() => {
+			const probeWindow = window as MediaProbeWindow;
 			const calls: string[] = [];
 			Object.defineProperty(window, "__katelyaMediaPlayCalls", {
 				configurable: true,
 				value: calls,
 			});
+			Object.defineProperty(window, "__katelyaMusicState", {
+				configurable: true,
+				writable: true,
+				value: null,
+			});
+			window.addEventListener("music-sidebar:state", (event) => {
+				probeWindow.__katelyaMusicState = (
+					event as CustomEvent<MusicProbeState>
+				).detail;
+			});
+
 			const nativePlay = HTMLMediaElement.prototype.play;
 			HTMLMediaElement.prototype.play = function () {
-				(window as MediaProbeWindow).__katelyaMediaPlayCalls?.push(
-					this.currentSrc || this.src,
-				);
+				probeWindow.__katelyaMediaPlayCalls?.push(this.currentSrc || this.src);
 				return nativePlay.call(this);
 			};
 		});
@@ -83,13 +99,25 @@ test.describe("mobile loading performance", () => {
 			);
 
 		await page.goto("/", { waitUntil: "domcontentloaded" });
+		await page.waitForFunction(
+			() => {
+				const state = (window as MediaProbeWindow).__katelyaMusicState;
+				return (
+					(state?.playlist?.length ?? 0) > 0 && Boolean(state?.currentSong?.url)
+				);
+			},
+			undefined,
+			{ timeout: 12000 },
+		);
+
 		const playButtons = page.getByRole("button", { name: "播放" });
 		await expect(playButtons.last()).toBeVisible();
-		await page.waitForTimeout(2500);
+		await expect(playButtons.last()).toBeEnabled();
+		await page.waitForTimeout(1200);
 
 		expect(
 			audioRequests,
-			"idle hydration must not keep the mobile browser loading a remote song",
+			"playlist metadata may load, but idle hydration must not request a remote song",
 		).toHaveLength(0);
 		expect(await readPlayCalls()).toHaveLength(0);
 
