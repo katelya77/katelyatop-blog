@@ -5,7 +5,6 @@ import { onMount } from "svelte";
 import I18nKey from "../../../i18n/i18nKey";
 import { i18n } from "../../../i18n/translation";
 import { navigateToPage } from "../../../utils/navigation-utils";
-import { panelManager } from "../../../utils/panel-manager.js";
 import {
 	checkIsHomePage,
 	generatePostItems,
@@ -16,21 +15,45 @@ import {
 	type TOCItem,
 } from "./hooks/useMobileTOC";
 
+type PopoverPanel = HTMLDivElement & {
+	showPopover?: () => void;
+	hidePopover?: () => void;
+};
+
+type PopoverToggleEvent = Event & {
+	newState?: "open" | "closed";
+};
+
 let tocItems: TOCItem[] = $state([]);
 let postItems: PostItem[] = $state([]);
 let activeId = $state("");
 let isHomePage = $state(false);
+let panelElement = $state<PopoverPanel | null>(null);
 
 let observer: IntersectionObserver | undefined;
 let initializing = false;
 let swupListenersRegistered = $state(false);
 
-const togglePanel = async () => {
-	await panelManager.togglePanel("mobile-toc-panel");
+const closePanel = () => {
+	if (
+		typeof panelElement?.hidePopover === "function" &&
+		panelElement.matches(":popover-open")
+	) {
+		panelElement.hidePopover();
+	}
 };
 
 const setPanelVisibility = async (show: boolean): Promise<void> => {
-	await panelManager.togglePanel("mobile-toc-panel", show);
+	if (show) {
+		if (
+			typeof panelElement?.showPopover === "function" &&
+			!panelElement.matches(":popover-open")
+		) {
+			panelElement.showPopover();
+		}
+		return;
+	}
+	closePanel();
 };
 
 const scrollToHeading = (id: string) => {
@@ -185,9 +208,34 @@ onMount(() => {
 		passive: true,
 	});
 
+	// Native popover wiring: mirror NavMenuPanel — mutual exclusion via
+	// katelya:overlay-open, close on swup navigations.
+	const onPopoverToggle = (event: Event) => {
+		if ((event as PopoverToggleEvent).newState === "open") {
+			document.dispatchEvent(
+				new CustomEvent("katelya:overlay-open", {
+					detail: { id: "mobile-toc" },
+				}),
+			);
+		}
+	};
+	const onOverlayOpen = (event: Event) => {
+		if ((event as CustomEvent<{ id?: string }>).detail?.id !== "mobile-toc") {
+			closePanel();
+		}
+	};
+	const onPageView = () => closePanel();
+
+	panelElement?.addEventListener("toggle", onPopoverToggle);
+	document.addEventListener("katelya:overlay-open", onOverlayOpen);
+	document.addEventListener("swup:page:view", onPageView);
+
 	return () => {
 		observer?.disconnect();
 		window.removeEventListener("scroll", updateActiveHeading);
+		panelElement?.removeEventListener("toggle", onPopoverToggle);
+		document.removeEventListener("katelya:overlay-open", onOverlayOpen);
+		document.removeEventListener("swup:page:view", onPageView);
 
 		const w = window as unknown as {
 			swup?: {
@@ -236,8 +284,10 @@ const getActivePadding = (level: number): string => {
 </script>
 
 <button
-	onclick={togglePanel}
+	popovertarget="mobile-toc-panel"
 	aria-label="Table of Contents"
+	aria-haspopup="dialog"
+	aria-controls="mobile-toc-panel"
 	id="mobile-toc-switch"
 	class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90 lg:hidden! theme-switch-btn"
 >
@@ -245,8 +295,12 @@ const getActivePadding = (level: number): string => {
 </button>
 
 <div
+	bind:this={panelElement}
 	id="mobile-toc-panel"
-	class="float-panel float-panel-closed mobile-toc-panel absolute md:w-[20rem] w-[calc(100vw-2rem)] top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-4"
+	popover="auto"
+	role="dialog"
+	aria-label={i18n(I18nKey.tableOfContents)}
+	class="float-panel mobile-toc-panel transition-all w-[calc(100vw-2rem)] md:w-[20rem] shadow-2xl rounded-2xl p-4"
 >
 	<div class="flex items-center justify-between mb-4">
 		<h3 class="text-lg font-bold text-(--primary)">
@@ -255,7 +309,7 @@ const getActivePadding = (level: number): string => {
 				: i18n(I18nKey.tableOfContents)}
 		</h3>
 		<button
-			onclick={togglePanel}
+			onclick={closePanel}
 			aria-label="Close TOC"
 			class="btn-plain rounded-lg h-8 w-8 active:scale-90 theme-switch-btn"
 		>

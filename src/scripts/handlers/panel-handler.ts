@@ -1,8 +1,8 @@
 /**
  * 面板处理器
  * 管理面板的点击外部关闭功能
- * 注：search-panel / display-setting / nav-menu-panel 已迁移为原生
- * popover="auto"，由浏览器原生 light dismiss 处理点击外部关闭，
+ * 注：search-panel / display-setting / nav-menu-panel / mobile-toc-panel
+ * 已迁移为原生 popover="auto"，由浏览器原生 light dismiss 处理点击外部关闭，
  * 不在此处登记，避免 class 显隐与 popover 状态互相覆盖。
  */
 
@@ -20,10 +20,6 @@ interface PanelConfig {
  */
 export class PanelHandler {
 	private panels: PanelConfig[] = [
-		{
-			id: "mobile-toc-panel",
-			ignoreElements: ["mobile-toc-panel", "mobile-toc-switch"],
-		},
 		{
 			id: "wallpaper-mode-panel",
 			ignoreElements: ["wallpaper-mode-panel", "wallpaper-mode-switch"],

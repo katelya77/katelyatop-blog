@@ -476,7 +476,12 @@ html.katelya-art-theme .katelya-hero-links a:focus-visible {
 	transform: translateY(-3px);
 }
 
-html.katelya-art-theme #navbar > div:not(.absolute) {
+/*
+ * 经典单卡片导航的绘制规则。katelya-navbar-shell 的两个 div 子节点
+ * （链接栏与工具区）由 impasto-geometry.css 负责，必须排除在外，
+ * 否则它们会被画上第二个半透明卡片背景（滚动残影矩形的来源）。
+ */
+html.katelya-art-theme #navbar > div:not(.absolute):not(.katelya-navbar-links):not(.katelya-navbar-tools) {
 	border: 1px solid rgba(211, 228, 219, 0.2) !important;
 	border-radius: 1.2rem !important;
 	background:
@@ -489,13 +494,13 @@ html.katelya-art-theme #navbar > div:not(.absolute) {
 	-webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
 }
 
-html.katelya-art-theme #navbar.scrolled > div:not(.absolute) {
+html.katelya-art-theme #navbar.scrolled > div:not(.absolute):not(.katelya-navbar-links):not(.katelya-navbar-tools) {
 	border-color: var(--katelya-line) !important;
 	background: rgba(240, 247, 242, 0.84) !important;
 	box-shadow: var(--katelya-shadow) !important;
 }
 
-html.katelya-art-theme.dark #navbar.scrolled > div:not(.absolute) {
+html.katelya-art-theme.dark #navbar.scrolled > div:not(.absolute):not(.katelya-navbar-links):not(.katelya-navbar-tools) {
 	background: rgba(14, 36, 39, 0.88) !important;
 }
 
@@ -716,7 +721,7 @@ html.katelya-art-theme ::-webkit-scrollbar-thumb {
 		font-size: 0.7rem;
 	}
 
-	html.katelya-art-theme #navbar > div:not(.absolute) {
+	html.katelya-art-theme #navbar > div:not(.absolute):not(.katelya-navbar-links):not(.katelya-navbar-tools) {
 		border-radius: 0 0 1.1rem 1.1rem !important;
 	}
 

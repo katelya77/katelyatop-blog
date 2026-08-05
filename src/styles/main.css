@@ -238,7 +238,7 @@ html {
   .enable-card-border .card-base-transparent {
     @apply transition-all duration-300 border border-(--line-divider) shadow-xs;
   }
-  .enable-card-border #navbar > div:not(.absolute) {
+  .enable-card-border #navbar > div:not(.absolute):not(.katelya-navbar-links):not(.katelya-navbar-tools) {
     @apply transition-all duration-300 border shadow-xs;
     border-color: var(--line-divider) !important;
   }
@@ -271,7 +271,7 @@ html {
     @apply bg-(--card-bg-transparent) backdrop-blur-sm;
   }
 
-  .wallpaper-transparent #navbar > div {
+  .wallpaper-transparent #navbar > div:not(.katelya-navbar-links):not(.katelya-navbar-tools) {
     @apply bg-(--card-bg-transparent) backdrop-blur-sm;
   }
 

@@ -70,13 +70,15 @@ html.katelya-art-theme .katelya-search-desktop-panel[data-fallback-open="true"] 
 
 /* Settings and mobile menu panels keep their theme-driven fixed position. */
 html.katelya-art-theme #display-setting[popover],
-html.katelya-art-theme #nav-menu-panel[popover] {
+html.katelya-art-theme #nav-menu-panel[popover],
+html.katelya-art-theme #mobile-toc-panel[popover] {
   bottom: auto !important;
   margin: 0 !important;
 }
 
 html.katelya-art-theme #display-setting:not(:popover-open),
-html.katelya-art-theme #nav-menu-panel:not(:popover-open) {
+html.katelya-art-theme #nav-menu-panel:not(:popover-open),
+html.katelya-art-theme #mobile-toc-panel:not(:popover-open) {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;

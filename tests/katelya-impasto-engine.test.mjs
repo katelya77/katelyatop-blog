@@ -23,15 +23,35 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /document\.visibilityState/);
 	assert.match(renderer, /prefers-reduced-motion/);
 	assert.match(renderer, /const MAX_DPR = 1\.4/);
+	assert.match(renderer, /const MIN_DPR = 0\.85/);
+	assert.match(renderer, /const MAX_RENDER_PIXELS = 3_200_000/);
+	assert.match(
+		renderer,
+		/Math\.sqrt\(MAX_RENDER_PIXELS\s*\/\s*Math\.max\(cssPixels,\s*1\)\)/,
+	);
 	assert.match(renderer, /connection\?\.saveData/);
 	assert.match(renderer, /cancelAnimationFrame/);
 	assert.match(renderer, /swup:page:view/);
 	assert.match(renderer, /const POINTER_FPS = 40/);
 	assert.match(renderer, /const THEME_FPS = 30/);
-	assert.match(renderer, /const IDLE_FPS = 10/);
+	assert.match(renderer, /const IDLE_FPS = 8/);
 	assert.match(renderer, /katelya-theme-change/);
 	assert.doesNotMatch(renderer, /MutationObserver/);
 	assert.doesNotMatch(packageJson, /["']three["']/);
+});
+
+test("shader builds directional impasto without extra network textures", async () => {
+	const renderer = await read("src/scripts/impasto-renderer.ts");
+
+	assert.match(renderer, /vec2 direction = normalize\(tensor\.rg/);
+	assert.match(renderer, /float strokeSegment/);
+	assert.match(renderer, /float bristleRidge/);
+	assert.match(renderer, /vec3 underpaint/);
+	assert.match(renderer, /float canvasWeave/);
+	assert.match(renderer, /float pigmentGlaze/);
+	assert.match(renderer, /float readingProtection/);
+	assert.doesNotMatch(renderer, /new Image\(/);
+	assert.doesNotMatch(renderer, /fetch\(/);
 });
 
 test("quantized structure field and generated fallbacks stay compact", async () => {
@@ -101,6 +121,16 @@ test("renderer and CSS expose static mobile and accessible fallbacks", async () 
 	assert.match(renderer, /pointer: coarse/);
 	assert.match(backdrop, /impasto-day\.svg/);
 	assert.match(backdrop, /impasto-night\.svg/);
+	assert.match(backdrop, /\.impasto-backdrop::after/);
+	assert.match(
+		backdrop,
+		/html\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/,
+	);
+	assert.match(
+		backdrop,
+		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*visibility:\s*hidden/,
+	);
+	assert.doesNotMatch(backdrop, /will-change/);
 	assert.match(backdrop, /@media \(prefers-reduced-motion:\s*reduce\)/);
 	assert.match(backdrop, /@media \(forced-colors:\s*active\)/);
 	assert.match(geometry, /@media print/);

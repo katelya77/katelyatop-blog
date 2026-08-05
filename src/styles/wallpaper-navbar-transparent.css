@@ -87,8 +87,11 @@ body.wallpaper-transparent #navbar[data-transparent-mode="semifull"].scrolled {
   --nav-radius: var(--radius-std);
 }
 
-/* 导航栏样式核心 (Navbar Core) */
-#navbar > div {
+/* 导航栏样式核心 (Navbar Core)
+ * 只针对经典单卡片导航：katelya-navbar-shell 的 .katelya-navbar-links /
+ * .katelya-navbar-tools 由 impasto-geometry.css 负责，排除以免二次上漆。
+ */
+#navbar > div:not(.katelya-navbar-links):not(.katelya-navbar-tools) {
   border: none !important;
   outline: none;
 
@@ -132,7 +135,7 @@ body.wallpaper-transparent #navbar[data-transparent-mode="semifull"].scrolled {
 
 @media (width < 1280px) {
   /* 修正移动端 Navbar 布局 */
-  #navbar > div {
+  #navbar > div:not(.katelya-navbar-links):not(.katelya-navbar-tools) {
     border-radius: 0.5rem;
     margin: 0;
     width: 100%;
