@@ -24,6 +24,28 @@ test("Katelya branding and canonical domain are configured", async () => {
 	assert.match(wallpaper, /katelya-van-gogh-night\.svg/);
 });
 
+test("home document title stays exactly on the public brand", async () => {
+	const layout = await read("src/layouts/Layout.astro");
+	assert.match(
+		layout,
+		/const pageTitle = title[\s\S]*\? `\$\{title\} - \$\{siteConfig\.title\}`[\s\S]*: siteConfig\.title;/,
+	);
+	assert.doesNotMatch(
+		layout,
+		/\? `\$\{siteConfig\.title\} - \$\{siteConfig\.subtitle\}`/,
+	);
+});
+
+test("footer exposes a polished official ICP filing link", async () => {
+	const footer = await read("src/components/organisms/footer/Footer.astro");
+	assert.match(footer, /赣ICP备2025074096号/);
+	assert.match(footer, /https:\/\/beian\.miit\.gov\.cn\//);
+	assert.match(footer, /target="_blank"/);
+	assert.match(footer, /rel="noopener noreferrer"/);
+	assert.match(footer, /aria-label="赣ICP备2025074096号/);
+	assert.match(footer, /katelya-icp-badge/);
+});
+
 test("Katelya profile links are present", async () => {
 	const profile = await read("src/config/profileConfig.ts");
 	assert.match(profile, /https:\/\/github\.com\/katelya77/);
