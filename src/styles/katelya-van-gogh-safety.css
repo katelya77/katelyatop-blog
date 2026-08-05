@@ -1,5 +1,7 @@
 /* Targeted containment and runtime-safety rules kept separate from the visual system. */
 
+@import "./katelya-responsive-hero.css";
+
 html.katelya-art-theme {
 	--btn-content: var(--katelya-cobalt);
 	--btn-regular-bg: rgba(226, 239, 230, 0.9);
