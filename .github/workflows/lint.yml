@@ -137,6 +137,15 @@ jobs:
           ENABLE_CONTENT_SYNC: false
           CI: true
 
+      - name: Upload UI verification screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-verification
+          path: artifacts/ui/*.png
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
