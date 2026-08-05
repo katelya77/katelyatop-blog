@@ -37,14 +37,28 @@ test("local playlist contains the exact supplied 21 tracks in order", () => {
 	for (const [title, artist, url] of tracks) {
 		const titleIndex = source.indexOf(`title: ${JSON.stringify(title)}`);
 		assert.ok(titleIndex > previousIndex, `${title} must appear in supplied order`);
-		assert.match(source, new RegExp(`artist:\\s*${JSON.stringify(artist).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
-		assert.ok(source.includes(`url: ${JSON.stringify(url)}`), `${title} URL must match exactly`);
+		assert.match(
+			source,
+			new RegExp(
+				`artist:\\s*${JSON.stringify(artist).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`,
+			),
+		);
+		assert.ok(
+			source.includes(`url: ${JSON.stringify(url)}`),
+			`${title} URL must match exactly`,
+		);
 		previousIndex = titleIndex;
 	}
-	assert.equal((source.match(/\bid:\s*\d+,/g) || []).length, 21);
+
+	assert.equal((source.match(/\bid:\s*\d+,/g) || []).length, 22);
+	assert.match(source, /export const DEFAULT_SONG[\s\S]*id:\s*0,/);
 	assert.equal((source.match(/duration:\s*0,/g) || []).length, 22);
+	assert.match(
+		source,
+		/const SHARED_PLAYLIST_COVER\s*=\s*\n?\s*"assets\/music\/cover\/katelya-starry-playlist\.svg"/,
+	);
 	assert.equal(
-		(source.match(/cover:\s*"assets\/music\/cover\/katelya-starry-playlist\.svg"/g) || []).length,
+		(source.match(/cover:\s*SHARED_PLAYLIST_COVER/g) || []).length,
 		21,
 	);
 });
