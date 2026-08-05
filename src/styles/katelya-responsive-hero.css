@@ -91,18 +91,16 @@ html.katelya-art-theme .banner-image-slot-desktop {
 }
 
 /*
- * Short landscape phones must never inherit the old 60vh banner collapse.
- * One visual viewport is the floor; 25rem leaves enough room for the complete
- * title, subtitle and action row on devices with very short browser heights.
+ * Rotated phones often report CSS widths above 768px. A short viewport, not
+ * width alone, identifies the compact landscape client and prevents the old
+ * 60vh banner collapse.
  */
-@media (max-width: 767px) and (orientation: landscape) {
+@media (max-width: 1023px) and (max-height: 560px) and (orientation: landscape) {
 	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
 		.katelya-hero-stage.is-home-hero {
 		--katelya-active-hero-height: max(100svh, 25rem) !important;
 	}
-}
 
-@media (max-width: 1023px) and (max-height: 560px) and (orientation: landscape) {
 	html.katelya-art-theme .katelya-orbit-hero {
 		padding: calc(var(--impasto-header-height) + var(--impasto-header-top) * 2 + 0.7rem)
 			1rem 1.1rem !important;
