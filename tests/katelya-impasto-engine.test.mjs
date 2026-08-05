@@ -64,7 +64,11 @@ test("first painted frame owns readiness and static fallback has one owner", asy
 test("shader builds irregular tensor-guided impasto instead of formulaic arcs", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 
-	assert.match(renderer, /vec2 direction = normalize\(tensor\.rg/);
+	assert.match(
+		renderer,
+		/vec2 tensorDirection = normalize\(tensor\.rg[\s\S]*vec2 direction = normalize\(/,
+	);
+	assert.match(renderer, /localWarp \* mix\(/);
 	assert.match(renderer, /float strokeSegment/);
 	assert.match(renderer, /float bristleRidge/);
 	assert.match(renderer, /vec3 underpaint/);
