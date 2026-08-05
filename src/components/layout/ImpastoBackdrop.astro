@@ -1,4 +1,5 @@
 ---
+import "../../styles/katelya-hero-depth.css";
 ---
 
 <div class="impasto-backdrop" aria-hidden="true">
@@ -7,8 +8,14 @@
 </div>
 
 <script>
+	import { initKatelyaHeroDepth } from "../../scripts/hero-depth";
 	import { initImpastoRenderer } from "../../scripts/impasto-renderer";
 
-	initImpastoRenderer();
-	document.addEventListener("astro:page-load", initImpastoRenderer);
+	function initializeKatelyaArtLayers() {
+		initImpastoRenderer();
+		initKatelyaHeroDepth();
+	}
+
+	initializeKatelyaArtLayers();
+	document.addEventListener("astro:page-load", initializeKatelyaArtLayers);
 </script>
