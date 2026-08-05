@@ -59,7 +59,8 @@ test.describe("mobile loading performance", () => {
 		});
 
 		await page.goto("/", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector("button.music-fab", { state: "visible" });
+		const playButtons = page.getByRole("button", { name: "播放" });
+		await expect(playButtons.last()).toBeVisible();
 		await page.waitForTimeout(2500);
 
 		expect(
@@ -67,10 +68,7 @@ test.describe("mobile loading performance", () => {
 			"idle hydration must not keep the mobile browser loading a remote song",
 		).toHaveLength(0);
 
-		await page.locator("button.music-fab").click();
-		const floatingPlayer = page.locator(".music-player-fab-anchor");
-		await expect(floatingPlayer).toBeVisible();
-		await floatingPlayer.getByRole("button", { name: "播放" }).click();
+		await playButtons.last().click();
 		await expect
 			.poll(() => audioRequests.length, { timeout: 5000 })
 			.toBeGreaterThan(0);
