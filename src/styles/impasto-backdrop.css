@@ -17,18 +17,21 @@ html.katelya-art-theme.dark {
 		linear-gradient(142deg, #061333 0%, #123b72 50%, #075667 100%);
 }
 
-html.katelya-art-theme body {
+html.katelya-art-theme body,
+html.katelya-art-theme.dark body {
 	background-color: #dcebe2 !important;
 	background-image: var(--impasto-boot-underpaint) !important;
 	background-position: center top !important;
 	background-size: cover !important;
+	background-attachment: scroll !important;
 }
 
 html.katelya-art-theme.dark body {
 	background-color: #071a42 !important;
 }
 
-html.impasto-ready body {
+html.katelya-art-theme.impasto-ready body,
+html.katelya-art-theme.dark.impasto-ready body {
 	background-image: none !important;
 }
 
@@ -59,7 +62,7 @@ html.impasto-ready body {
 .impasto-static-fallback {
 	background-color: #7fbab0;
 	background-image:
-		linear-gradient(rgba(224, 239, 225, 0.10), rgba(205, 227, 216, 0.22)),
+		linear-gradient(rgba(224, 239, 225, 0.1), rgba(205, 227, 216, 0.22)),
 		url("/assets/impasto/impasto-day.svg");
 	background-position: center;
 	background-size: cover;
@@ -94,7 +97,7 @@ html.impasto-ready body {
 html.dark .impasto-static-fallback {
 	background-color: #08224c;
 	background-image:
-		linear-gradient(rgba(2, 12, 35, 0.10), rgba(3, 18, 43, 0.23)),
+		linear-gradient(rgba(2, 12, 35, 0.1), rgba(3, 18, 43, 0.23)),
 		url("/assets/impasto/impasto-night.svg");
 }
 
@@ -125,11 +128,15 @@ html.impasto-static .impasto-backdrop canvas {
 }
 
 html.katelya-art-theme body::before,
-html.katelya-art-theme body::after {
+html.katelya-art-theme body::after,
+html.katelya-art-theme.dark body::before,
+html.katelya-art-theme.dark body::after {
 	display: none !important;
+	content: none !important;
 }
 
-html.katelya-art-theme #banner-wrapper {
+html.katelya-art-theme #banner-wrapper,
+html.katelya-art-theme.dark #banner-wrapper {
 	position: absolute !important;
 	top: 0 !important;
 	left: 0 !important;
@@ -137,6 +144,7 @@ html.katelya-art-theme #banner-wrapper {
 	width: 100% !important;
 	height: 100% !important;
 	background: transparent !important;
+	background-image: none !important;
 	transform: none !important;
 }
 
@@ -174,7 +182,8 @@ html.katelya-art-theme.dark #banner-wrapper::before {
 		) !important;
 }
 
-html.katelya-art-theme #banner-wrapper::after {
+html.katelya-art-theme #banner-wrapper::after,
+html.katelya-art-theme.dark #banner-wrapper::after {
 	background: linear-gradient(180deg, transparent 66%, var(--page-bg)) !important;
 }
 
