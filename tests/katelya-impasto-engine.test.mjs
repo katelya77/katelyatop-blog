@@ -32,9 +32,9 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /connection\?\.saveData/);
 	assert.match(renderer, /cancelAnimationFrame/);
 	assert.match(renderer, /swup:page:view/);
-	assert.match(renderer, /const POINTER_FPS = 40/);
-	assert.match(renderer, /const THEME_FPS = 30/);
-	assert.match(renderer, /const IDLE_FPS = 8/);
+	assert.match(renderer, /const POINTER_FPS = 48/);
+	assert.match(renderer, /const THEME_FPS = 36/);
+	assert.match(renderer, /const IDLE_FPS = 14/);
 	assert.match(renderer, /katelya-theme-change/);
 	assert.doesNotMatch(renderer, /MutationObserver/);
 	assert.doesNotMatch(packageJson, /["']three["']/);
@@ -91,6 +91,13 @@ test("shader builds irregular tensor-guided impasto instead of formulaic arcs", 
 	assert.match(renderer, /vec2 vortexWarp/);
 	assert.match(renderer, /float brokenStroke/);
 	assert.match(renderer, /float paintEdge/);
+	assert.match(renderer, /vec2 vortexCenterA/);
+	assert.match(renderer, /vec2 vortexCenterB/);
+	assert.match(renderer, /vec2 vortexCenterC/);
+	assert.match(renderer, /vec2 broadFlow/);
+	assert.match(renderer, /vec2 secondaryFlow/);
+	assert.match(renderer, /vec2 ridgeFlow/);
+	assert.match(renderer, /normal = normalize\(vec3\(-dFdx\(height\) \* 22\.0/);
 	assert.doesNotMatch(renderer, /new Image\(/);
 	assert.doesNotMatch(renderer, /fetch\(/);
 });
