@@ -7,14 +7,11 @@ import { url } from "../../../utils/url-utils";
 
 const currentYear = new Date().getFullYear();
 
-// 页脚自定义内容逻辑
 let customFooterHtml = "";
 if (footerConfig.enable) {
-	// 优先使用 customHtml，如果为空则使用 FooterConfig.html 文件内容
 	if (footerConfig.customHtml && footerConfig.customHtml.trim() !== "") {
 		customFooterHtml = footerConfig.customHtml.trim();
 	} else {
-		// customHtml 为空时，读取 FooterConfig.html 文件内容
 		try {
 			const footerConfigPath = path.join(
 				process.cwd(),
@@ -22,7 +19,6 @@ if (footerConfig.enable) {
 				"FooterConfig.html",
 			);
 			customFooterHtml = fs.readFileSync(footerConfigPath, "utf-8");
-			// 移除HTML注释
 			customFooterHtml = customFooterHtml
 				.replace(/<!--[\s\S]*?-->/g, "")
 				.trim();
@@ -36,12 +32,10 @@ if (footerConfig.enable) {
 }
 ---
 
-<!--<div class="border-t border-[var(--primary)] mx-16 border-dashed py-8 max-w-[var(--page-width)] flex flex-col items-center justify-center px-6">-->
 <div
 	class="transition border-t border-black/10 dark:border-white/15 my-10 border-dashed mx-32"
 >
 </div>
-<!--<div class="transition bg-[oklch(92%_0.01_var(--hue))] dark:bg-black rounded-2xl py-8 mt-4 mb-8 flex flex-col items-center justify-center px-6">-->
 <div
 	class="transition border-dashed border-[oklch(85%_0.01_var(--hue))] dark:border-white/15 rounded-2xl mb-12 flex flex-col items-center justify-center px-6"
 >
@@ -87,5 +81,113 @@ if (footerConfig.enable) {
 				href="https://github.com/LyraVoid/Mizuki">9.0</a
 			>
 		</div>
+
+		<div class="katelya-icp-row">
+			<a
+				class="katelya-icp-badge"
+				href="https://beian.miit.gov.cn/"
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label="赣ICP备2025074096号，前往工业和信息化部备案管理系统"
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<path
+						d="M12 2.7 19 5.6v5.2c0 4.6-2.9 8.5-7 10.5-4.1-2-7-5.9-7-10.5V5.6L12 2.7Z"
+					></path>
+					<path d="m8.8 11.9 2 2 4.4-4.6"></path>
+				</svg>
+				<span>赣ICP备2025074096号</span>
+			</a>
+		</div>
 	</div>
 </div>
+
+<style>
+	.katelya-icp-row {
+		display: flex;
+		justify-content: center;
+		margin-top: 0.85rem;
+	}
+
+	.katelya-icp-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		min-height: 2rem;
+		padding: 0.36rem 0.78rem;
+		border: 1px solid color-mix(in oklab, var(--primary) 34%, transparent);
+		border-radius: 999px;
+		background:
+			linear-gradient(
+				135deg,
+				color-mix(in oklab, var(--card-bg) 88%, white 12%),
+				color-mix(in oklab, var(--card-bg) 92%, var(--primary) 8%)
+			);
+		box-shadow:
+			0 0.45rem 1.4rem color-mix(in oklab, var(--primary) 10%, transparent),
+			inset 0 1px 0 rgba(255, 255, 255, 0.38);
+		color: var(--primary);
+		font-size: 0.78rem;
+		font-weight: 650;
+		letter-spacing: 0.025em;
+		text-decoration: none;
+		transition:
+			transform 180ms ease,
+			border-color 180ms ease,
+			box-shadow 180ms ease,
+			background 180ms ease;
+	}
+
+	.katelya-icp-badge svg {
+		width: 1rem;
+		height: 1rem;
+		flex: none;
+		fill: color-mix(in oklab, var(--primary) 14%, transparent);
+		stroke: currentColor;
+		stroke-width: 1.7;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.katelya-icp-badge:hover {
+		transform: translateY(-2px);
+		border-color: color-mix(in oklab, var(--primary) 58%, transparent);
+		box-shadow:
+			0 0.7rem 1.8rem color-mix(in oklab, var(--primary) 16%, transparent),
+			inset 0 1px 0 rgba(255, 255, 255, 0.48);
+	}
+
+	.katelya-icp-badge:focus-visible {
+		outline: 3px solid color-mix(in oklab, var(--primary) 28%, transparent);
+		outline-offset: 3px;
+	}
+
+	:global(html.dark) .katelya-icp-badge {
+		background:
+			linear-gradient(
+				135deg,
+				rgba(10, 31, 55, 0.84),
+				rgba(19, 61, 76, 0.74)
+			);
+		box-shadow:
+			0 0.55rem 1.55rem rgba(1, 10, 28, 0.24),
+			inset 0 1px 0 rgba(255, 224, 143, 0.1);
+	}
+
+	@media (max-width: 640px) {
+		.katelya-icp-badge {
+			font-size: 0.74rem;
+			padding-inline: 0.68rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.katelya-icp-badge {
+			transition: none;
+		}
+
+		.katelya-icp-badge:hover {
+			transform: none;
+		}
+	}
+</style>
