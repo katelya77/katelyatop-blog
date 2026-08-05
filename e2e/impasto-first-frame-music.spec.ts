@@ -77,6 +77,18 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 		document.documentElement.classList.contains("dark"),
 	);
 	await page.waitForTimeout(360);
+	await expect(page.locator("#banner-wrapper")).toHaveCSS(
+		"background-image",
+		"none",
+	);
+	const darkSurface = await page.evaluate(() => ({
+		bodyBackgroundImage: getComputedStyle(document.body).backgroundImage,
+		bannerBackgroundImage: getComputedStyle(
+			document.querySelector<HTMLElement>("#banner-wrapper")!,
+		).backgroundImage,
+	}));
+	expect(darkSurface.bodyBackgroundImage).toBe("none");
+	expect(darkSurface.bannerBackgroundImage).toBe("none");
 	await page.screenshot({
 		path: `${ARTIFACT_DIR}/impasto-night-first-frame.png`,
 		fullPage: false,
