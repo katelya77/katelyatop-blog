@@ -160,17 +160,17 @@ void main() {
 	float secondary = fbm(scaled * 5.8 - tangent * 2.1 + vec2(8.2, -4.7));
 	float ridges = fbm(scaled * 12.4 + tangent * broad * 2.7 + direction * secondary);
 	float cellSeed = hash21(floor(brushSpace * vec2(6.1, 13.7)) + vec2(2.7, 11.3));
-	float brokenStroke = brokenStroke(
+	float brokenMask = brokenStroke(
 		brushSpace + vec2(time * 0.006, broad * 0.08),
 		cellSeed
 	) * mix(0.58, 1.0, coherence);
-	float strokeSegment = smoothstep(0.18, 0.86, brokenStroke + ridges * 0.20);
+	float strokeSegment = smoothstep(0.18, 0.86, brokenMask + ridges * 0.20);
 	float bristleRidge = pow(
 		1.0 - abs(sin(brushSpace.y * (82.0 + cellSeed * 71.0) + ridges * 7.2)),
 		5.2
 	) * mix(0.48, 1.0, coherence);
 	float chippedPigment = smoothstep(0.34, 0.76, noise(scaled * 31.0 + cellSeed * 9.0));
-	float paintEdge = paintEdge(fract(brushSpace.x * (2.8 + cellSeed * 3.5)), 0.17);
+	float edgeMask = paintEdge(fract(brushSpace.x * (2.8 + cellSeed * 3.5)), 0.17);
 	float shortStroke = strokeSegment * mix(0.64, 1.0, chippedPigment);
 	float pigmentGlaze = smoothstep(
 		0.22,
@@ -179,7 +179,7 @@ void main() {
 	);
 	float pigment = clamp(
 		0.10 + broad * 0.35 + secondary * 0.18 + energy * 0.23 +
-		shortStroke * 0.21 + bristleRidge * 0.08 + paintEdge * 0.05,
+		shortStroke * 0.21 + bristleRidge * 0.08 + edgeMask * 0.05,
 		0.0,
 		1.0
 	);
@@ -210,7 +210,7 @@ void main() {
 		ridges * 0.15 +
 		shortStroke * 0.27 +
 		bristleRidge * 0.13 +
-		paintEdge * 0.06;
+		edgeMask * 0.06;
 	vec3 normal = normalize(vec3(-dFdx(height) * 31.0, -dFdy(height) * 31.0, 1.0));
 	vec3 lightDirection = normalize(vec3(
 		(uPointer.x - 0.5) * 1.18 + 0.18,
@@ -224,7 +224,7 @@ void main() {
 	vec3 lightColour = mix(vec3(1.0, 0.94, 0.76), vec3(1.0, 0.73, 0.23), uDark);
 	base *= 0.70 + diffuse * 0.42;
 	base += lightColour * specular *
-		(0.055 + energy * 0.12 + bristleRidge * 0.06 + paintEdge * 0.04);
+		(0.055 + energy * 0.12 + bristleRidge * 0.06 + edgeMask * 0.04);
 
 	vec2 center = vec2((uv.x - 0.5) / 0.37, (uv.y - 0.43) / 0.28);
 	float readingProtection = exp(-dot(center, center) * 1.78);
@@ -237,7 +237,7 @@ void main() {
 	base += canvasWeave * mix(0.007, 0.010, uDark) * (1.0 - readingProtection * 0.42);
 	float pigmentGrain = hash21(gl_FragCoord.xy * 0.73) - 0.5;
 	base += pigmentGrain * 0.008;
-	float vignette = smoothstep(1.10, 0.24, length((uv - 0.5) * vec2(1.0, 0.76)));
+	float vignette = 1.0 - smoothstep(0.24, 1.10, length((uv - 0.5) * vec2(1.0, 0.76)));
 	base *= 0.81 + vignette * 0.19;
 	outColor = vec4(base, 1.0);
 }`;
