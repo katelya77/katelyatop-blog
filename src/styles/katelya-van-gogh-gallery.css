@@ -560,7 +560,8 @@ html.katelya-art-theme .katelya-post-cover {
 
 /* Floating panels and controls */
 html.katelya-art-theme #display-setting,
-html.katelya-art-theme #nav-menu-panel {
+html.katelya-art-theme #nav-menu-panel,
+html.katelya-art-theme #mobile-toc-panel {
 	position: fixed !important;
 	top: calc(var(--katelya-gallery-header-height) + var(--katelya-header-offset) * 2 + 0.35rem) !important;
 	right: max(1rem, calc((100vw - var(--page-width)) / 2 + 1rem)) !important;
@@ -672,7 +673,8 @@ html.katelya-art-theme [class*="floating-control"] {
 
 	html.katelya-art-theme .katelya-search-panel,
 	html.katelya-art-theme #display-setting,
-	html.katelya-art-theme #nav-menu-panel {
+	html.katelya-art-theme #nav-menu-panel,
+	html.katelya-art-theme #mobile-toc-panel {
 		top: 4.75rem !important;
 		right: 0.65rem !important;
 		width: calc(100vw - 1.3rem) !important;

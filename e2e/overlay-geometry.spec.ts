@@ -14,7 +14,13 @@ import { expect, type Page, test } from "@playwright/test";
  *     overlaps the hero's closing edge by --katelya-fullscreen-content-overlap.
  */
 
-const PANEL_IDS = ["#display-setting", "#nav-menu-panel", "#search-panel"];
+const PANEL_IDS = [
+	"#display-setting",
+	"#nav-menu-panel",
+	"#search-panel",
+	// Native popover since the overlay refactor; absent from the DOM is fine.
+	"#mobile-toc-panel",
+];
 const ARTIFACT_DIR = "artifacts/ui";
 
 async function gotoHome(page: Page) {
@@ -45,30 +51,60 @@ async function expectPanelsHidden(page: Page) {
  * content (hero, banner, body). Forbidden: any *visible* element that is a
  * floating panel or a native popover — those would be the ghost rectangles.
  */
-async function expectNoGhostOverlay(page: Page, label: string) {
-	const offenders = await page.evaluate(() => {
+async function expectNoGhostOverlay(
+	page: Page,
+	label: string,
+	points?: Array<[number, number]>,
+) {
+	const offenders = await page.evaluate((probePoints) => {
 		const describe = (el: Element) => {
 			const rect = el.getBoundingClientRect();
 			return `${el.tagName.toLowerCase()}#${el.id || "?"}.${[...el.classList].join(".")} ${Math.round(rect.width)}x${Math.round(rect.height)}`;
 		};
-		const hits = document.elementsFromPoint(window.innerWidth - 250, 70);
+		const pts: Array<[number, number]> = probePoints ?? [
+			[window.innerWidth - 250, 70],
+		];
 		const bad: string[] = [];
-		for (const el of hits) {
-			const panel = el.closest(".float-panel, [popover]");
-			if (!panel) continue;
-			const style = window.getComputedStyle(panel);
-			const visible =
-				style.display !== "none" &&
-				style.visibility !== "hidden" &&
-				Number(style.opacity) > 0;
-			if (visible) bad.push(describe(panel));
+		for (const [x, y] of pts) {
+			const hits = document.elementsFromPoint(x, y);
+			for (const el of hits) {
+				const panel = el.closest(".float-panel, [popover]");
+				if (!panel) continue;
+				const style = window.getComputedStyle(panel);
+				const visible =
+					style.display !== "none" &&
+					style.visibility !== "hidden" &&
+					Number(style.opacity) > 0;
+				if (visible)
+					bad.push(`(${Math.round(x)},${Math.round(y)}) ${describe(panel)}`);
+			}
 		}
 		return bad;
-	});
+	}, points ?? null);
 	expect(
 		offenders,
-		`[${label}] elementsFromPoint(innerWidth-250, 70) hit visible overlay panel(s) — ghost rectangle regression`,
+		`[${label}] ghost probe hit visible overlay panel(s) — ghost rectangle regression`,
 	).toEqual([]);
+}
+
+/**
+ * Probe points around the navbar's right end, derived from the live navbar
+ * rect: just below the tools strip (where the 2560px ghost rectangle used to
+ * appear) plus the original fixed points.
+ */
+async function navbarProbePoints(page: Page): Promise<Array<[number, number]>> {
+	return page.evaluate(() => {
+		const nav = document.getElementById("navbar");
+		if (!nav) return [[window.innerWidth - 250, 70]] as Array<[number, number]>;
+		const r = nav.getBoundingClientRect();
+		return [
+			[r.right - 120, r.bottom + 20],
+			[r.right - 300, r.bottom + 20],
+			[r.right - 120, r.bottom + 50],
+			[window.innerWidth - 250, 70],
+			[window.innerWidth - 350, 130],
+		] as Array<[number, number]>;
+	});
 }
 
 /**
@@ -284,6 +320,11 @@ test.describe("desktop viewports", () => {
 	}) => {
 		await page.setViewportSize({ width: 1664, height: 920 });
 		await gotoHome(page);
+		// @swup/astro initializes on idle — navigating before window.swup
+		// exists causes a full reload, wiping the swup:page:view counter.
+		await page.waitForFunction(() =>
+			document.documentElement.classList.contains("swup-enabled"),
+		);
 		await expect(
 			page.locator(".katelya-hero-stage"),
 			"home hero stage should start with is-home-hero",
@@ -332,6 +373,205 @@ test.describe("desktop viewports", () => {
 			swupPageViews,
 			"navigations should go through swup (swup:page:view events), not full reloads",
 		).toBeGreaterThanOrEqual(2);
+	});
+
+	test("H. 2560x1418 scroll leaves no ghost overlay near navbar tools", async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 2560, height: 1418 });
+		await gotoHome(page);
+
+		for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+			await scrollToFraction(page, fraction);
+			await expectPanelsHidden(page);
+			await expectNoGhostOverlay(
+				page,
+				`2560 scroll ${fraction * 100}%`,
+				await navbarProbePoints(page),
+			);
+
+			// The tools strip must stay inside the navbar and unpainted — the
+			// ghost rectangle was this box, stretched and filled by legacy
+			// `#navbar > div` rules.
+			const tools = await page.evaluate(() => {
+				const nav = document.getElementById("navbar");
+				const strip = document.querySelector(".katelya-navbar-tools");
+				if (!nav || !strip) return null;
+				const navRect = nav.getBoundingClientRect();
+				const stripRect = strip.getBoundingClientRect();
+				const style = window.getComputedStyle(strip);
+				return {
+					navBottom: navRect.bottom,
+					navTop: navRect.top,
+					stripBottom: stripRect.bottom,
+					stripTop: stripRect.top,
+					backgroundColor: style.backgroundColor,
+				};
+			});
+			expect(
+				tools,
+				`[${fraction}] navbar / tools strip must exist`,
+			).not.toBeNull();
+			if (!tools) continue;
+			expect(
+				tools.stripBottom,
+				`[2560 scroll ${fraction * 100}%] tools strip must not protrude below the navbar (was the ghost rectangle)`,
+			).toBeLessThanOrEqual(tools.navBottom + 1);
+			expect(
+				tools.stripTop,
+				`[2560 scroll ${fraction * 100}%] tools strip must not protrude above the navbar`,
+			).toBeGreaterThanOrEqual(tools.navTop - 1);
+			expect(
+				tools.backgroundColor,
+				`[2560 scroll ${fraction * 100}%] tools strip must stay transparent`,
+			).toBe("rgba(0, 0, 0, 0)");
+		}
+	});
+
+	test("I. dropdown menu open/close and mutual exclusion (2560x1418)", async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 2560, height: 1418 });
+		await gotoHome(page);
+
+		const trigger = page.locator("[data-dropdown-trigger]").first();
+		const menu = page.locator("[data-dropdown-menu]").first();
+
+		// Open via click, close via Esc. The pointer must move away first —
+		// the menu also opens on :hover, which is intended.
+		await trigger.click();
+		await expect(menu).toBeVisible();
+		await page.mouse.move(1280, 600);
+		await page.keyboard.press("Escape");
+		await expect(menu).toBeHidden();
+
+		// Open via click, close via outside click.
+		await trigger.click();
+		await expect(menu).toBeVisible();
+		await page.mouse.click(1280, 600);
+		await expect(menu).toBeHidden();
+
+		// Mutual exclusion: opening search closes the dropdown.
+		await trigger.click();
+		await expect(menu).toBeVisible();
+		await page.locator("#search-bar").click();
+		await expect(page.locator("#search-panel")).toBeVisible();
+		await expect(menu).toBeHidden();
+		await page.keyboard.press("Escape");
+		await expect(page.locator("#search-panel")).toBeHidden();
+
+		// No ghost left behind after the cycles.
+		for (const fraction of [0.5, 1]) {
+			await scrollToFraction(page, fraction);
+			await expectNoGhostOverlay(
+				page,
+				`after dropdown cycles, scroll ${fraction * 100}%`,
+				await navbarProbePoints(page),
+			);
+		}
+	});
+
+	test("J. navbar right-side buttons do not overlap (2560 / 1440)", async ({
+		page,
+	}) => {
+		for (const viewport of [
+			{ width: 2560, height: 1418 },
+			{ width: 1440, height: 900 },
+		]) {
+			await page.setViewportSize(viewport);
+			await gotoHome(page);
+
+			const m = await page.evaluate(() => {
+				const nav = document.getElementById("navbar");
+				const strip = document.querySelector(".katelya-navbar-tools");
+				const selectors = [
+					"[data-dropdown-trigger]",
+					"#display-settings-switch",
+					"#scheme-switch",
+					"#search-bar",
+				];
+				if (!nav || !strip) return null;
+				const rects = selectors.map((sel) => {
+					const el = document.querySelector(sel);
+					if (!el) return null;
+					const r = el.getBoundingClientRect();
+					return {
+						sel,
+						top: r.top,
+						bottom: r.bottom,
+						left: r.left,
+						right: r.right,
+					};
+				});
+				if (rects.some((r) => r === null)) return null;
+				const navRect = nav.getBoundingClientRect();
+				const stripRect = strip.getBoundingClientRect();
+				return {
+					nav: {
+						top: navRect.top,
+						bottom: navRect.bottom,
+						left: navRect.left,
+						right: navRect.right,
+					},
+					strip: {
+						top: stripRect.top,
+						bottom: stripRect.bottom,
+						left: stripRect.left,
+						right: stripRect.right,
+					},
+					rects: rects as Array<{
+						sel: string;
+						top: number;
+						bottom: number;
+						left: number;
+						right: number;
+					}>,
+				};
+			});
+			expect(
+				m,
+				`[${viewport.width}] navbar geometry targets must exist`,
+			).not.toBeNull();
+			if (!m) continue;
+
+			// The tools strip is contained by the navbar on both axes.
+			expect(
+				m.strip.bottom,
+				`[${viewport.width}] tools strip must not protrude below the navbar`,
+			).toBeLessThanOrEqual(m.nav.bottom + 1);
+			expect(
+				m.strip.top,
+				`[${viewport.width}] tools strip must not protrude above the navbar`,
+			).toBeGreaterThanOrEqual(m.nav.top - 1);
+			expect(m.strip.right).toBeLessThanOrEqual(m.nav.right + 1);
+			expect(m.strip.left).toBeGreaterThanOrEqual(m.nav.left - 1);
+
+			for (const r of m.rects) {
+				expect(
+					r.top,
+					`[${viewport.width}] ${r.sel} must sit inside the navbar vertically`,
+				).toBeGreaterThanOrEqual(m.nav.top - 1);
+				expect(
+					r.bottom,
+					`[${viewport.width}] ${r.sel} must sit inside the navbar vertically`,
+				).toBeLessThanOrEqual(m.nav.bottom + 1);
+			}
+			for (let i = 0; i < m.rects.length; i++) {
+				for (let j = i + 1; j < m.rects.length; j++) {
+					const a = m.rects[i];
+					const b = m.rects[j];
+					const overlap =
+						a.left < b.right - 1 &&
+						b.left < a.right - 1 &&
+						a.top < b.bottom - 1 &&
+						b.top < a.bottom - 1;
+					expect(
+						overlap,
+						`[${viewport.width}] ${a.sel} and ${b.sel} must not overlap`,
+					).toBe(false);
+				}
+			}
+		}
 	});
 
 	test("G. screenshot artifacts", async ({ page }) => {
@@ -399,4 +639,32 @@ test("A(mobile). no ghost overlay while scrolling (390x844)", async ({
 		await expectPanelsHidden(page);
 		await expectNoGhostOverlay(page, `mobile scroll ${fraction * 100}%`);
 	}
+});
+
+test("B(mobile). mobile toc popover open/close and mutual exclusion", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await gotoHome(page);
+
+	const toc = page.locator("#mobile-toc-panel");
+	await expect(toc).toBeHidden();
+
+	await page.locator("#mobile-toc-switch").click();
+	await expect(toc).toBeVisible();
+	// Migrated to a native popover: fully out of flow, fixed positioning.
+	const position = await toc.evaluate((el) => getComputedStyle(el).position);
+	expect(position, "mobile toc panel must be position:fixed").toBe("fixed");
+
+	// Mutual exclusion: opening the nav menu closes the toc panel.
+	await page.locator("#nav-menu-switch").click();
+	await expect(page.locator("#nav-menu-panel")).toBeVisible();
+	await expect(toc).toBeHidden();
+
+	// Close the menu again and confirm no ghost remains after scrolling.
+	await page.locator("#nav-menu-switch").click();
+	await expect(page.locator("#nav-menu-panel")).toBeHidden();
+	await scrollToFraction(page, 0.5);
+	await expectPanelsHidden(page);
+	await expectNoGhostOverlay(page, "mobile after toc cycles");
 });

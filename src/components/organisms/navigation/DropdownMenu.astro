@@ -205,6 +205,9 @@ const hasChildren = children.length > 0;
 					}
 				} else if (e.key === "Escape") {
 					closeMenu();
+					// :focus-within keeps the menu open while the trigger is
+					// focused — release focus so Escape actually closes it.
+					trigger.blur();
 				}
 			});
 
@@ -230,6 +233,12 @@ const hasChildren = children.length > 0;
 				if (!dropdown.contains(e.target as Node)) {
 					closeMenu();
 				}
+			});
+
+			// Mutual exclusion with the native popover panels
+			// (search / settings / menu / mobile-toc).
+			document.addEventListener("katelya:overlay-open", () => {
+				closeMenu();
 			});
 		});
 	});

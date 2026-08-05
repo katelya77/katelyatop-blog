@@ -226,6 +226,10 @@ test("closed overlays leave no composited rectangle and overlays are exclusive",
 		panels,
 		/#nav-menu-panel:not\(:popover-open\)[\s\S]*?display:\s*none\s*!important/,
 	);
+	assert.match(
+		panels,
+		/#mobile-toc-panel:not\(:popover-open\)[\s\S]*?display:\s*none\s*!important/,
+	);
 	assert.doesNotMatch(panels, /\.float-panel\s*\{[^}]*will-change/);
 	assert.match(panels, /\.float-panel:popover-open[^{]*\{[^}]*will-change/);
 });
@@ -259,4 +263,56 @@ test("abstract starry cypress seal replaces the plain K mark", async () => {
 	assert.match(seal, /data-motif="star-track"/);
 	assert.match(seal, /id="k-negative"/);
 	assert.doesNotMatch(seal, /<feTurbulence|<animate/);
+});
+
+test("mobile toc panel is a native popover without panel manager", async () => {
+	const toc = await read("src/components/features/toc/MobileTOC.svelte");
+	const handler = await read("src/scripts/handlers/panel-handler.ts");
+
+	assert.match(toc, /popover="auto"/);
+	assert.match(toc, /popovertarget="mobile-toc-panel"/);
+	assert.match(toc, /showPopover\(\)/);
+	assert.match(toc, /hidePopover\(\)/);
+	assert.match(toc, /katelya:overlay-open/);
+	assert.doesNotMatch(toc, /panelManager/);
+	assert.doesNotMatch(toc, /float-panel-closed/);
+	// The panel-handler comment may mention the migration, but the panel must
+	// not be registered for class-based click-outside management.
+	assert.doesNotMatch(handler, /id:\s*"mobile-toc-panel"/);
+});
+
+test("legacy #navbar > div paint rules exclude navbar shell children", async () => {
+	// These pre-art-theme rules paint every direct child div of #navbar with a
+	// translucent background — the source of the scrolled ghost rectangle when
+	// the in-flow mobile toc panel inflated .katelya-navbar-tools.
+	const files = [
+		"src/styles/katelya-impressionist.css",
+		"src/styles/mobile-navbar.css",
+		"src/styles/wallpaper-navbar-transparent.css",
+		"src/styles/main.css",
+	];
+	for (const file of files) {
+		const css = await read(file);
+		const bare = css.matchAll(
+			/#navbar(?:\.scrolled)?\s*>\s*div([^{]*)\{([^}]*)\}/g,
+		);
+		let count = 0;
+		for (const m of bare) {
+			const body = m[2];
+			// Only paint rules (background / box-shadow, incl. @apply bg-/shadow
+			// utilities) can produce the ghost rectangle; transition guards like
+			// `.is-theme-transitioning` are benign.
+			if (!/background|box-shadow|bg-\(|shadow/.test(body)) continue;
+			count += 1;
+			assert.ok(
+				m[1].includes(":not(.katelya-navbar-links)") &&
+					m[1].includes(":not(.katelya-navbar-tools)"),
+				`${file}: legacy navbar paint rule must exclude shell children: ${m[0].slice(0, 120)}`,
+			);
+		}
+		assert.ok(
+			count > 0,
+			`${file}: expected at least one bare #navbar > div paint rule`,
+		);
+	}
 });
