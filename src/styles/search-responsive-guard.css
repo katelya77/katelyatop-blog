@@ -1,0 +1,23 @@
+/*
+ * Search renders desktop and mobile triggers from one Svelte island.
+ * katelya-light-performance.css styles the desktop trigger as a grid, so the
+ * responsive visibility must be declared after that file instead of relying
+ * on Tailwind utility order.
+ */
+html.katelya-art-theme .katelya-search-desktop {
+	display: none !important;
+}
+
+html.katelya-art-theme #search-switch {
+	display: inline-flex !important;
+}
+
+@media (width >= 1024px) {
+	html.katelya-art-theme .katelya-search-desktop {
+		display: grid !important;
+	}
+
+	html.katelya-art-theme #search-switch {
+		display: none !important;
+	}
+}
