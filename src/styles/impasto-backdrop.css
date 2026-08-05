@@ -146,6 +146,39 @@ html.katelya-art-theme #banner-wrapper::after {
 	background: linear-gradient(180deg, transparent 66%, var(--page-bg)) !important;
 }
 
+/*
+ * The center link strip is structural, not a card. Legacy transparent-navbar
+ * selectors still target direct div children on scroll; keep this authoritative
+ * strip unpainted in banner and fullscreen modes so only the navbar shell owns
+ * the glass surface.
+ */
+html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
+	background: transparent !important;
+	background-image: none !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+/*
+ * A fullscreen wallpaper owns the complete 100svh stage. Main content starts
+ * after that stage instead of being pulled upward by the former 6–10rem
+ * overlap; the transition wash also stays below the hero boundary.
+ */
+html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
+	margin-top: 0 !important;
+}
+
+html.katelya-art-theme body.fullscreen-banner #main-grid {
+	padding-top: clamp(1rem, 1.5vw, 1.5rem) !important;
+}
+
+html.katelya-art-theme body.fullscreen-banner #main-grid::before {
+	inset: 0 0 auto !important;
+}
+
 @media (prefers-reduced-motion: reduce), (pointer: coarse) {
 	.impasto-backdrop canvas {
 		display: none !important;
