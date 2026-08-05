@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onDestroy, onMount } from "svelte";
 
+import { LOCAL_PLAYLIST } from "@/components/widgets/music-player/constants";
 import type { MusicPlayerState } from "@/stores/musicPlayerStore";
 import { musicPlayerStore } from "@/stores/musicPlayerStore";
 
@@ -13,6 +14,9 @@ import SidebarTrackInfo from "./components/SidebarTrackInfo.svelte";
 let playerState: MusicPlayerState = $state(musicPlayerStore.getState());
 let showPlaylist = $state(false);
 let unsubscribe: (() => void) | undefined;
+const sidebarPlaylist = $derived(
+	playerState.playlist.length > 0 ? playerState.playlist : LOCAL_PLAYLIST,
+);
 
 onMount(() => {
 	unsubscribe = musicPlayerStore.subscribe((nextState) => {
@@ -97,7 +101,7 @@ function setVolume(volume: number) {
 	/>
 
 	<SidebarPlaylist
-		playlist={playerState.playlist}
+		playlist={sidebarPlaylist}
 		currentIndex={playerState.currentIndex}
 		isPlaying={playerState.isPlaying}
 		show={showPlaylist}
