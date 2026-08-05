@@ -68,7 +68,9 @@ test.describe("mobile loading performance", () => {
 		).toHaveLength(0);
 
 		await page.locator("button.music-fab").click();
-		await page.getByRole("button", { name: "播放" }).click();
+		const floatingPlayer = page.locator(".music-player-fab-anchor");
+		await expect(floatingPlayer).toBeVisible();
+		await floatingPlayer.getByRole("button", { name: "播放" }).click();
 		await expect
 			.poll(() => audioRequests.length, { timeout: 5000 })
 			.toBeGreaterThan(0);
