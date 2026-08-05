@@ -20,6 +20,69 @@ html.katelya-art-theme .katelya-paint-aura {
 	transition: transform 180ms ease-out;
 }
 
+html.katelya-art-theme .katelya-aura-ring {
+	border: 0;
+	box-shadow: none;
+	animation: none;
+	filter: blur(22px);
+	opacity: 0.42;
+	mix-blend-mode: soft-light;
+}
+
+html.katelya-art-theme .katelya-aura-ring--outer {
+	width: min(70vw, 64rem);
+	height: min(23vw, 19rem);
+	border-radius: 63% 37% 58% 42% / 46% 61% 39% 54%;
+	background:
+		linear-gradient(
+			164deg,
+			transparent 3%,
+			rgba(100, 187, 180, 0.18) 27%,
+			rgba(240, 218, 146, 0.10) 52%,
+			rgba(110, 84, 166, 0.16) 76%,
+			transparent 96%
+		);
+	transform: translate(-52%, -47%) rotate(-7deg) skewX(-5deg);
+}
+
+html.katelya-art-theme .katelya-aura-ring--inner {
+	width: min(47vw, 42rem);
+	height: min(17vw, 13rem);
+	border-radius: 41% 59% 35% 65% / 57% 38% 62% 43%;
+	background:
+		linear-gradient(
+			18deg,
+			transparent 2%,
+			rgba(237, 229, 184, 0.16) 31%,
+			rgba(90, 171, 167, 0.13) 59%,
+			transparent 94%
+		);
+	transform: translate(-46%, -54%) rotate(11deg) skewY(4deg) translateZ(28px);
+}
+
+html.katelya-art-theme.dark .katelya-aura-ring--outer {
+	background:
+		linear-gradient(
+			164deg,
+			transparent 4%,
+			rgba(41, 116, 159, 0.22) 25%,
+			rgba(88, 65, 145, 0.16) 55%,
+			rgba(239, 190, 72, 0.10) 78%,
+			transparent 96%
+		);
+}
+
+html.katelya-art-theme.dark .katelya-aura-ring--inner {
+	background:
+		linear-gradient(
+			18deg,
+			transparent 2%,
+			rgba(55, 148, 161, 0.16) 30%,
+			rgba(235, 185, 65, 0.10) 63%,
+			transparent 94%
+		);
+}
+
 html.katelya-art-theme .katelya-orbit-stage {
 	transform-style: preserve-3d;
 }
@@ -35,7 +98,7 @@ html.katelya-art-theme .katelya-hero-title {
 	transform-style: preserve-3d;
 	filter:
 		drop-shadow(0 4px 2px rgba(4, 26, 37, 0.24))
-		drop-shadow(0 18px 28px rgba(5, 33, 44, 0.20));
+		drop-shadow(0 18px 28px rgba(5, 33, 44, 0.2));
 }
 
 html.katelya-art-theme .katelya-hero-title > span {
