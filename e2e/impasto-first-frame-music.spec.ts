@@ -128,19 +128,15 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 	expect(reducedDepth).toBe("0px");
 });
 
-test("music control center exposes the supplied 21-track playlist", async ({ page }) => {
+test("music sidebar exposes the supplied 21-track playlist", async ({ page }) => {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto("/");
-	const musicButton = page.getByRole("button", {
-		name: /打开音乐控制中心：我知道/,
-	});
-	await expect(musicButton).toBeVisible();
-	await musicButton.click();
-	const panel = page.locator(".fab-music-panel");
-	await expect(panel).toBeVisible();
-	await expect(panel).toContainText("我知道");
-	await panel.getByRole("button", { name: "Playlist" }).click();
-	const playlist = panel.getByRole("listbox", { name: "Playlist" });
+	const player = page.locator(".music-sidebar-widget");
+	await expect(player).toBeVisible();
+	await expect(player).toContainText("我知道");
+	await expect(player).toContainText("By2");
+	await player.getByRole("button", { name: "Playlist" }).click();
+	const playlist = player.getByRole("listbox", { name: "Playlist" });
 	await expect(playlist).toBeVisible();
 	await expect(playlist.getByRole("option")).toHaveCount(21);
 	await expect(
