@@ -36,9 +36,9 @@ const DESKTOP_RENDER_PROFILE: RenderProfile = {
 	idleFps: 14,
 };
 const TOUCH_RENDER_PROFILE: RenderProfile = {
-	maxDpr: 1.15,
-	minDpr: 0.8,
-	maxPixels: 1_450_000,
+	maxDpr: 1.5,
+	minDpr: 1,
+	maxPixels: 2_400_000,
 	pointerFps: 24,
 	themeFps: 20,
 	idleFps: 8,
