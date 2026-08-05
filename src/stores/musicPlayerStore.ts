@@ -130,6 +130,7 @@ class MusicPlayerStore {
 
 		this.audio.addEventListener("play", () => {
 			this.state.isPlaying = true;
+			this.state.autoplayFailed = false;
 			this.broadcastState();
 		});
 
@@ -197,16 +198,24 @@ class MusicPlayerStore {
 			};
 		}
 
-		if (this.state.willAutoPlay || this.state.isPlaying) {
-			const playPromise = this.audio?.play();
-			if (playPromise !== undefined) {
-				playPromise.catch(() => {
-					this.state.autoplayFailed = true;
-					this.state.isPlaying = false;
-				});
-			}
+		if (this.state.willAutoPlay && !this.state.isPlaying) {
+			this.requestPlayback();
 		}
 		this.broadcastState();
+	}
+
+	private requestPlayback(): void {
+		if (!this.audio) {
+			return;
+		}
+		const playPromise = this.audio.play();
+		if (playPromise !== undefined) {
+			playPromise.catch(() => {
+				this.state.autoplayFailed = true;
+				this.state.isPlaying = false;
+				this.broadcastState();
+			});
+		}
 	}
 
 	private loadVolumeFromStorage(): void {
@@ -229,14 +238,7 @@ class MusicPlayerStore {
 	private registerInteractionHandler(): void {
 		const handler = () => {
 			if (this.state.autoplayFailed && this.audio) {
-				const playPromise = this.audio.play();
-				if (playPromise !== undefined) {
-					playPromise
-						.then(() => {
-							this.state.autoplayFailed = false;
-						})
-						.catch(() => {});
-				}
+				this.requestPlayback();
 			}
 		};
 		document.addEventListener("click", handler, { once: true });
@@ -397,7 +399,11 @@ class MusicPlayerStore {
 				this.audio.src = "";
 			}
 			this.audio.src = getAssetPath(song.url);
-			this.audio.load();
+			if (autoPlay) {
+				this.requestPlayback();
+			} else {
+				this.audio.load();
+			}
 		}
 		this.broadcastState();
 	}
@@ -428,7 +434,7 @@ class MusicPlayerStore {
 		if (!this.ensureCurrentSongLoaded(true)) {
 			return;
 		}
-		this.audio.play().catch(() => {});
+		this.requestPlayback();
 	}
 
 	play(): void {
@@ -438,7 +444,7 @@ class MusicPlayerStore {
 		if (!this.ensureCurrentSongLoaded(true)) {
 			return;
 		}
-		this.audio.play().catch(() => {});
+		this.requestPlayback();
 	}
 
 	pause(): void {
