@@ -57,30 +57,56 @@ export function initKatelyaHeroDepth(): void {
 		if (!frameId) frameId = requestAnimationFrame(render);
 	};
 
-	const onPointerMove = (event: PointerEvent) => {
-		if (!hero.classList.contains("is-home-active")) return;
-		const rect = hero.getBoundingClientRect();
-		if (rect.width <= 0 || rect.height <= 0) return;
-		targetX = clamp(((event.clientX - rect.left) / rect.width - 0.5) * 2, -MAX_X, MAX_X);
-		targetY = clamp(((event.clientY - rect.top) / rect.height - 0.5) * 2, -MAX_Y, MAX_Y);
-		queueRender();
-	};
-
 	const reset = () => {
 		targetX = 0;
 		targetY = 0;
 		queueRender();
 	};
 
+	const onPointerMove = (event: PointerEvent) => {
+		if (!hero.classList.contains("is-home-active")) {
+			reset();
+			return;
+		}
+
+		const rect = hero.getBoundingClientRect();
+		if (rect.width <= 0 || rect.height <= 0) {
+			reset();
+			return;
+		}
+
+		const insideHero =
+			event.clientX >= rect.left &&
+			event.clientX <= rect.right &&
+			event.clientY >= rect.top &&
+			event.clientY <= rect.bottom;
+		if (!insideHero) {
+			reset();
+			return;
+		}
+
+		targetX = clamp(
+			((event.clientX - rect.left) / rect.width - 0.5) * 2,
+			-MAX_X,
+			MAX_X,
+		);
+		targetY = clamp(
+			((event.clientY - rect.top) / rect.height - 0.5) * 2,
+			-MAX_Y,
+			MAX_Y,
+		);
+		queueRender();
+	};
+
 	writeVariables();
 	if (!reducedMotion && !coarsePointer) {
-		hero.addEventListener("pointermove", onPointerMove, { passive: true });
-		hero.addEventListener("pointerleave", reset, { passive: true });
+		window.addEventListener("pointermove", onPointerMove, { passive: true });
+		window.addEventListener("blur", reset);
 	}
 
 	depthWindow.__katelyaHeroDepthCleanup = () => {
 		if (frameId) cancelAnimationFrame(frameId);
-		hero.removeEventListener("pointermove", onPointerMove);
-		hero.removeEventListener("pointerleave", reset);
+		window.removeEventListener("pointermove", onPointerMove);
+		window.removeEventListener("blur", reset);
 	};
 }
