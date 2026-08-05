@@ -113,6 +113,7 @@ class MusicPlayerStore {
 		}
 
 		this.audio = new Audio();
+		this.audio.preload = "none";
 		this.setupAudioListeners();
 		this.loadVolumeFromStorage();
 		this.registerInteractionHandler();
@@ -297,7 +298,7 @@ class MusicPlayerStore {
 			this.state.isLoading = false;
 
 			if (this.state.playlist.length > 0) {
-				this.loadSong(this.state.playlist[0], false);
+				this.selectSong(this.state.playlist[0]);
 			}
 		} catch (_e) {
 			this.showError(i18n(Key.musicPlayerErrorPlaylist));
@@ -343,25 +344,56 @@ class MusicPlayerStore {
 		if (this.state.playlist.length === 0) {
 			this.showError("本地播放列表为空");
 		} else {
-			this.loadSong(this.state.playlist[0], false);
+			this.selectSong(this.state.playlist[0]);
+			this.broadcastState();
 		}
+	}
+
+	private selectSong(song: Song): void {
+		this.state.currentSong = { ...song };
+		this.state.currentTime = 0;
+		this.state.duration = song.duration || 0;
+		this.state.isLoading = false;
+		this.state.isPlaying = false;
+		this.state.willAutoPlay = false;
+	}
+
+	private getCurrentSongUrl(): string {
+		if (!this.state.currentSong.url || typeof window === "undefined") {
+			return "";
+		}
+		return new URL(
+			getAssetPath(this.state.currentSong.url),
+			window.location.href,
+		).href;
+	}
+
+	private ensureCurrentSongLoaded(autoPlay = true): boolean {
+		if (!this.audio || !this.state.currentSong.url) {
+			return false;
+		}
+		const expectedUrl = this.getCurrentSongUrl();
+		if (!expectedUrl) {
+			return false;
+		}
+		if (this.audio.currentSrc === expectedUrl || this.audio.src === expectedUrl) {
+			return true;
+		}
+		this.loadSong(this.state.currentSong, autoPlay);
+		return false;
 	}
 
 	private loadSong(song: Song, autoPlay = true): void {
 		if (!song || !song.url) {
 			return;
 		}
-		if (song.url !== this.state.currentSong.url) {
-			this.state.currentSong = { ...song };
-			if (song.url) {
-				this.state.isLoading = true;
-			} else {
-				this.state.isLoading = false;
-			}
-		}
+		this.state.currentSong = { ...song };
+		this.state.currentTime = 0;
+		this.state.duration = song.duration || 0;
+		this.state.isLoading = true;
 		this.state.willAutoPlay = autoPlay;
 		if (this.audio) {
-			if (this.audio.src && song.url) {
+			if (this.audio.src) {
 				this.audio.src = "";
 			}
 			this.audio.src = getAssetPath(song.url);
@@ -391,13 +423,19 @@ class MusicPlayerStore {
 		}
 		if (this.state.isPlaying) {
 			this.audio.pause();
-		} else {
-			this.audio.play().catch(() => {});
+			return;
 		}
+		if (!this.ensureCurrentSongLoaded(true)) {
+			return;
+		}
+		this.audio.play().catch(() => {});
 	}
 
 	play(): void {
 		if (!this.audio || !this.state.currentSong.url) {
+			return;
+		}
+		if (!this.ensureCurrentSongLoaded(true)) {
 			return;
 		}
 		this.audio.play().catch(() => {});
