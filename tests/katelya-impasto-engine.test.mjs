@@ -59,6 +59,18 @@ test("first painted frame owns readiness and static fallback has one owner", asy
 		"the component fallback must be the only static painted surface",
 	);
 	assert.match(backdrop, /transition:\s*opacity 260ms/);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/s,
+	);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark #banner-wrapper\s*\{[^}]*background-image:\s*none !important/s,
+	);
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme\.dark body::before,[\s\S]*display:\s*none !important/,
+	);
 });
 
 test("shader builds irregular tensor-guided impasto instead of formulaic arcs", async () => {
@@ -153,7 +165,7 @@ test("renderer and CSS expose static mobile and accessible fallbacks", async () 
 	assert.match(backdrop, /\.impasto-backdrop::after/);
 	assert.match(
 		backdrop,
-		/html\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/,
+		/html\.katelya-art-theme\.impasto-ready body,[\s\S]*background-image:\s*none !important/,
 	);
 	assert.match(
 		backdrop,
