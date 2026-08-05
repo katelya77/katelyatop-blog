@@ -73,11 +73,7 @@ if (!banner || typeof banner !== "string" || banner.trim() === "") {
 banner = getDefaultBanner();
 const enableBanner = !!siteConfig.banner.src;
 
-const pageTitle = title
-	? `${title} - ${siteConfig.title}`
-	: siteConfig.subtitle
-		? `${siteConfig.title} - ${siteConfig.subtitle}`
-		: siteConfig.title;
+const pageTitle = title ? `${title} - ${siteConfig.title}` : siteConfig.title;
 
 let ogImageUrl: string | undefined;
 if (siteConfig.generateOgImages && postSlug) {
