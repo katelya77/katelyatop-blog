@@ -27,6 +27,10 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 	await page.waitForFunction(() =>
 		document.documentElement.classList.contains("impasto-ready"),
 	);
+	const canvasLocator = page.locator("[data-impasto-canvas]");
+	const fallbackLocator = page.locator(".impasto-static-fallback");
+	await expect(canvasLocator).toHaveCSS("opacity", "1");
+	await expect(fallbackLocator).toHaveCSS("visibility", "hidden");
 
 	const result = await page.evaluate(() => {
 		const fallback = document.querySelector<HTMLElement>(
