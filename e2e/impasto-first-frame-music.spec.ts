@@ -107,7 +107,21 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 	if (!box) return;
 
 	await page.mouse.move(box.x + box.width * 0.82, box.y + box.height * 0.24);
-	await page.waitForTimeout(420);
+	await expect
+		.poll(
+			() =>
+				hero.evaluate((element) =>
+					Math.abs(
+						Number.parseFloat(
+							getComputedStyle(element as HTMLElement).getPropertyValue(
+								"--hero-deep-x",
+							),
+						),
+					),
+				),
+			{ timeout: 3000 },
+		)
+		.toBeGreaterThan(2);
 	const activeDepth = await hero.evaluate((element) => {
 		const style = getComputedStyle(element as HTMLElement);
 		return {
@@ -116,7 +130,6 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 			lightX: style.getPropertyValue("--hero-light-x").trim(),
 		};
 	});
-	expect(Math.abs(activeDepth.deepX)).toBeGreaterThan(2);
 	expect(Math.abs(activeDepth.deepX)).toBeLessThanOrEqual(19.1);
 	expect(Math.abs(activeDepth.deepY)).toBeLessThanOrEqual(13.1);
 	expect(activeDepth.lightX).toMatch(/%$/);
@@ -143,7 +156,7 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 test("music sidebar exposes the supplied 21-track playlist", async ({ page }) => {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto("/");
-	const player = page.locator(".music-sidebar-widget");
+	const player = page.locator(".music-sidebar-widget:visible").first();
 	await expect(player).toBeVisible();
 	await expect(player).toContainText("我知道");
 	await expect(player).toContainText("By2");
