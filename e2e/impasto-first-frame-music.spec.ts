@@ -1,8 +1,12 @@
+import { mkdir } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
+
+const ARTIFACT_DIR = "artifacts/ui";
 
 test("impasto first frame keeps fallback until the first successful WebGL paint", async ({
 	page,
 }) => {
+	await mkdir(ARTIFACT_DIR, { recursive: true });
 	await page.addInitScript(() => {
 		const classAdds: string[] = [];
 		const originalAdd = DOMTokenList.prototype.add;
@@ -20,10 +24,8 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 
 	await page.setViewportSize({ width: 1664, height: 920 });
 	await page.goto("/", { waitUntil: "domcontentloaded" });
-	await page.waitForFunction(
-		() =>
-			document.documentElement.classList.contains("impasto-ready") ||
-			document.documentElement.classList.contains("impasto-static"),
+	await page.waitForFunction(() =>
+		document.documentElement.classList.contains("impasto-ready"),
 	);
 
 	const result = await page.evaluate(() => {
@@ -49,18 +51,32 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 		};
 	});
 
-	if (result.ready) {
-		expect(result.classAdds.indexOf("impasto-booting")).toBeGreaterThanOrEqual(0);
-		expect(result.classAdds.indexOf("impasto-ready")).toBeGreaterThan(
-			result.classAdds.indexOf("impasto-booting"),
-		);
-		expect(result.canvasSize[0]).toBeGreaterThan(0);
-		expect(result.canvasSize[1]).toBeGreaterThan(0);
-		expect(Number(result.canvasOpacity)).toBeGreaterThan(0.9);
-		expect(result.fallbackOpacity).toBe("0");
-		expect(result.fallbackVisibility).toBe("hidden");
-		expect(result.bodyBackgroundImage).toBe("none");
-	}
+	expect(result.ready).toBe(true);
+	expect(result.classAdds.indexOf("impasto-booting")).toBeGreaterThanOrEqual(0);
+	expect(result.classAdds.indexOf("impasto-ready")).toBeGreaterThan(
+		result.classAdds.indexOf("impasto-booting"),
+	);
+	expect(result.canvasSize[0]).toBeGreaterThan(0);
+	expect(result.canvasSize[1]).toBeGreaterThan(0);
+	expect(Number(result.canvasOpacity)).toBeGreaterThan(0.9);
+	expect(result.fallbackOpacity).toBe("0");
+	expect(result.fallbackVisibility).toBe("hidden");
+	expect(result.bodyBackgroundImage).toBe("none");
+
+	await page.screenshot({
+		path: `${ARTIFACT_DIR}/impasto-day-first-frame.png`,
+		fullPage: false,
+	});
+
+	await page.locator("#scheme-switch").click();
+	await page.waitForFunction(() =>
+		document.documentElement.classList.contains("dark"),
+	);
+	await page.waitForTimeout(360);
+	await page.screenshot({
+		path: `${ARTIFACT_DIR}/impasto-night-first-frame.png`,
+		fullPage: false,
+	});
 });
 
 test("hero depth responds within bounded layers and respects reduced motion", async ({
@@ -126,4 +142,9 @@ test("music control center exposes the supplied 21-track playlist", async ({ pag
 	await expect(
 		playlist.getByRole("option", { name: "播放 鼓楼 - 赵雷" }),
 	).toBeAttached();
+	await mkdir(ARTIFACT_DIR, { recursive: true });
+	await page.screenshot({
+		path: `${ARTIFACT_DIR}/music-playlist-21-tracks.png`,
+		fullPage: false,
+	});
 });
