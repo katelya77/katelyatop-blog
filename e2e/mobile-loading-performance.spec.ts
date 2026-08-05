@@ -22,7 +22,7 @@ test.describe("mobile loading performance", () => {
 		deviceScaleFactor: 3,
 	});
 
-	test("touch clients render the live impasto canvas instead of being forced static", async ({
+	test("touch clients render a detailed live impasto canvas instead of being forced static", async ({
 		page,
 	}) => {
 		await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -39,10 +39,8 @@ test.describe("mobile loading performance", () => {
 			{ timeout: 7000 },
 		);
 
-		await expect(page.locator("[data-impasto-canvas]")).toHaveCSS(
-			"opacity",
-			"1",
-		);
+		const canvas = page.locator<HTMLCanvasElement>("[data-impasto-canvas]");
+		await expect(canvas).toHaveCSS("opacity", "1");
 		await expect(page.locator(".impasto-static-fallback")).toHaveCSS(
 			"visibility",
 			"hidden",
@@ -52,6 +50,21 @@ test.describe("mobile loading performance", () => {
 				document.documentElement.classList.contains("impasto-static"),
 			),
 		).toBe(false);
+
+		const renderMetrics = await canvas.evaluate((element) => ({
+			renderScale:
+				element.width / Math.max(document.documentElement.clientWidth, 1),
+			pixelCount: element.width * element.height,
+		}));
+		expect(
+			renderMetrics.renderScale,
+			"touch artwork should retain fine brush detail on high-density screens",
+		).toBeGreaterThanOrEqual(1.45);
+		expect(renderMetrics.renderScale).toBeLessThanOrEqual(1.51);
+		expect(
+			renderMetrics.pixelCount,
+			"touch rendering must remain within the bounded GPU pixel budget",
+		).toBeLessThanOrEqual(2_400_000);
 
 		await page.screenshot({
 			path: `${ARTIFACT_DIR}/mobile-live-impasto.png`,
