@@ -146,11 +146,13 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 	);
 	await page.waitForTimeout(250);
 	const reducedDepth = await reducedHero.evaluate((element) =>
-		getComputedStyle(element as HTMLElement)
-			.getPropertyValue("--hero-deep-x")
-			.trim(),
+		Number.parseFloat(
+			getComputedStyle(element as HTMLElement).getPropertyValue(
+				"--hero-deep-x",
+			),
+		),
 	);
-	expect(reducedDepth).toBe("0px");
+	expect(reducedDepth).toBe(0);
 });
 
 test("music sidebar exposes the supplied 21-track playlist", async ({ page }) => {
