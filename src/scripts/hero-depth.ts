@@ -1,5 +1,6 @@
 type DepthWindow = Window & {
 	__katelyaHeroDepthCleanup?: () => void;
+	__katelyaHeroDepthElement?: HTMLElement;
 };
 
 const MAX_X = 1;
@@ -13,10 +14,17 @@ function clamp(value: number, minimum: number, maximum: number): number {
 
 export function initKatelyaHeroDepth(): void {
 	const depthWindow = window as DepthWindow;
-	depthWindow.__katelyaHeroDepthCleanup?.();
-
 	const hero = document.querySelector<HTMLElement>("[data-katelya-orbit]");
 	if (!hero) return;
+	if (
+		depthWindow.__katelyaHeroDepthElement === hero &&
+		depthWindow.__katelyaHeroDepthCleanup
+	) {
+		return;
+	}
+
+	depthWindow.__katelyaHeroDepthCleanup?.();
+	depthWindow.__katelyaHeroDepthElement = hero;
 
 	const reducedMotion = window.matchMedia(
 		"(prefers-reduced-motion: reduce)",
@@ -108,5 +116,8 @@ export function initKatelyaHeroDepth(): void {
 		if (frameId) cancelAnimationFrame(frameId);
 		window.removeEventListener("pointermove", onPointerMove);
 		window.removeEventListener("blur", reset);
+		if (depthWindow.__katelyaHeroDepthElement === hero) {
+			depthWindow.__katelyaHeroDepthElement = undefined;
+		}
 	};
 }
