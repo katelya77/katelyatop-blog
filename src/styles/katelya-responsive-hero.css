@@ -102,8 +102,7 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	}
 
 	html.katelya-art-theme .katelya-orbit-hero {
-		padding: calc(var(--impasto-header-height) + var(--impasto-header-top) * 2 + 0.7rem)
-			1rem 1.1rem !important;
+		padding: 0 1rem !important;
 		perspective: none !important;
 	}
 
