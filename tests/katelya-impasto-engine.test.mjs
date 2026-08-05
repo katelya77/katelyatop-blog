@@ -30,9 +30,11 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /themeFps:\s*36/);
 	assert.match(renderer, /idleFps:\s*14/);
 	assert.match(renderer, /const TOUCH_RENDER_PROFILE: RenderProfile/);
-	assert.match(renderer, /maxDpr:\s*1\.15/);
-	assert.match(renderer, /maxPixels:\s*1_450_000/);
+	assert.match(renderer, /maxDpr:\s*1\.5/);
+	assert.match(renderer, /minDpr:\s*1,/);
+	assert.match(renderer, /maxPixels:\s*2_400_000/);
 	assert.match(renderer, /pointerFps:\s*24/);
+	assert.match(renderer, /themeFps:\s*20/);
 	assert.match(renderer, /idleFps:\s*8/);
 	assert.match(
 		renderer,
