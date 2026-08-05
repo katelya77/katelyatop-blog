@@ -71,9 +71,7 @@ html.katelya-art-theme.dark.impasto-ready body {
 .impasto-static-fallback {
 	z-index: 0;
 	background-color: #7fbab0;
-	background-image:
-		linear-gradient(rgba(224, 239, 225, 0.1), rgba(205, 227, 216, 0.22)),
-		url("/assets/impasto/impasto-day.svg");
+	background-image: var(--impasto-boot-underpaint);
 	background-position: center;
 	background-size: cover;
 	opacity: 1;
@@ -122,7 +120,14 @@ html.dark .impasto-backdrop::before {
 	opacity: 0.1;
 }
 
-html.dark .impasto-static-fallback {
+html.impasto-static .impasto-static-fallback {
+	background-color: #7fbab0;
+	background-image:
+		linear-gradient(rgba(224, 239, 225, 0.1), rgba(205, 227, 216, 0.22)),
+		url("/assets/impasto/impasto-day.svg");
+}
+
+html.dark.impasto-static .impasto-static-fallback {
 	background-color: #08224c;
 	background-image:
 		linear-gradient(rgba(2, 12, 35, 0.1), rgba(3, 18, 43, 0.23)),
@@ -141,18 +146,18 @@ html.impasto-static .impasto-static-fallback {
 
 html.impasto-ready .impasto-backdrop canvas {
 	opacity: 1;
+	transition: none;
 }
 
 html.impasto-ready .impasto-backdrop::before {
 	opacity: var(--impasto-brush-glaze-opacity);
+	transition: none;
 }
 
 html.impasto-ready .impasto-static-fallback {
 	opacity: 0;
 	visibility: hidden;
-	transition:
-		opacity 260ms cubic-bezier(0.22, 0.7, 0.28, 1),
-		visibility 0s linear 260ms;
+	transition: none;
 }
 
 html.impasto-static .impasto-backdrop canvas,
@@ -249,8 +254,19 @@ html.katelya-art-theme body.fullscreen-banner #main-grid::before {
 	}
 
 	.impasto-static-fallback {
+		background-color: #7fbab0 !important;
+		background-image:
+			linear-gradient(rgba(224, 239, 225, 0.1), rgba(205, 227, 216, 0.22)),
+			url("/assets/impasto/impasto-day.svg") !important;
 		opacity: 1 !important;
 		visibility: visible !important;
+	}
+
+	html.dark .impasto-static-fallback {
+		background-color: #08224c !important;
+		background-image:
+			linear-gradient(rgba(2, 12, 35, 0.1), rgba(3, 18, 43, 0.23)),
+			url("/assets/impasto/impasto-night.svg") !important;
 	}
 }
 
