@@ -40,7 +40,28 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.doesNotMatch(packageJson, /["']three["']/);
 });
 
-test("shader builds directional impasto without extra network textures", async () => {
+test("first painted frame owns readiness and static fallback has one owner", async () => {
+	const renderer = await read("src/scripts/impasto-renderer.ts");
+	const backdrop = await read("src/styles/impasto-backdrop.css");
+
+	assert.match(renderer, /impasto-booting/);
+	assert.match(renderer, /function markFirstFrameReady|const markFirstFrameReady/);
+	const firstDraw = renderer.indexOf("gl.drawArrays");
+	const readyMutation = renderer.indexOf('classList.add("impasto-ready")');
+	assert.ok(firstDraw >= 0, "renderer must draw a first frame");
+	assert.ok(
+		readyMutation > firstDraw,
+		"impasto-ready must only be set after a successful first draw",
+	);
+	assert.doesNotMatch(
+		backdrop,
+		/html\.katelya-art-theme body\s*\{[^}]*impasto-day\.svg/s,
+		"the component fallback must be the only static painted surface",
+	);
+	assert.match(backdrop, /transition:\s*opacity 260ms/);
+});
+
+test("shader builds irregular tensor-guided impasto instead of formulaic arcs", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 
 	assert.match(renderer, /vec2 direction = normalize\(tensor\.rg/);
@@ -50,6 +71,10 @@ test("shader builds directional impasto without extra network textures", async (
 	assert.match(renderer, /float canvasWeave/);
 	assert.match(renderer, /float pigmentGlaze/);
 	assert.match(renderer, /float readingProtection/);
+	assert.match(renderer, /float curlNoise/);
+	assert.match(renderer, /vec2 vortexWarp/);
+	assert.match(renderer, /float brokenStroke/);
+	assert.match(renderer, /float paintEdge/);
 	assert.doesNotMatch(renderer, /new Image\(/);
 	assert.doesNotMatch(renderer, /fetch\(/);
 });
