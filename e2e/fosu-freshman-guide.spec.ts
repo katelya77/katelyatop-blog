@@ -17,10 +17,8 @@ for (const viewport of viewports) {
 		await page.goto(topicUrl, { waitUntil: "domcontentloaded" });
 
 		await expect(
-			page.getByText("校园数字生活｜校园网、VPN、100网与企业微信", {
-				exact: true,
-			}),
-		).toBeVisible();
+			page.locator('#post-container [data-pagefind-meta="title"]'),
+		).toHaveText("校园数字生活｜校园网、VPN、100网与企业微信");
 		await expect(page.locator("[data-series-navigation]")).toHaveCount(2);
 		await expect(page.getByText("2026级佛山大学新生指南").first()).toBeVisible();
 		await expect(page.getByRole("link", { name: "返回总览" }).first()).toBeVisible();
@@ -39,10 +37,8 @@ test("overview is a start-here hub with topic cards and a stable route", async (
 	await page.goto(overviewUrl, { waitUntil: "domcontentloaded" });
 
 	await expect(
-		page.getByText("2026级佛山大学新生指南｜从报到、军训到大学生活", {
-			exact: true,
-		}),
-	).toBeVisible();
+		page.locator('#post-container [data-pagefind-meta="title"]'),
+	).toHaveText("2026级佛山大学新生指南｜从报到、军训到大学生活");
 	await expect(page.locator("[data-series-navigation]")).toHaveCount(0);
 	await expect(
 		page.getByRole("link", { name: /报到与开学准备/ }).first(),
