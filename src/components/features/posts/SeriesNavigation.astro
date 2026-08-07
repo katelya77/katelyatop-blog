@@ -22,15 +22,16 @@ const {
 	items,
 	position = "top",
 } = Astro.props;
-const currentIndex = items.findIndex((item) => item.order === currentOrder);
-const previous = currentIndex > 0 ? items[currentIndex - 1] : undefined;
+const topicItems = items.filter((item) => item.order > 0);
+const currentIndex = topicItems.findIndex((item) => item.order === currentOrder);
+const previous = currentIndex > 0 ? topicItems[currentIndex - 1] : undefined;
 const next =
-	currentIndex >= 0 && currentIndex < items.length - 1
-		? items[currentIndex + 1]
+	currentIndex >= 0 && currentIndex < topicItems.length - 1
+		? topicItems[currentIndex + 1]
 		: undefined;
 const progress =
-	items.length > 0 && currentIndex >= 0
-		? Math.round(((currentIndex + 1) / items.length) * 100)
+	topicItems.length > 0 && currentIndex >= 0
+		? Math.round(((currentIndex + 1) / topicItems.length) * 100)
 		: 0;
 ---
 
@@ -69,7 +70,7 @@ const progress =
 			<span
 				class="text-xs font-medium px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/8 text-black/50 dark:text-white/55"
 			>
-				{Math.max(currentIndex + 1, 1)} / {items.length}
+				{Math.max(currentIndex + 1, 1)} / {topicItems.length}
 			</span>
 			<a
 				href={homeUrl}
