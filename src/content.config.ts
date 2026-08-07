@@ -22,6 +22,11 @@ const postsCollection = defineCollection({
 		licenseName: z.string().optional().default(""),
 		licenseUrl: z.string().optional().default(""),
 
+		/* Optional article-series metadata */
+		series: z.string().optional(),
+		seriesOrder: z.number().int().nonnegative().optional(),
+		seriesHome: z.string().optional(),
+
 		/* Page encryption fields */
 		encrypted: z.boolean().optional().default(false),
 		password: z.string().optional().default(""),

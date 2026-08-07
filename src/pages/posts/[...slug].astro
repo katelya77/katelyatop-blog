@@ -10,6 +10,7 @@ import {
 	PostNavigation,
 	RandomPosts,
 	RelatedPosts,
+	SeriesNavigation,
 	ShareCard,
 } from "@components/features/posts";
 import { ReadingTime, WordCount } from "@components/features/posts/atoms";
@@ -19,6 +20,7 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getRelatedPosts, getSortedPosts } from "@utils/content-utils";
 import { hasCustomPermalink, initPostIdMap } from "@utils/permalink-utils";
 import { getPostPublicDescription } from "@utils/post-card-content";
+import { buildSeriesNavigation } from "@utils/series-utils";
 import { getFileDirFromPath, removeFileExtension } from "@utils/url-utils";
 import {
 	licenseConfig,
@@ -97,6 +99,8 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
 const { remarkPluginFrontmatter } = await render(entry);
+const seriesPosts = entry.data.series ? await getSortedPosts() : [];
+const seriesNavigation = buildSeriesNavigation(entry, seriesPosts);
 
 // 获取相关文章
 const relatedPosts = relatedPostsConfig.enable
@@ -134,6 +138,7 @@ if (entry.data.image) {
 				format: "jpeg",
 				quality: 80,
 			});
+			ogCoverUrl = img.src;
 			ogCoverUrl = ogImage.src;
 		}
 	} else if (entry.data.image.startsWith("http")) {
@@ -292,6 +297,12 @@ const jsonLd = {
 				}
 			</div>
 
+			{
+				seriesNavigation && entry.data.seriesOrder !== 0 && (
+					<SeriesNavigation {...seriesNavigation} position="top" />
+				)
+			}
+
 			<!-- always show cover as long as it has one -->
 
 			{
@@ -381,12 +392,22 @@ const jsonLd = {
 		)
 	}
 
-	<PostNavigation
-		prevSlug={entry.data.nextSlug}
-		prevTitle={entry.data.nextTitle}
-		nextSlug={entry.data.prevSlug}
-		nextTitle={entry.data.prevTitle}
-	/>
+	{
+		seriesNavigation && entry.data.seriesOrder !== 0 && (
+			<SeriesNavigation {...seriesNavigation} position="bottom" />
+		)
+	}
+
+	{
+		!seriesNavigation && (
+			<PostNavigation
+				prevSlug={entry.data.nextSlug}
+				prevTitle={entry.data.nextTitle}
+				nextSlug={entry.data.prevSlug}
+				nextTitle={entry.data.prevTitle}
+			/>
+		)
+	}
 
 	<!-- 相关文章与随机文章 -->
 	{

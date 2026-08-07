@@ -26,6 +26,11 @@ export const navBarConfig: NavBarConfig = {
 			icon: "material-symbols:more-horiz",
 			children: [
 				{
+					name: "新生指南",
+					url: "/fosu/2026-freshman-guide/",
+					icon: "material-symbols:school-outline-rounded",
+				},
+				{
 					name: "RSS 订阅",
 					url: "/rss.xml",
 					external: true,
