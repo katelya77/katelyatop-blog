@@ -10,6 +10,7 @@ export { default as TOCBadge } from "./components/TOCBadge.astro";
 export { default as TOCItemComponent } from "./components/TOCItem.astro";
 export { default as TOCProgressBar } from "./components/TOCProgressBar.astro";
 // 组件导出（兼容包装器）
+export { default as DesktopTOCRail } from "./DesktopTOCRail.astro";
 export { default as FloatingTOC } from "./FloatingTOC.astro";
 // Hooks 导出
 export * from "./hooks/useFloatingTOC";
