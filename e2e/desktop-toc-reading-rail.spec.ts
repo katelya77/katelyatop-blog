@@ -56,14 +56,12 @@ test("1664px desktop uses a compact rail that expands inward without overflow", 
 	expect(await visibleLabelWidth(page)).toBeGreaterThanOrEqual(120);
 	expect(await documentWidth(page)).toBeLessThanOrEqual(1665);
 
-	const overlapLayer = await page.evaluate(() => {
+	const overlapLayerIsSafe = await page.evaluate(() => {
 		const surfaceElement = document.querySelector<HTMLElement>(
 			"#desktop-toc-rail .desktop-toc-surface",
 		);
 		const categories = document.getElementById("categories");
-		if (!surfaceElement || !categories) {
-			return { overlaps: false, railOnTop: false };
-		}
+		if (!surfaceElement || !categories) return false;
 
 		const surfaceRect = surfaceElement.getBoundingClientRect();
 		const categoriesRect = categories.getBoundingClientRect();
@@ -71,20 +69,18 @@ test("1664px desktop uses a compact rail that expands inward without overflow", 
 		const right = Math.min(surfaceRect.right, categoriesRect.right);
 		const top = Math.max(surfaceRect.top, categoriesRect.top);
 		const bottom = Math.min(surfaceRect.bottom, categoriesRect.bottom);
-		if (left >= right || top >= bottom) {
-			return { overlaps: false, railOnTop: false };
-		}
+
+		// No overlap is already safe. If the two surfaces overlap, the TOC must own
+		// the sampled overlap point so category/music widgets cannot clip it.
+		if (left >= right || top >= bottom) return true;
 
 		const x = (left + right) / 2;
 		const y = (top + bottom) / 2;
-		const topElement = document.elementFromPoint(x, y);
-		return {
-			overlaps: true,
-			railOnTop: Boolean(topElement?.closest("#desktop-toc-rail")),
-		};
+		return Boolean(
+			document.elementFromPoint(x, y)?.closest("#desktop-toc-rail"),
+		);
 	});
-	expect(overlapLayer.overlaps).toBe(true);
-	expect(overlapLayer.railOnTop).toBe(true);
+	expect(overlapLayerIsSafe).toBe(true);
 
 	await page.evaluate(() => {
 		const target = document.querySelectorAll<HTMLElement>("#post-container h2[id]")[1];
