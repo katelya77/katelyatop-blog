@@ -219,6 +219,7 @@ const { class: className } = Astro.props;
 			this.regenerateTOC();
 			this.tocEl = this;
 			this.scrollContainer =
+				(this.closest(".desktop-toc-scroll") as HTMLElement | null) ||
 				(this.closest("#toc-inner-wrapper") as HTMLElement | null) ||
 				this.tocEl;
 
@@ -313,18 +314,18 @@ const { class: className } = Astro.props;
 							'<div class="transition w-1.5 h-1.5 rounded-sm bg-black/5 dark:bg-white/10"></div>';
 					}
 
-					return `<a href="#${item.id}" class="px-2 flex gap-2 relative transition w-full min-h-9 rounded-xl hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)] py-2">
-					<div class="transition w-5 h-5 shrink-0 rounded-lg text-xs flex items-center justify-center font-bold ${depthClass} ${item.depth === 0 ? "bg-[var(--toc-badge-bg)] text-[var(--btn-content)]" : ""}">
+					return `<a href="#${item.id}" class="sidebar-toc-item px-2 flex gap-2 relative transition w-full min-h-9 rounded-xl hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)] py-2" data-depth="${item.depth}" data-toc-id="${item.id}">
+					<div class="sidebar-toc-marker transition w-5 h-5 shrink-0 rounded-lg text-xs flex items-center justify-center font-bold ${depthClass} ${item.depth === 0 ? "bg-[var(--toc-badge-bg)] text-[var(--btn-content)]" : ""}" data-depth="${item.depth}">
 						${badgeContent}
 					</div>
-					<div class="transition text-sm ${item.depth <= 1 ? "text-50" : "text-30"}">${item.text}</div>
+					<div class="sidebar-toc-label transition text-sm ${item.depth <= 1 ? "text-50" : "text-30"}">${item.text}</div>
 				</a>`;
 				})
 				.join("");
 
 			this.innerHTML =
 				tocHTML +
-				'<div id="active-indicator" style="opacity: 0" class="-z-10 absolute bg-[var(--toc-btn-hover)] left-0 right-0 rounded-xl transition-all group-hover:bg-transparent border-2 border-[var(--toc-btn-hover)] group-hover:border-[var(--toc-btn-active)] border-dashed"></div>';
+				'<div id="active-indicator" style="opacity: 0" class="sidebar-toc-active-indicator -z-10 absolute bg-[var(--toc-btn-hover)] left-0 right-0 rounded-xl transition-all group-hover:bg-transparent border-2 border-[var(--toc-btn-hover)] group-hover:border-[var(--toc-btn-active)] border-dashed"></div>';
 			this.dataset.loaded = "true";
 		}
 
