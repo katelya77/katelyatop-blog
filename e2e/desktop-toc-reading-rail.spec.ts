@@ -56,6 +56,36 @@ test("1664px desktop uses a compact rail that expands inward without overflow", 
 	expect(await visibleLabelWidth(page)).toBeGreaterThanOrEqual(120);
 	expect(await documentWidth(page)).toBeLessThanOrEqual(1665);
 
+	const overlapLayer = await page.evaluate(() => {
+		const surfaceElement = document.querySelector<HTMLElement>(
+			"#desktop-toc-rail .desktop-toc-surface",
+		);
+		const categories = document.getElementById("categories");
+		if (!surfaceElement || !categories) {
+			return { overlaps: false, railOnTop: false };
+		}
+
+		const surfaceRect = surfaceElement.getBoundingClientRect();
+		const categoriesRect = categories.getBoundingClientRect();
+		const left = Math.max(surfaceRect.left, categoriesRect.left);
+		const right = Math.min(surfaceRect.right, categoriesRect.right);
+		const top = Math.max(surfaceRect.top, categoriesRect.top);
+		const bottom = Math.min(surfaceRect.bottom, categoriesRect.bottom);
+		if (left >= right || top >= bottom) {
+			return { overlaps: false, railOnTop: false };
+		}
+
+		const x = (left + right) / 2;
+		const y = (top + bottom) / 2;
+		const topElement = document.elementFromPoint(x, y);
+		return {
+			overlaps: true,
+			railOnTop: Boolean(topElement?.closest("#desktop-toc-rail")),
+		};
+	});
+	expect(overlapLayer.overlaps).toBe(true);
+	expect(overlapLayer.railOnTop).toBe(true);
+
 	await page.evaluate(() => {
 		const target = document.querySelectorAll<HTMLElement>("#post-container h2[id]")[1];
 		target?.scrollIntoView({ block: "start" });
