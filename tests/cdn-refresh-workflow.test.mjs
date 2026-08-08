@@ -32,7 +32,7 @@ describe("CDN refresh workflow contract", () => {
 		assert.match(workflow, /push:\s*\n\s*branches:\s*\[\s*master\s*\]/);
 		assert.match(workflow, /workflow_dispatch:/);
 		assert.match(workflow, /force_home_refresh:/);
-		assert.match(workflow, /fetch-depth:\s*2/);
+		assert.match(workflow, /fetch-depth:\s*0/);
 		assert.match(
 			workflow,
 			/CF_API_TOKEN:\s*\$\{\{\s*secrets\.CF_API_TOKEN\s*\}\}/,
@@ -58,6 +58,7 @@ describe("CDN refresh workflow contract", () => {
 		assert.match(source, /buildRefreshPlan/);
 		assert.match(source, /waitForPagesDeployment/);
 		assert.match(source, /submitDogeRefresh/);
+		assert.match(source, /core\.quotePath=false/);
 		assert.doesNotMatch(source, /submitDogeRefresh\([^)]*_astro/s);
 	});
 });
