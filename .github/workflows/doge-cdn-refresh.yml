@@ -1,0 +1,61 @@
+name: Refresh DogeCloud CDN
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      force_home_refresh:
+        description: "Force a homepage refresh to smoke-test the Pages → DogeCloud chain"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doge-cdn-refresh-production
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    name: Refresh precise production CDN targets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Resolve base commit
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          zero="0000000000000000000000000000000000000000"
+          if [[ "$EVENT_NAME" == "push" && -n "${EVENT_BEFORE:-}" && "$EVENT_BEFORE" != "$zero" ]]; then
+            base="$EVENT_BEFORE"
+          else
+            base="$(git rev-parse "${GITHUB_SHA}^")"
+          fi
+          echo "BASE_SHA=$base" >> "$GITHUB_ENV"
+
+      - name: Wait for Pages and refresh DogeCloud CDN
+        run: node scripts/cdn-refresh/run.mjs
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_PAGES_PROJECT: katelyatop-blog
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          DOGE_ACCESS_KEY: ${{ secrets.DOGE_ACCESS_KEY }}
+          DOGE_SECRET_KEY: ${{ secrets.DOGE_SECRET_KEY }}
+          SITE_URL: https://blog.katelya.top
+          FORCE_HOME_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.force_home_refresh && 'true' || 'false' }}
