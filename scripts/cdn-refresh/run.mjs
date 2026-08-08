@@ -62,7 +62,15 @@ export async function main(env = process.env) {
 	const headSha = requireEnv(env, "GITHUB_SHA");
 	const siteUrl = env.SITE_URL || "https://blog.katelya.top";
 
-	const diff = runGit(["diff", "--name-status", "-M", baseSha, headSha]);
+	const diff = runGit([
+		"-c",
+		"core.quotePath=false",
+		"diff",
+		"--name-status",
+		"-M",
+		baseSha,
+		headSha,
+	]);
 	const changes = parseGitDiff(diff);
 	let plan = await buildRefreshPlan({
 		changes,
