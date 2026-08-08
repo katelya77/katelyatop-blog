@@ -13,6 +13,7 @@ test("desktop article TOC uses an adaptive reading rail", async () => {
 
 	assert.match(grid, /DesktopTOCRail/);
 	assert.match(grid, /<DesktopTOCRail headings=\{headings\}/);
+	assert.match(grid, /absolute w-full z-40 hidden 2xl:block/);
 
 	assert.match(sidebarToc, /sidebar-toc-item/);
 	assert.match(sidebarToc, /sidebar-toc-marker/);
