@@ -1,6 +1,7 @@
 import type { PermalinkConfig } from "../types/config";
 
 // Permalink 固定链接配置
+// 修改此配置会影响公开 URL 生成，因此纳入生产 CDN 精确刷新范围。
 export const permalinkConfig: PermalinkConfig = {
 	enable: false, // 是否启用全局 permalink 功能，关闭时使用默认的文件名作为链接
 	/**
