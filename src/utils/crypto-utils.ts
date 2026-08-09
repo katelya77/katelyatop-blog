@@ -13,8 +13,32 @@ export const CRYPTO_CONSTANTS = {
 /**
  * 使用 HMAC-SHA256 派生确定性字节
  */
-function deriveBytes(key: string, context: string, length: number): Buffer {
-	return createHmac("sha256", key).update(context).digest().subarray(0, length);
+function ownedBytes(value: ArrayLike<number>): Uint8Array<ArrayBuffer> {
+	const result = new Uint8Array(value.length);
+	result.set(value);
+	return result;
+}
+
+function concatBytes(parts: Uint8Array[]): Uint8Array<ArrayBuffer> {
+	const result = new Uint8Array(
+		parts.reduce((total, part) => total + part.byteLength, 0),
+	);
+	let offset = 0;
+	for (const part of parts) {
+		result.set(part, offset);
+		offset += part.byteLength;
+	}
+	return result;
+}
+
+function deriveBytes(
+	key: string,
+	context: string,
+	length: number,
+): Uint8Array<ArrayBuffer> {
+	return ownedBytes(
+		createHmac("sha256", key).update(context).digest().subarray(0, length),
+	);
 }
 
 /**
@@ -43,20 +67,18 @@ export function encryptContent(
 
 	const salt = deriveBytes(password, `salt:${slug}`, SALT_LENGTH);
 	const iv = deriveBytes(password, `iv:${slug}`, IV_LENGTH);
-	const key = pbkdf2Sync(
-		password,
-		salt,
-		PBKDF2_ITERATIONS,
-		KEY_LENGTH,
-		"sha256",
+	const key = ownedBytes(
+		pbkdf2Sync(password, salt, PBKDF2_ITERATIONS, KEY_LENGTH, "sha256"),
 	);
 
 	const cipher = createCipheriv("aes-256-gcm", key, iv);
-	const encrypted = Buffer.concat([
-		cipher.update(plaintext, "utf8"),
-		cipher.final(),
+	const encrypted = concatBytes([
+		ownedBytes(cipher.update(plaintext, "utf8")),
+		ownedBytes(cipher.final()),
 	]);
-	const authTag = cipher.getAuthTag();
+	const authTag = ownedBytes(cipher.getAuthTag());
 
-	return Buffer.concat([salt, iv, authTag, encrypted]).toString("base64");
+	return Buffer.from(concatBytes([salt, iv, authTag, encrypted])).toString(
+		"base64",
+	);
 }

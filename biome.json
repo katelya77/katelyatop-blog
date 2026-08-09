@@ -1,13 +1,15 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
 	"vcs": {
-		"enabled": false,
+		"enabled": true,
 		"clientKind": "git",
-		"useIgnoreFile": false
+		"useIgnoreFile": true
 	},
 	"files": {
 		"includes": [
 			"**",
+			"!**/.devin/**/*",
+			"!**/docs/editor/**/*",
 			"!**/src/**/*.css",
 			"!**/dist/**/*",
 			"!**/node_modules/**/*",
@@ -19,10 +21,38 @@
 	},
 	"formatter": {
 		"enabled": true,
+		"includes": [
+			"src/components/layout/KatelyaOrbitHero.astro",
+			"src/scripts/hero-depth.ts",
+			"src/scripts/impasto-renderer.ts",
+			"src/utils/crypto-utils.ts",
+			"tests/katelya-impasto-cold-boot.test.mjs",
+			"tests/katelya-impasto-engine.test.mjs",
+			"tests/katelya-layout-regressions.test.mjs",
+			"tests/katelya-light-theme-performance.test.mjs",
+			"tests/katelya-painterly-engine-v2.test.mjs",
+			"e2e/painterly-engine-v2.spec.ts",
+			"e2e/painterly-responsive-matrix.spec.ts"
+		],
 		"indentStyle": "tab",
 		"lineWidth": 80
 	},
-	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"assist": {
+		"includes": [
+			"src/components/layout/KatelyaOrbitHero.astro",
+			"src/scripts/hero-depth.ts",
+			"src/scripts/impasto-renderer.ts",
+			"src/utils/crypto-utils.ts",
+			"tests/katelya-impasto-cold-boot.test.mjs",
+			"tests/katelya-impasto-engine.test.mjs",
+			"tests/katelya-layout-regressions.test.mjs",
+			"tests/katelya-light-theme-performance.test.mjs",
+			"tests/katelya-painterly-engine-v2.test.mjs",
+			"e2e/painterly-engine-v2.spec.ts",
+			"e2e/painterly-responsive-matrix.spec.ts"
+		],
+		"actions": { "source": { "organizeImports": "on" } }
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {

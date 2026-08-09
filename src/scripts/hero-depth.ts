@@ -31,8 +31,22 @@ export function initKatelyaHeroDepth(): void {
 	let targetX = 0;
 	let targetY = 0;
 	let frameId = 0;
+	let pageLeft = 0;
+	let pageTop = 0;
+	let heroWidth = 1;
+	let heroHeight = 1;
+
+	const measureHero = () => {
+		const rect = hero.getBoundingClientRect();
+		pageLeft = rect.left + window.scrollX;
+		pageTop = rect.top + window.scrollY;
+		heroWidth = Math.max(rect.width, 1);
+		heroHeight = Math.max(rect.height, 1);
+	};
 
 	const writeVariables = (x: number, y: number) => {
+		hero.style.setProperty("--hero-pointer-x", x.toFixed(3));
+		hero.style.setProperty("--hero-pointer-y", y.toFixed(3));
 		hero.style.setProperty("--hero-shallow-x", `${(x * 5).toFixed(2)}px`);
 		hero.style.setProperty("--hero-shallow-y", `${(y * 4).toFixed(2)}px`);
 		hero.style.setProperty("--hero-mid-x", `${(x * 11).toFixed(2)}px`);
@@ -64,45 +78,47 @@ export function initKatelyaHeroDepth(): void {
 			return;
 		}
 
-		const rect = hero.getBoundingClientRect();
-		if (rect.width <= 0 || rect.height <= 0) {
-			reset();
-			return;
-		}
+		const left = pageLeft - window.scrollX;
+		const top = pageTop - window.scrollY;
+		const right = left + heroWidth;
+		const bottom = top + heroHeight;
 
 		const insideHero =
-			event.clientX >= rect.left &&
-			event.clientX <= rect.right &&
-			event.clientY >= rect.top &&
-			event.clientY <= rect.bottom;
+			event.clientX >= left &&
+			event.clientX <= right &&
+			event.clientY >= top &&
+			event.clientY <= bottom;
 		if (!insideHero) {
 			reset();
 			return;
 		}
 
 		targetX = clamp(
-			((event.clientX - rect.left) / rect.width - 0.5) * 2,
+			((event.clientX - left) / heroWidth - 0.5) * 2,
 			-MAX_X,
 			MAX_X,
 		);
 		targetY = clamp(
-			((event.clientY - rect.top) / rect.height - 0.5) * 2,
+			((event.clientY - top) / heroHeight - 0.5) * 2,
 			-MAX_Y,
 			MAX_Y,
 		);
 		queueRender();
 	};
 
+	measureHero();
 	writeVariables(0, 0);
 	if (!reducedMotion && !coarsePointer) {
 		window.addEventListener("pointermove", onPointerMove, { passive: true });
 		window.addEventListener("blur", reset);
+		window.addEventListener("resize", measureHero, { passive: true });
 	}
 
 	depthWindow.__katelyaHeroDepthCleanup = () => {
 		if (frameId) cancelAnimationFrame(frameId);
 		window.removeEventListener("pointermove", onPointerMove);
 		window.removeEventListener("blur", reset);
+		window.removeEventListener("resize", measureHero);
 		if (depthWindow.__katelyaHeroDepthElement === hero) {
 			depthWindow.__katelyaHeroDepthElement = undefined;
 		}

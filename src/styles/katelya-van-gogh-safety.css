@@ -43,19 +43,6 @@ html.katelya-art-theme.dark {
 html.katelya-art-theme body {
 	position: relative;
 	isolation: isolate;
-	background-attachment: scroll !important;
-}
-
-html.katelya-art-theme body::before,
-html.katelya-art-theme body::after {
-	position: fixed;
-	z-index: -2;
-	pointer-events: none;
-	content: "";
-}
-
-html.katelya-art-theme body::after {
-	z-index: -1;
 }
 
 html.katelya-art-theme ::selection {

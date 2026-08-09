@@ -1,12 +1,12 @@
 html.katelya-art-theme,
 html.katelya-art-theme body {
-	background-attachment: scroll !important;
+	background-attachment: scroll;
 }
 
 html.katelya-art-theme {
 	--impasto-fiber-color: rgba(21, 82, 78, 0.11);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-day.svg");
-	--impasto-brush-glaze-opacity: 0.28;
+	--impasto-brush-glaze-opacity: 0.1;
 	--impasto-boot-underpaint:
 		radial-gradient(ellipse at 48% 38%, rgba(242, 235, 194, 0.44), transparent 34%),
 		linear-gradient(138deg, #174f55 0%, #66aaa1 52%, #dfece0 100%);
@@ -15,7 +15,7 @@ html.katelya-art-theme {
 html.katelya-art-theme.dark {
 	--impasto-fiber-color: rgba(215, 198, 134, 0.06);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-night.svg");
-	--impasto-brush-glaze-opacity: 0.34;
+	--impasto-brush-glaze-opacity: 0.13;
 	--impasto-boot-underpaint:
 		radial-gradient(ellipse at 58% 29%, rgba(239, 190, 72, 0.12), transparent 27%),
 		linear-gradient(142deg, #061333 0%, #123b72 50%, #075667 100%);
@@ -23,20 +23,20 @@ html.katelya-art-theme.dark {
 
 html.katelya-art-theme body,
 html.katelya-art-theme.dark body {
-	background-color: #dcebe2 !important;
-	background-image: var(--impasto-boot-underpaint) !important;
-	background-position: center top !important;
-	background-size: cover !important;
-	background-attachment: scroll !important;
+	background-color: #dcebe2;
+	background-image: var(--impasto-boot-underpaint);
+	background-position: center top;
+	background-size: cover;
+	background-attachment: scroll;
 }
 
 html.katelya-art-theme.dark body {
-	background-color: #071a42 !important;
+	background-color: #071a42;
 }
 
 html.katelya-art-theme.impasto-ready body,
 html.katelya-art-theme.dark.impasto-ready body {
-	background-image: none !important;
+	background-image: none;
 }
 
 .impasto-backdrop {
@@ -48,7 +48,7 @@ html.katelya-art-theme.dark.impasto-ready body {
 	contain: strict;
 }
 
-.impasto-backdrop canvas,
+[data-impasto-canvas],
 .impasto-static-fallback,
 .impasto-backdrop::before,
 .impasto-backdrop::after {
@@ -58,7 +58,7 @@ html.katelya-art-theme.dark.impasto-ready body {
 	height: 100%;
 }
 
-.impasto-backdrop canvas {
+[data-impasto-canvas] {
 	z-index: 0;
 	display: block;
 	opacity: 0;
@@ -134,7 +134,7 @@ html.dark.impasto-static .impasto-static-fallback {
 		url("/assets/impasto/impasto-night.svg");
 }
 
-html.impasto-booting .impasto-backdrop canvas {
+html.impasto-booting [data-impasto-canvas] {
 	opacity: 0;
 }
 
@@ -144,7 +144,7 @@ html.impasto-static .impasto-static-fallback {
 	visibility: visible;
 }
 
-html.impasto-ready .impasto-backdrop canvas {
+html.impasto-ready [data-impasto-canvas] {
 	opacity: 1;
 	transition: none;
 }
@@ -160,69 +160,38 @@ html.impasto-ready .impasto-static-fallback {
 	transition: none;
 }
 
-html.impasto-static .impasto-backdrop canvas,
+html.impasto-static [data-impasto-canvas],
 html.impasto-static .impasto-backdrop::before {
 	display: none;
 }
 
-html.katelya-art-theme body::before,
-html.katelya-art-theme body::after,
-html.katelya-art-theme.dark body::before,
-html.katelya-art-theme.dark body::after {
-	display: none !important;
-	content: none !important;
-}
-
 html.katelya-art-theme #banner-wrapper,
 html.katelya-art-theme.dark #banner-wrapper {
-	position: absolute !important;
-	top: 0 !important;
-	left: 0 !important;
-	z-index: 1 !important;
-	width: 100% !important;
-	height: 100% !important;
-	background: transparent !important;
-	background-image: none !important;
-	transform: none !important;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	background-image: none;
+	transform: none;
 }
 
 html.katelya-art-theme #banner-wrapper img {
-	opacity: 0 !important;
+	opacity: 0;
 }
 
-html.katelya-art-theme #banner-wrapper::before {
-	background:
-		radial-gradient(
-			ellipse at 50% 42%,
-			rgba(255, 247, 210, 0.13),
-			transparent 38%
-		),
-		linear-gradient(
-			180deg,
-			rgba(19, 62, 62, 0.08),
-			transparent 58%,
-			rgba(225, 238, 228, 0.42)
-		) !important;
+html.katelya-art-theme #header-waves {
+	display: none;
 }
 
-html.katelya-art-theme.dark #banner-wrapper::before {
-	background:
-		radial-gradient(
-			ellipse at 50% 40%,
-			rgba(242, 200, 91, 0.075),
-			transparent 36%
-		),
-		linear-gradient(
-			180deg,
-			rgba(2, 10, 32, 0.12),
-			transparent 58%,
-			rgba(4, 20, 44, 0.5)
-		) !important;
-}
-
+html.katelya-art-theme #banner-wrapper::before,
 html.katelya-art-theme #banner-wrapper::after,
+html.katelya-art-theme.dark #banner-wrapper::before,
 html.katelya-art-theme.dark #banner-wrapper::after {
-	background: linear-gradient(180deg, transparent 66%, var(--page-bg)) !important;
+	content: none;
+	background: none;
 }
 
 html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
@@ -248,7 +217,7 @@ html.katelya-art-theme body.fullscreen-banner #main-grid::before {
 }
 
 @media (pointer: coarse) {
-	.impasto-backdrop canvas {
+	[data-impasto-canvas] {
 		filter: saturate(1.06) contrast(0.9);
 	}
 
@@ -258,7 +227,7 @@ html.katelya-art-theme body.fullscreen-banner #main-grid::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.impasto-backdrop canvas,
+	[data-impasto-canvas],
 	.impasto-backdrop::before {
 		display: none !important;
 	}

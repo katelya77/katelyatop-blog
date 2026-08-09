@@ -52,8 +52,10 @@ const orbitItems = [
 	data-katelya-orbit
 >
 	<div class="katelya-paint-aura" aria-hidden="true">
-		<span class="katelya-aura-ring katelya-aura-ring--outer"></span>
-		<span class="katelya-aura-ring katelya-aura-ring--inner"></span>
+		<span class="katelya-aura-stroke katelya-aura-stroke--one"></span>
+		<span class="katelya-aura-stroke katelya-aura-stroke--two"></span>
+		<span class="katelya-aura-stroke katelya-aura-stroke--three"></span>
+		<span class="katelya-aura-stroke katelya-aura-stroke--four"></span>
 		<span class="katelya-gold-fleck katelya-gold-fleck--one"></span>
 		<span class="katelya-gold-fleck katelya-gold-fleck--two"></span>
 		<span class="katelya-gold-fleck katelya-gold-fleck--three"></span>
@@ -123,10 +125,7 @@ const orbitItems = [
 		var hero = document.querySelector("[data-katelya-orbit]");
 		if (!hero) return;
 
-		var animationFrame = 0;
 		var syncFrame = 0;
-		var targetX = 0;
-		var targetY = 0;
 
 		function getHomeState() {
 			var data = document.getElementById("page-overlay-data");
@@ -166,51 +165,14 @@ const orbitItems = [
 			});
 		}
 
-		function renderTilt() {
-			animationFrame = 0;
-			hero.style.setProperty("--orbit-ry", targetX.toFixed(2) + "deg");
-			hero.style.setProperty("--orbit-rx", targetY.toFixed(2) + "deg");
-		}
-
-		function queueTiltRender() {
-			if (!animationFrame) animationFrame = requestAnimationFrame(renderTilt);
-		}
-
-		function onPointerMove(event) {
-			if (!hero.classList.contains("is-home-active")) return;
-			var rect = hero.getBoundingClientRect();
-			var x = (event.clientX - rect.left) / rect.width - 0.5;
-			var y = (event.clientY - rect.top) / rect.height - 0.5;
-			targetX = x * 5;
-			targetY = y * -3.5;
-			queueTiltRender();
-		}
-
-		function onPointerLeave() {
-			targetX = 0;
-			targetY = 0;
-			queueTiltRender();
-		}
-
 		document.addEventListener("swup:page:view", queueHomeStateSync);
 		window.addEventListener("popstate", queueHomeStateSync);
 		queueHomeStateSync();
 
-		var reducedMotion = window.matchMedia(
-			"(prefers-reduced-motion: reduce)",
-		).matches;
-		if (!reducedMotion) {
-			hero.addEventListener("pointermove", onPointerMove, { passive: true });
-			hero.addEventListener("pointerleave", onPointerLeave, { passive: true });
-		}
-
 		window.__katelyaOrbitCleanup = function () {
-			if (animationFrame) cancelAnimationFrame(animationFrame);
 			if (syncFrame) cancelAnimationFrame(syncFrame);
 			document.removeEventListener("swup:page:view", queueHomeStateSync);
 			window.removeEventListener("popstate", queueHomeStateSync);
-			hero.removeEventListener("pointermove", onPointerMove);
-			hero.removeEventListener("pointerleave", onPointerLeave);
 		};
 	})();
 </script>
@@ -253,31 +215,54 @@ const orbitItems = [
 		overflow: hidden;
 	}
 
-	.katelya-aura-ring {
+	.katelya-aura-stroke {
 		position: absolute;
-		top: 50%;
-		left: 50%;
-		border: 1px solid color-mix(in srgb, var(--katelya-gold) 44%, transparent);
-		border-radius: 50%;
-		transform: translate(-50%, -50%) rotate(-8deg);
+		height: clamp(0.28rem, 0.52vw, 0.58rem);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in srgb, var(--katelya-cyan) 62%, transparent) 18%,
+			color-mix(in srgb, var(--katelya-gold) 72%, transparent) 58%,
+			transparent
+		);
+		clip-path: polygon(0 48%, 9% 24%, 34% 40%, 61% 6%, 84% 34%, 100% 52%, 86% 73%, 55% 62%, 23% 94%, 7% 69%);
+		mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
+		-webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 84%, transparent);
 	}
 
-	.katelya-aura-ring--outer {
-		width: min(76vw, 72rem);
-		height: min(36vw, 32rem);
+	.katelya-aura-stroke--one {
+		top: 25%;
+		left: 7%;
+		width: min(45vw, 40rem);
+		transform: rotate(-11deg) skewX(-9deg);
 	}
 
-	.katelya-aura-ring--inner {
-		width: min(54vw, 50rem);
-		height: min(25vw, 22rem);
-		transform: translate(-50%, -50%) rotate(11deg);
+	.katelya-aura-stroke--two {
+		top: 31%;
+		right: 4%;
+		width: min(37vw, 34rem);
+		transform: rotate(8deg) skewX(13deg);
+	}
+
+	.katelya-aura-stroke--three {
+		bottom: 24%;
+		left: 13%;
+		width: min(32vw, 29rem);
+		transform: rotate(7deg) skewX(-12deg);
+	}
+
+	.katelya-aura-stroke--four {
+		right: 15%;
+		bottom: 19%;
+		width: min(25vw, 22rem);
+		transform: rotate(-14deg) skewX(7deg);
 	}
 
 	.katelya-gold-fleck {
 		position: absolute;
 		width: 0.44rem;
 		height: 0.44rem;
-		border-radius: 50%;
+		border-radius: 67% 33% 58% 42% / 41% 66% 34% 59%;
 		background: var(--katelya-gold);
 		box-shadow: 0 0 1.1rem color-mix(in srgb, var(--katelya-gold) 68%, transparent);
 	}
@@ -298,10 +283,11 @@ const orbitItems = [
 	}
 
 	.katelya-orbit-stage {
+		top: 55%;
 		left: 50%;
 		width: min(82vw, 78rem);
-		transform: translateX(-50%) rotateX(var(--orbit-rx, 0deg))
-			rotateY(var(--orbit-ry, 0deg));
+		height: min(36vw, 32rem);
+		transform: translate(-50%, -50%);
 		transform-style: preserve-3d;
 		transition: transform 120ms ease-out;
 	}
@@ -316,7 +302,7 @@ const orbitItems = [
 		color: var(--katelya-text);
 		text-decoration: none;
 		border-radius: 1rem 0.78rem 1.08rem 0.82rem;
-		backdrop-filter: blur(12px);
+		backdrop-filter: none;
 		transform-style: preserve-3d;
 	}
 
@@ -423,8 +409,8 @@ const orbitItems = [
 		border: 1px solid var(--katelya-border-bright);
 		border-radius: 999px;
 		background: color-mix(in srgb, var(--katelya-surface) 84%, transparent);
-		box-shadow: 0 8px 24px rgba(18, 58, 57, 0.16);
-		backdrop-filter: blur(10px);
+		box-shadow: 0 5px 15px rgba(18, 58, 57, 0.1);
+		backdrop-filter: none;
 	}
 
 	.katelya-hero-links a:hover,

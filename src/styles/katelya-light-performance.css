@@ -1,85 +1,5 @@
 html.katelya-art-theme {
 	--katelya-theme-transition: 180ms;
-	--katelya-hero-light-ink: #153f40;
-	--katelya-hero-light-muted: rgba(21, 63, 64, 0.82);
-	--katelya-hero-light-canvas: rgba(249, 246, 218, 0.58);
-	--katelya-hero-light-canvas-strong: rgba(250, 247, 221, 0.82);
-}
-
-/* Localized reading protection: preserve the painting outside the copy area. */
-html.katelya-art-theme:not(.dark) .katelya-hero-copy {
-	isolation: isolate;
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-copy::before {
-	position: absolute;
-	inset: -3.1rem -5.8rem -2.5rem;
-	z-index: -1;
-	pointer-events: none;
-	content: "";
-	border-radius: 50%;
-	background: radial-gradient(
-		ellipse at center,
-		var(--katelya-hero-light-canvas-strong) 0%,
-		var(--katelya-hero-light-canvas) 42%,
-		rgba(226, 239, 224, 0.24) 63%,
-		transparent 78%
-	);
-	filter: blur(1.5px);
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-title {
-	color: #fff9df !important;
-	-webkit-text-stroke: 0.45px rgba(19, 61, 61, 0.46);
-	text-shadow:
-		0 1px 0 rgba(18, 57, 58, 0.7),
-		0 3px 8px rgba(20, 69, 68, 0.32),
-		0 15px 32px rgba(19, 67, 65, 0.24) !important;
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-eyebrow {
-	color: color-mix(in srgb, var(--katelya-gold) 54%, var(--katelya-hero-light-ink)) !important;
-	text-shadow: 0 1px 8px rgba(248, 243, 211, 0.88);
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-subtitle {
-	color: var(--katelya-hero-light-ink) !important;
-	text-shadow: 0 1px 10px rgba(248, 245, 218, 0.9) !important;
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-subtitle__line {
-	display: inline-flex;
-	min-height: 2.35rem;
-	align-items: center;
-	padding: 0.34rem 0.9rem;
-	border: 1px solid rgba(55, 108, 103, 0.17);
-	border-radius: 999px;
-	background: linear-gradient(110deg, rgba(251, 248, 222, 0.7), rgba(225, 239, 224, 0.54));
-	box-shadow: 0 10px 28px rgba(27, 80, 75, 0.1);
-	backdrop-filter: blur(6px);
-}
-
-html.katelya-art-theme:not(.dark) .katelya-hero-links a {
-	color: var(--katelya-hero-light-ink) !important;
-	border-color: rgba(65, 107, 102, 0.23) !important;
-	background: linear-gradient(120deg, rgba(255, 251, 226, 0.9), rgba(226, 239, 225, 0.8)) !important;
-	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.72),
-		0 8px 20px rgba(28, 74, 70, 0.13) !important;
-}
-
-html.katelya-art-theme:not(.dark) .katelya-orbit-card {
-	color: var(--katelya-hero-light-ink) !important;
-	border-color: rgba(70, 111, 105, 0.22) !important;
-	background: linear-gradient(130deg, rgba(251, 247, 220, 0.84), rgba(224, 238, 223, 0.74)) !important;
-	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.72),
-		0 18px 36px rgba(28, 72, 68, 0.14) !important;
-}
-
-html.katelya-art-theme:not(.dark) .katelya-orbit-card__copy small {
-	color: var(--katelya-hero-light-muted);
-	opacity: 0.76;
 }
 
 /* Search trigger never participates in navbar width changes. */
@@ -534,10 +454,6 @@ html.katelya-art-theme.is-theme-transitioning .waves {
 }
 
 @media (max-width: 767px) {
-	html.katelya-art-theme:not(.dark) .katelya-hero-copy::before {
-		inset: -2.4rem -1.2rem -2rem;
-	}
-
 	html.katelya-art-theme .katelya-search-desktop-panel {
 		max-width: calc(100vw - 1.5rem);
 		padding: 0.62rem;

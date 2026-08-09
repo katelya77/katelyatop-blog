@@ -40,7 +40,10 @@ test("first painted frame owns readiness and static fallback has one owner", asy
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 
 	assert.match(renderer, /impasto-booting/);
-	assert.match(renderer, /function markFirstFrameReady|const markFirstFrameReady/);
+	assert.match(
+		renderer,
+		/function markFirstFrameReady|const markFirstFrameReady/,
+	);
 	const firstDraw = renderer.indexOf("gl.drawArrays");
 	const readyMutation = renderer.indexOf('classList.add("impasto-ready")');
 	assert.ok(firstDraw >= 0, "renderer must draw a first frame");
@@ -56,16 +59,13 @@ test("first painted frame owns readiness and static fallback has one owner", asy
 	assert.match(backdrop, /transition:\s*opacity 260ms/);
 	assert.match(
 		backdrop,
-		/html\.katelya-art-theme\.dark\.impasto-ready body\s*\{[^}]*background-image:\s*none !important/s,
+		/html\.katelya-art-theme\.dark\.impasto-ready body\s*\{[^}]*background-image:\s*none/s,
 	);
 	assert.match(
 		backdrop,
-		/html\.katelya-art-theme\.dark #banner-wrapper\s*\{[^}]*background-image:\s*none !important/s,
+		/html\.katelya-art-theme\.dark #banner-wrapper\s*\{[^}]*background-image:\s*none/s,
 	);
-	assert.match(
-		backdrop,
-		/html\.katelya-art-theme\.dark body::before,[\s\S]*display:\s*none !important/,
-	);
+	assert.doesNotMatch(backdrop, /body::before|body::after/);
 });
 
 test("shader builds irregular tensor-guided impasto instead of formulaic arcs", async () => {
@@ -76,7 +76,7 @@ test("shader builds irregular tensor-guided impasto instead of formulaic arcs", 
 		/vec2 tensorDirection = normalize\(tensor\.rg[\s\S]*vec2 direction = normalize\(/,
 	);
 	assert.match(renderer, /localWarp \* mix\(/);
-	assert.match(renderer, /float strokeSegment/);
+	assert.match(renderer, /float midStrokeMask/);
 	assert.match(renderer, /float bristleRidge/);
 	assert.match(renderer, /vec3 underpaint/);
 	assert.match(renderer, /float canvasWeave/);
@@ -89,10 +89,10 @@ test("shader builds irregular tensor-guided impasto instead of formulaic arcs", 
 	assert.match(renderer, /vec2 vortexCenterA/);
 	assert.match(renderer, /vec2 vortexCenterB/);
 	assert.match(renderer, /vec2 vortexCenterC/);
-	assert.match(renderer, /vec2 broadFlow/);
-	assert.match(renderer, /vec2 secondaryFlow/);
-	assert.match(renderer, /vec2 ridgeFlow/);
-	assert.match(renderer, /normal = normalize\(vec3\(-dFdx\(height\) \* 22\.0/);
+	assert.match(renderer, /float broadUnderpainting/);
+	assert.match(renderer, /float microBristleRidge/);
+	assert.match(renderer, /float localPhase/);
+	assert.match(renderer, /normal = normalize\(vec3\(-dFdx\(height\) \* 16\.0/);
 	assert.doesNotMatch(renderer, /new Image\(/);
 	assert.doesNotMatch(renderer, /fetch\(/);
 });
@@ -110,7 +110,7 @@ test("quantized structure field and generated fallbacks stay compact", async () 
 	assert.equal(field.width, 32);
 	assert.equal(field.height, 18);
 	assert.equal(Buffer.from(field.data, "base64").length, 32 * 18 * 4);
-	assert.equal(metadata.generator, "katelya-impasto-svg-v1");
+	assert.equal(metadata.generator, "katelya-impasto-svg-v2");
 	assert.equal(metadata.sourcePathCount, 172000);
 	assert.ok(metadata.dayBytes + metadata.nightBytes < 500_000);
 	assert.match(day, /feDiffuseLighting/);
@@ -163,7 +163,10 @@ test("touch clients keep dynamic impasto while accessibility fallbacks stay inta
 	assert.match(renderer, /impasto-static/);
 	assert.match(renderer, /prefers-reduced-motion/);
 	assert.match(renderer, /connection\?\.saveData/);
-	assert.doesNotMatch(renderer, /coarsePointer\s*&&\s*window\.innerWidth\s*<\s*900/);
+	assert.doesNotMatch(
+		renderer,
+		/coarsePointer\s*&&\s*window\.innerWidth\s*<\s*900/,
+	);
 	assert.match(renderer, /TOUCH_MIN_DPR/);
 	assert.match(renderer, /TOUCH_MAX_RENDER_PIXELS/);
 	assert.match(renderer, /TOUCH_POINTER_FPS/);
