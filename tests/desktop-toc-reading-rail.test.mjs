@@ -14,6 +14,11 @@ test("desktop article TOC uses an adaptive compositor-friendly reading rail", as
 	assert.match(grid, /DesktopTOCRail/);
 	assert.match(grid, /<DesktopTOCRail headings=\{headings\}/);
 	assert.match(grid, /absolute w-full z-40 hidden 2xl:block/);
+	assert.doesNotMatch(grid, /class="fixed top-14/);
+	assert.match(
+		grid,
+		/top-\[calc\(var\(--impasto-header-top\)\+var\(--impasto-header-height\)\+1rem\)\]/,
+	);
 
 	assert.match(sidebarToc, /sidebar-toc-item/);
 	assert.match(sidebarToc, /sidebar-toc-marker/);

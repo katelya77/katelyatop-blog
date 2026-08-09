@@ -28,7 +28,7 @@ async function visibleLabelWidth(page: Page) {
 		.evaluate((element) => element.getBoundingClientRect().width);
 }
 
-test("1664px desktop reveals the full TOC without resizing the rail", async ({
+test("1664px desktop reveals the full TOC below the navbar without resizing the rail", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -37,6 +37,7 @@ test("1664px desktop reveals the full TOC without resizing the rail", async ({
 	const rail = page.locator("#desktop-toc-rail");
 	const compact = rail.locator(".desktop-toc-compact");
 	const panel = rail.locator(".desktop-toc-panel");
+	const navbar = page.locator("#navbar");
 	const initialRailBox = await rail.boundingBox();
 	const panelBox = await panel.boundingBox();
 	expect(initialRailBox).not.toBeNull();
@@ -55,13 +56,18 @@ test("1664px desktop reveals the full TOC without resizing the rail", async ({
 
 	const expandedRailBox = await rail.boundingBox();
 	const expandedPanelBox = await panel.boundingBox();
+	const navbarBox = await navbar.boundingBox();
 	expect(expandedRailBox).not.toBeNull();
 	expect(expandedPanelBox).not.toBeNull();
-	if (!expandedRailBox || !expandedPanelBox) return;
+	expect(navbarBox).not.toBeNull();
+	if (!expandedRailBox || !expandedPanelBox || !navbarBox) return;
 
 	expect(Math.abs(expandedRailBox.width - initialRailBox.width)).toBeLessThan(1);
 	expect(expandedPanelBox.x).toBeGreaterThanOrEqual(0);
 	expect(expandedPanelBox.x + expandedPanelBox.width).toBeLessThanOrEqual(1664);
+	expect(expandedPanelBox.y).toBeGreaterThanOrEqual(
+		navbarBox.y + navbarBox.height + 8,
+	);
 	expect(await visibleLabelWidth(page)).toBeGreaterThanOrEqual(120);
 	expect(await documentWidth(page)).toBeLessThanOrEqual(1665);
 
