@@ -86,6 +86,17 @@ test("theme switching uses one lightweight 180ms transition path", async () => {
 	assert.match(renderer, /const THEME_BURST_MS = 220/);
 });
 
+test("Impasto and hero-depth modules start after the first paint opportunity", async () => {
+	const backdrop = await read("src/components/layout/ImpastoBackdrop.astro");
+
+	assert.doesNotMatch(backdrop, /import \{ initImpastoRenderer \} from/);
+	assert.doesNotMatch(backdrop, /import \{ initKatelyaHeroDepth \} from/);
+	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/impasto-renderer"\)/);
+	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/hero-depth"\)/);
+	assert.match(backdrop, /requestAnimationFrame/);
+	assert.match(backdrop, /astro:page-load/);
+});
+
 test("Live2D iframe stays network-idle until the widget is eligible", async () => {
 	const pio = await read("src/components/features/pio/Pio.astro");
 
