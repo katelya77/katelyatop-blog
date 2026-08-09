@@ -85,3 +85,14 @@ test("theme switching uses one lightweight 180ms transition path", async () => {
 	assert.match(renderer, /katelya-theme-change/);
 	assert.match(renderer, /const THEME_BURST_MS = 220/);
 });
+
+test("Live2D iframe stays network-idle until the widget is eligible", async () => {
+	const pio = await read("src/components/features/pio/Pio.astro");
+
+	assert.match(pio, /data-src="\/pio\/live2d-host\.html"/);
+	assert.doesNotMatch(pio, /\bsrc="\/pio\/live2d-host\.html"/);
+	assert.match(pio, /function ensureFrameSource\(/);
+	assert.match(pio, /currentEl\.dataset\.src/);
+	assert.match(pio, /window\.innerWidth\s*<=\s*PIO_MOBILE_BREAKPOINT/);
+	assert.match(pio, /scheduleInit\(\)/);
+});
