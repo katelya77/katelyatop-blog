@@ -22,19 +22,30 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /getContext\("webgl2"/);
 	assert.match(renderer, /document\.visibilityState/);
 	assert.match(renderer, /prefers-reduced-motion/);
-	assert.match(renderer, /const MAX_DPR = 1\.4/);
-	assert.match(renderer, /const MIN_DPR = 0\.85/);
-	assert.match(renderer, /const MAX_RENDER_PIXELS = 3_200_000/);
+	assert.match(renderer, /const DESKTOP_RENDER_PROFILE: RenderProfile/);
+	assert.match(renderer, /maxDpr:\s*1\.4/);
+	assert.match(renderer, /minDpr:\s*0\.85/);
+	assert.match(renderer, /maxPixels:\s*3_200_000/);
+	assert.match(renderer, /pointerFps:\s*48/);
+	assert.match(renderer, /themeFps:\s*36/);
+	assert.match(renderer, /idleFps:\s*14/);
+	assert.match(renderer, /const TOUCH_RENDER_PROFILE: RenderProfile/);
+	assert.match(renderer, /maxDpr:\s*1\.5/);
+	assert.match(renderer, /minDpr:\s*1,/);
+	assert.match(renderer, /maxPixels:\s*2_400_000/);
+	assert.match(renderer, /pointerFps:\s*24/);
+	assert.match(renderer, /themeFps:\s*20/);
+	assert.match(renderer, /idleFps:\s*8/);
 	assert.match(
 		renderer,
-		/Math\.sqrt\(MAX_RENDER_PIXELS\s*\/\s*Math\.max\(cssPixels,\s*1\)\)/,
+		/Math\.sqrt\(profile\.maxPixels\s*\/\s*Math\.max\(cssPixels,\s*1\)\)/,
 	);
 	assert.match(renderer, /connection\?\.saveData/);
 	assert.match(renderer, /cancelAnimationFrame/);
 	assert.match(renderer, /swup:page:view/);
-	assert.match(renderer, /const POINTER_FPS = 48/);
-	assert.match(renderer, /const THEME_FPS = 36/);
-	assert.match(renderer, /const IDLE_FPS = 14/);
+	assert.match(renderer, /renderProfile\.pointerFps/);
+	assert.match(renderer, /renderProfile\.themeFps/);
+	assert.match(renderer, /renderProfile\.idleFps/);
 	assert.match(renderer, /katelya-theme-change/);
 	assert.doesNotMatch(renderer, /MutationObserver/);
 	assert.doesNotMatch(packageJson, /["']three["']/);
@@ -160,13 +171,14 @@ test("navigation and page content use independent stable geometry", async () => 
 	assert.doesNotMatch(backdrop, /background-attachment:\s*fixed/);
 });
 
-test("renderer and CSS expose static mobile and accessible fallbacks", async () => {
+test("renderer exposes adaptive touch rendering and accessible static fallbacks", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 	const geometry = await read("src/styles/impasto-geometry.css");
 
 	assert.match(renderer, /impasto-static/);
 	assert.match(renderer, /pointer: coarse/);
+	assert.match(renderer, /TOUCH_RENDER_PROFILE/);
 	assert.match(backdrop, /impasto-day\.svg/);
 	assert.match(backdrop, /impasto-night\.svg/);
 	assert.match(backdrop, /\.impasto-backdrop::after/);
@@ -180,6 +192,10 @@ test("renderer and CSS expose static mobile and accessible fallbacks", async () 
 	);
 	assert.doesNotMatch(backdrop, /will-change/);
 	assert.match(backdrop, /@media \(prefers-reduced-motion:\s*reduce\)/);
+	assert.doesNotMatch(
+		backdrop,
+		/@media \([^)]*pointer:\s*coarse[^)]*\)\s*\{[\s\S]*\.impasto-backdrop canvas[\s\S]*display:\s*none/,
+	);
 	assert.match(backdrop, /@media \(forced-colors:\s*active\)/);
 	assert.match(geometry, /@media print/);
 });

@@ -16,14 +16,33 @@ type ThemeChangeDetail = {
 	dark?: boolean;
 };
 
+type RenderProfile = {
+	maxDpr: number;
+	minDpr: number;
+	maxPixels: number;
+	pointerFps: number;
+	themeFps: number;
+	idleFps: number;
+};
+
 const THEME_BURST_MS = 220;
 const POINTER_BURST_MS = 650;
-const MAX_DPR = 1.4;
-const MIN_DPR = 0.85;
-const MAX_RENDER_PIXELS = 3_200_000;
-const POINTER_FPS = 48;
-const THEME_FPS = 36;
-const IDLE_FPS = 14;
+const DESKTOP_RENDER_PROFILE: RenderProfile = {
+	maxDpr: 1.4,
+	minDpr: 0.85,
+	maxPixels: 3_200_000,
+	pointerFps: 48,
+	themeFps: 36,
+	idleFps: 14,
+};
+const TOUCH_RENDER_PROFILE: RenderProfile = {
+	maxDpr: 1.5,
+	minDpr: 1,
+	maxPixels: 2_400_000,
+	pointerFps: 24,
+	themeFps: 20,
+	idleFps: 8,
+};
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -320,17 +339,26 @@ function createProgram(gl: WebGL2RenderingContext): WebGLProgram {
 
 function shouldUseStaticMode(): boolean {
 	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
 	const saveData = Boolean((navigator as NavigatorWithConnection).connection?.saveData);
-	return reducedMotion || saveData || (coarsePointer && window.innerWidth < 900);
+	return reducedMotion || saveData;
 }
 
-function getAdaptiveDpr(cssWidth: number, cssHeight: number): number {
+function getRenderProfile(): RenderProfile {
+	return window.matchMedia("(pointer: coarse)").matches
+		? TOUCH_RENDER_PROFILE
+		: DESKTOP_RENDER_PROFILE;
+}
+
+function getAdaptiveDpr(
+	cssWidth: number,
+	cssHeight: number,
+	profile: RenderProfile,
+): number {
 	const cssPixels = Math.max(1, cssWidth * cssHeight);
-	const pixelBudgetDpr = Math.sqrt(MAX_RENDER_PIXELS / Math.max(cssPixels, 1));
+	const pixelBudgetDpr = Math.sqrt(profile.maxPixels / Math.max(cssPixels, 1));
 	return Math.max(
-		MIN_DPR,
-		Math.min(window.devicePixelRatio || 1, MAX_DPR, pixelBudgetDpr),
+		profile.minDpr,
+		Math.min(window.devicePixelRatio || 1, profile.maxDpr, pixelBudgetDpr),
 	);
 }
 
@@ -357,6 +385,7 @@ export function initImpastoRenderer(): void {
 		return;
 	}
 
+	const renderProfile = getRenderProfile();
 	const gl = canvas.getContext("webgl2", {
 		alpha: false,
 		antialias: false,
@@ -434,7 +463,7 @@ export function initImpastoRenderer(): void {
 		resizeFrame = 0;
 		const cssWidth = Math.max(1, document.documentElement.clientWidth);
 		const cssHeight = Math.max(1, document.documentElement.clientHeight);
-		const dpr = getAdaptiveDpr(cssWidth, cssHeight);
+		const dpr = getAdaptiveDpr(cssWidth, cssHeight, renderProfile);
 		const width = Math.max(1, Math.round(cssWidth * dpr));
 		const height = Math.max(1, Math.round(cssHeight * dpr));
 		if (canvas.width === width && canvas.height === height) return;
@@ -468,7 +497,11 @@ export function initImpastoRenderer(): void {
 
 		const pointerActive = now < pointerActiveUntil;
 		const themeActive = now < themeBurstUntil;
-		const fps = pointerActive ? POINTER_FPS : themeActive ? THEME_FPS : IDLE_FPS;
+		const fps = pointerActive
+			? renderProfile.pointerFps
+			: themeActive
+				? renderProfile.themeFps
+				: renderProfile.idleFps;
 		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.04);
 		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.04);
 
