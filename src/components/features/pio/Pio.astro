@@ -60,7 +60,7 @@ const isRight = config.position === "right";
 
 <iframe
 	id="l2d-iframe"
-	src="/pio/live2d-host.html"
+	data-src="/pio/live2d-host.html"
 	allowtransparency="true"
 	style={"position: fixed; z-index: 999; pointer-events: none; border: none; bottom: 0;"
 		+ (isRight ? " right: 0;" : " left: 0;")
@@ -114,29 +114,40 @@ const isRight = config.position === "right";
 			let currentHiddenOnMobile = true;
 			let isTransitioning = false;
 			let initSent = false;
+			let frameLoaded = false;
 			let currentConfigKey = "";
 			let pendingInit: number | undefined;
 			let swupHooksRegistered = false;
 
-			function applyVisibility() {
-				if (!currentEl) return;
-				if (
+			function isHiddenMobile() {
+				return (
 					currentHiddenOnMobile &&
 					window.innerWidth <= PIO_MOBILE_BREAKPOINT
-				) {
-					currentEl.style.display = "none";
-				} else {
-					currentEl.style.display = "";
+				);
+			}
+
+			function applyVisibility() {
+				if (!currentEl) return;
+				currentEl.style.display = isHiddenMobile() ? "none" : "";
+			}
+
+			function ensureFrameSource(): boolean {
+				if (!currentEl || isHiddenMobile()) return false;
+				const source = currentEl.dataset.src;
+				if (!source) return false;
+
+				if (!currentEl.getAttribute("src")) {
+					frameLoaded = false;
+					currentEl.setAttribute("src", source);
+					return false;
 				}
+
+				return frameLoaded;
 			}
 
 			function postInit() {
 				if (!currentEl || initSent || isTransitioning) return;
-				if (
-					currentHiddenOnMobile &&
-					window.innerWidth <= PIO_MOBILE_BREAKPOINT
-				)
-					return;
+				if (!ensureFrameSource()) return;
 				currentEl.contentWindow?.postMessage(
 					{ type: "l2d-init", config: currentConfig },
 					"*",
@@ -146,6 +157,8 @@ const isRight = config.position === "right";
 
 			function scheduleInit() {
 				window.clearTimeout(pendingInit);
+				if (!currentEl || isHiddenMobile()) return;
+
 				const _window = window as Window & {
 					requestIdleCallback?: (
 						callback: IdleRequestCallback,
@@ -218,15 +231,18 @@ const isRight = config.position === "right";
 						currentConfigKey = nextConfigKey;
 					}
 					if (isNewFrame) {
+						frameLoaded = Boolean(
+							nextEl.getAttribute("src") &&
+								nextEl.contentDocument?.readyState === "complete",
+						);
 						nextEl.addEventListener("load", () => {
+							frameLoaded = true;
 							initSent = false;
 							scheduleInit();
 						});
 					}
 					applyVisibility();
-					if (nextEl.contentDocument?.readyState === "complete") {
-						scheduleInit();
-					}
+					scheduleInit();
 				},
 			};
 		}

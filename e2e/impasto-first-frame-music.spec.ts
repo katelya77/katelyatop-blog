@@ -102,6 +102,15 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 	await page.goto("/");
 	const hero = page.locator("[data-katelya-orbit]");
 	await expect(hero).toBeVisible();
+	await expect
+		.poll(() =>
+			hero.evaluate((element) =>
+				(element as HTMLElement).style
+					.getPropertyValue("--hero-deep-x")
+					.trim(),
+			),
+		)
+		.not.toBe("");
 	const box = await hero.boundingBox();
 	expect(box).not.toBeNull();
 	if (!box) return;
@@ -138,6 +147,15 @@ test("hero depth responds within bounded layers and respects reduced motion", as
 	await page.reload();
 	const reducedHero = page.locator("[data-katelya-orbit]");
 	await expect(reducedHero).toBeVisible();
+	await expect
+		.poll(() =>
+			reducedHero.evaluate((element) =>
+				(element as HTMLElement).style
+					.getPropertyValue("--hero-deep-x")
+					.trim(),
+			),
+		)
+		.not.toBe("");
 	const reducedBox = await reducedHero.boundingBox();
 	if (!reducedBox) return;
 	await page.mouse.move(

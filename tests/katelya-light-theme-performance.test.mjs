@@ -85,3 +85,25 @@ test("theme switching uses one lightweight 180ms transition path", async () => {
 	assert.match(renderer, /katelya-theme-change/);
 	assert.match(renderer, /const THEME_BURST_MS = 220/);
 });
+
+test("Impasto and hero-depth modules start after the first paint opportunity", async () => {
+	const backdrop = await read("src/components/layout/ImpastoBackdrop.astro");
+
+	assert.doesNotMatch(backdrop, /import \{ initImpastoRenderer \} from/);
+	assert.doesNotMatch(backdrop, /import \{ initKatelyaHeroDepth \} from/);
+	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/impasto-renderer"\)/);
+	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/hero-depth"\)/);
+	assert.match(backdrop, /requestAnimationFrame/);
+	assert.match(backdrop, /astro:page-load/);
+});
+
+test("Live2D iframe stays network-idle until the widget is eligible", async () => {
+	const pio = await read("src/components/features/pio/Pio.astro");
+
+	assert.match(pio, /data-src="\/pio\/live2d-host\.html"/);
+	assert.doesNotMatch(pio, /\n\s*src="\/pio\/live2d-host\.html"/);
+	assert.match(pio, /function ensureFrameSource\(/);
+	assert.match(pio, /currentEl\.dataset\.src/);
+	assert.match(pio, /window\.innerWidth\s*<=\s*PIO_MOBILE_BREAKPOINT/);
+	assert.match(pio, /scheduleInit\(\)/);
+});
