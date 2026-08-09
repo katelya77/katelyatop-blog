@@ -11,6 +11,20 @@ interface Props {
 
 const { headings = [] } = Astro.props;
 const tocLabel = i18n(I18nKey.tableOfContents);
+const compactSource = headings.filter((heading) => heading.depth >= 2).slice(0, 14);
+const primaryDepth = compactSource.length
+	? Math.min(...compactSource.map((heading) => heading.depth))
+	: 2;
+let compactMajorIndex = 0;
+const compactItems = compactSource.map((heading) => {
+	const major = heading.depth === primaryDepth;
+	if (major) compactMajorIndex += 1;
+	return {
+		major,
+		label: major ? String(compactMajorIndex) : "",
+		title: heading.text,
+	};
+});
 ---
 
 <aside
@@ -18,7 +32,29 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 	class="desktop-toc-rail"
 	aria-label={tocLabel}
 >
-	<div class="desktop-toc-surface">
+	<div class="desktop-toc-compact" aria-hidden="true">
+		<div class="desktop-toc-compact-heading">
+			<span class="desktop-toc-heading-mark"></span>
+			<span class="desktop-toc-heading-glyph">≡</span>
+		</div>
+		<div class="desktop-toc-compact-list">
+			{
+				compactItems.map((item) => (
+					<span
+						class:list={[
+							"desktop-toc-compact-item",
+							item.major ? "is-major" : "is-minor",
+						]}
+						title={item.title}
+					>
+						{item.major ? item.label : ""}
+					</span>
+				))
+			}
+		</div>
+	</div>
+
+	<div class="desktop-toc-panel">
 		<div class="desktop-toc-heading">
 			<span class="desktop-toc-heading-mark" aria-hidden="true"></span>
 			<span class="desktop-toc-heading-text">{tocLabel}</span>
@@ -42,7 +78,7 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 		margin-inline-start: auto;
 		opacity: 0;
 		pointer-events: none;
-		transition: opacity 0.18s ease;
+		transition: opacity 0.16s ease;
 	}
 
 	.desktop-toc-rail:has(table-of-contents[data-loaded="true"]) {
@@ -50,41 +86,55 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 		pointer-events: auto;
 	}
 
-	.desktop-toc-surface {
-		width: var(--desktop-toc-compact-width);
-		max-height: calc(100dvh - 7rem);
-		margin-inline-start: auto;
-		overflow: hidden;
+	.desktop-toc-compact,
+	.desktop-toc-panel {
 		border: 1px solid
 			color-mix(in oklab, var(--line-color) 82%, transparent);
 		border-radius: 1.25rem;
-		background: color-mix(
-			in oklab,
-			var(--card-bg-transparent) 92%,
-			transparent
-		);
-		backdrop-filter: blur(14px) saturate(1.06);
-		-webkit-backdrop-filter: blur(14px) saturate(1.06);
 		box-shadow:
 			0 14px 36px rgba(20, 31, 29, 0.1),
 			inset 0 1px 0 rgba(255, 255, 255, 0.3);
-		transform-origin: right top;
-		transition:
-			width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-			transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-			box-shadow 0.22s ease;
 	}
 
+	.desktop-toc-compact {
+		position: relative;
+		width: 100%;
+		max-height: calc(100dvh - 7rem);
+		overflow: hidden;
+		background: color-mix(
+			in oklab,
+			var(--card-bg-transparent) 94%,
+			transparent
+		);
+		backdrop-filter: blur(10px) saturate(1.04);
+		-webkit-backdrop-filter: blur(10px) saturate(1.04);
+		transform: translate3d(0, 0, 0);
+		opacity: 1;
+		transition:
+			transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.12s ease;
+	}
+
+	.desktop-toc-compact-heading,
 	.desktop-toc-heading {
 		display: grid;
-		grid-template-columns: 0.2rem minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 0.55rem;
 		min-height: 3rem;
-		padding: 0.7rem 0.75rem;
 		border-bottom: 1px solid
 			color-mix(in oklab, var(--line-divider) 80%, transparent);
 		color: color-mix(in oklab, var(--content-meta) 84%, var(--primary));
+	}
+
+	.desktop-toc-compact-heading {
+		grid-template-columns: 0.2rem 1fr;
+		gap: 0.45rem;
+		padding: 0.7rem 0.72rem;
+	}
+
+	.desktop-toc-heading {
+		grid-template-columns: 0.2rem minmax(0, 1fr) auto;
+		gap: 0.55rem;
+		padding: 0.7rem 0.75rem;
 	}
 
 	.desktop-toc-heading-mark {
@@ -96,31 +146,101 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 			color-mix(in oklab, var(--primary) 10%, transparent);
 	}
 
-	.desktop-toc-heading-text {
-		min-width: 0;
-		max-width: 0;
-		overflow: hidden;
-		opacity: 0;
-		white-space: nowrap;
-		font-size: 0.78rem;
-		font-weight: 650;
-		letter-spacing: 0.08em;
-		transition:
-			max-width 0.18s ease,
-			opacity 0.14s ease;
-	}
-
 	.desktop-toc-heading-glyph {
 		display: grid;
 		place-items: center;
 		width: 1.55rem;
 		height: 1.55rem;
+		justify-self: end;
 		border-radius: 0.65rem;
 		background: color-mix(in oklab, var(--toc-badge-bg) 76%, transparent);
 		color: var(--btn-content);
 		font-size: 0.95rem;
 		font-weight: 700;
 		line-height: 1;
+	}
+
+	.desktop-toc-heading-text {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		font-size: 0.78rem;
+		font-weight: 650;
+		letter-spacing: 0.08em;
+	}
+
+	.desktop-toc-compact-list {
+		display: grid;
+		justify-items: center;
+		gap: 0.46rem;
+		padding: 0.58rem 0.5rem 0.7rem;
+	}
+
+	.desktop-toc-compact-item {
+		display: grid;
+		place-items: center;
+		flex: none;
+	}
+
+	.desktop-toc-compact-item.is-major {
+		width: 1.72rem;
+		height: 1.72rem;
+		border-radius: 0.7rem;
+		background: color-mix(in oklab, var(--toc-badge-bg) 88%, transparent);
+		color: var(--btn-content);
+		font-size: 0.72rem;
+		font-weight: 750;
+		box-shadow: inset 0 0 0 1px
+			color-mix(in oklab, var(--line-color) 45%, transparent);
+	}
+
+	.desktop-toc-compact-item.is-minor {
+		width: 0.46rem;
+		height: 0.46rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--primary) 28%, transparent);
+	}
+
+	.desktop-toc-panel {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: min(var(--desktop-toc-expanded-width), calc(100vw - 1.5rem));
+		max-height: calc(100dvh - 7rem);
+		overflow: hidden;
+		background: color-mix(
+			in oklab,
+			var(--card-bg-transparent) 98%,
+			var(--page-bg) 2%
+		);
+		box-shadow:
+			0 18px 48px rgba(20, 31, 29, 0.16),
+			inset 0 1px 0 rgba(255, 255, 255, 0.36);
+		transform: translate3d(0.65rem, 0, 0) scale(0.985);
+		transform-origin: right top;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 0.14s ease,
+			visibility 0s linear 0.18s;
+	}
+
+	.desktop-toc-rail:hover .desktop-toc-panel,
+	.desktop-toc-rail:focus-within .desktop-toc-panel {
+		transform: translate3d(0, 0, 0) scale(1);
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transition-delay: 0s;
+	}
+
+	.desktop-toc-rail:hover .desktop-toc-compact,
+	.desktop-toc-rail:focus-within .desktop-toc-compact {
+		transform: translate3d(0.2rem, 0, 0) scale(0.985);
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	.desktop-toc-scroll {
@@ -164,14 +284,15 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 		text-decoration: none;
 		color: color-mix(in oklab, var(--content-meta) 90%, transparent);
 		transition:
-			background-color 0.14s ease,
-			color 0.14s ease,
-			transform 0.14s ease;
+			background-color 0.12s ease,
+			color 0.12s ease,
+			transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
 	}
 
 	:global(.desktop-toc-rail .sidebar-toc-item:hover) {
 		background: color-mix(in oklab, var(--toc-btn-hover) 82%, transparent);
 		color: color-mix(in oklab, var(--content-meta) 72%, var(--primary));
+		transform: translate3d(-0.12rem, 0, 0);
 	}
 
 	:global(.desktop-toc-rail .sidebar-toc-item:focus-visible) {
@@ -186,9 +307,15 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 
 	:global(.desktop-toc-rail .sidebar-toc-marker) {
 		margin-inline-start: 0 !important;
-		transition:
-			margin 0.18s ease,
-			transform 0.18s ease;
+		transition: transform 0.14s ease;
+	}
+
+	:global(.desktop-toc-rail .sidebar-toc-marker[data-depth="1"]) {
+		margin-inline-start: 0.72rem !important;
+	}
+
+	:global(.desktop-toc-rail .sidebar-toc-marker[data-depth="2"]) {
+		margin-inline-start: 1.32rem !important;
 	}
 
 	:global(.desktop-toc-rail .sidebar-toc-item.visible .sidebar-toc-marker) {
@@ -199,62 +326,17 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 2;
+		flex: 1;
 		min-width: 0;
-		max-width: 0;
 		overflow: hidden;
 		overflow-wrap: anywhere;
 		word-break: normal;
 		line-height: 1.35;
-		opacity: 0;
 		font-size: 0.82rem;
-		transition:
-			max-width 0.18s ease,
-			opacity 0.14s ease;
 	}
 
 	:global(.desktop-toc-rail .sidebar-toc-active-indicator) {
 		display: none;
-	}
-
-	.desktop-toc-rail:not(:hover):not(:focus-within)
-		:global(.sidebar-toc-item) {
-		justify-content: center;
-	}
-
-	.desktop-toc-rail:hover .desktop-toc-surface,
-	.desktop-toc-rail:focus-within .desktop-toc-surface {
-		width: min(var(--desktop-toc-expanded-width), calc(100vw - 1.5rem));
-		transform: translateX(
-			calc(
-				var(--desktop-toc-compact-width) -
-					min(var(--desktop-toc-expanded-width), calc(100vw - 1.5rem))
-			)
-		);
-		box-shadow:
-			0 18px 48px rgba(20, 31, 29, 0.16),
-			inset 0 1px 0 rgba(255, 255, 255, 0.36);
-	}
-
-	.desktop-toc-rail:hover .desktop-toc-heading-text,
-	.desktop-toc-rail:focus-within .desktop-toc-heading-text {
-		max-width: 10rem;
-		opacity: 1;
-	}
-
-	.desktop-toc-rail:hover :global(.sidebar-toc-label),
-	.desktop-toc-rail:focus-within :global(.sidebar-toc-label) {
-		max-width: 11.8rem;
-		opacity: 1;
-	}
-
-	.desktop-toc-rail:hover :global(.sidebar-toc-marker[data-depth="1"]),
-	.desktop-toc-rail:focus-within :global(.sidebar-toc-marker[data-depth="1"]) {
-		margin-inline-start: 0.72rem !important;
-	}
-
-	.desktop-toc-rail:hover :global(.sidebar-toc-marker[data-depth="2"]),
-	.desktop-toc-rail:focus-within :global(.sidebar-toc-marker[data-depth="2"]) {
-		margin-inline-start: 1.32rem !important;
 	}
 
 	@media (min-width: 1880px) {
@@ -262,48 +344,28 @@ const tocLabel = i18n(I18nKey.tableOfContents);
 			width: clamp(12rem, var(--toc-width), 16rem);
 		}
 
-		.desktop-toc-surface,
-		.desktop-toc-rail:hover .desktop-toc-surface,
-		.desktop-toc-rail:focus-within .desktop-toc-surface {
+		.desktop-toc-compact {
+			display: none;
+		}
+
+		.desktop-toc-panel,
+		.desktop-toc-rail:hover .desktop-toc-panel,
+		.desktop-toc-rail:focus-within .desktop-toc-panel {
+			position: relative;
 			width: 100%;
-			transform: none;
-		}
-
-		.desktop-toc-heading-text,
-		.desktop-toc-rail:hover .desktop-toc-heading-text,
-		.desktop-toc-rail:focus-within .desktop-toc-heading-text {
-			max-width: 10rem;
+			transform: translate3d(0, 0, 0) scale(1);
 			opacity: 1;
-		}
-
-		:global(.desktop-toc-rail .sidebar-toc-label),
-		.desktop-toc-rail:hover :global(.sidebar-toc-label),
-		.desktop-toc-rail:focus-within :global(.sidebar-toc-label) {
-			max-width: 11rem;
-			opacity: 1;
-		}
-
-		.desktop-toc-rail:not(:hover):not(:focus-within)
-			:global(.sidebar-toc-item) {
-			justify-content: flex-start;
-		}
-
-		:global(.desktop-toc-rail .sidebar-toc-marker[data-depth="1"]) {
-			margin-inline-start: 0.72rem !important;
-		}
-
-		:global(.desktop-toc-rail .sidebar-toc-marker[data-depth="2"]) {
-			margin-inline-start: 1.32rem !important;
+			visibility: visible;
+			pointer-events: auto;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.desktop-toc-rail,
-		.desktop-toc-surface,
-		.desktop-toc-heading-text,
+		.desktop-toc-compact,
+		.desktop-toc-panel,
 		:global(.desktop-toc-rail .sidebar-toc-item),
-		:global(.desktop-toc-rail .sidebar-toc-marker),
-		:global(.desktop-toc-rail .sidebar-toc-label) {
+		:global(.desktop-toc-rail .sidebar-toc-marker) {
 			transition: none !important;
 		}
 	}
