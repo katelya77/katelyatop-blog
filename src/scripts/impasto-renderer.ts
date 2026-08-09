@@ -24,6 +24,12 @@ const MAX_RENDER_PIXELS = 3_200_000;
 const POINTER_FPS = 48;
 const THEME_FPS = 36;
 const IDLE_FPS = 14;
+const TOUCH_MAX_DPR = 1.0;
+const TOUCH_MIN_DPR = 0.55;
+const TOUCH_MAX_RENDER_PIXELS = 1_150_000;
+const TOUCH_POINTER_FPS = 30;
+const TOUCH_THEME_FPS = 24;
+const TOUCH_IDLE_FPS = 10;
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -318,19 +324,26 @@ function createProgram(gl: WebGL2RenderingContext): WebGLProgram {
 	return program;
 }
 
+function isCoarsePointer(): boolean {
+	return window.matchMedia("(pointer: coarse)").matches;
+}
+
 function shouldUseStaticMode(): boolean {
 	const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
 	const saveData = Boolean((navigator as NavigatorWithConnection).connection?.saveData);
-	return reducedMotion || saveData || (coarsePointer && window.innerWidth < 900);
+	return reducedMotion || saveData;
 }
 
 function getAdaptiveDpr(cssWidth: number, cssHeight: number): number {
+	const touch = isCoarsePointer();
 	const cssPixels = Math.max(1, cssWidth * cssHeight);
-	const pixelBudgetDpr = Math.sqrt(MAX_RENDER_PIXELS / Math.max(cssPixels, 1));
+	const maxRenderPixels = touch ? TOUCH_MAX_RENDER_PIXELS : MAX_RENDER_PIXELS;
+	const minDpr = touch ? TOUCH_MIN_DPR : MIN_DPR;
+	const maxDpr = touch ? TOUCH_MAX_DPR : MAX_DPR;
+	const pixelBudgetDpr = Math.sqrt(maxRenderPixels / Math.max(cssPixels, 1));
 	return Math.max(
-		MIN_DPR,
-		Math.min(window.devicePixelRatio || 1, MAX_DPR, pixelBudgetDpr),
+		minDpr,
+		Math.min(window.devicePixelRatio || 1, maxDpr, pixelBudgetDpr),
 	);
 }
 
@@ -429,6 +442,10 @@ export function initImpastoRenderer(): void {
 	let resizeFrame = 0;
 	let firstFrameReady = hadReadyFrame;
 	const startedAt = performance.now();
+	const touch = isCoarsePointer();
+	const pointerFps = touch ? TOUCH_POINTER_FPS : POINTER_FPS;
+	const themeFps = touch ? TOUCH_THEME_FPS : THEME_FPS;
+	const idleFps = touch ? TOUCH_IDLE_FPS : IDLE_FPS;
 
 	const resize = () => {
 		resizeFrame = 0;
@@ -468,7 +485,7 @@ export function initImpastoRenderer(): void {
 
 		const pointerActive = now < pointerActiveUntil;
 		const themeActive = now < themeBurstUntil;
-		const fps = pointerActive ? POINTER_FPS : themeActive ? THEME_FPS : IDLE_FPS;
+		const fps = pointerActive ? pointerFps : themeActive ? themeFps : idleFps;
 		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.04);
 		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.04);
 
