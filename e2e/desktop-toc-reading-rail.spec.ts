@@ -28,37 +28,46 @@ async function visibleLabelWidth(page: Page) {
 		.evaluate((element) => element.getBoundingClientRect().width);
 }
 
-test("1664px desktop uses a compact rail that expands inward without overflow", async ({
+test("1664px desktop reveals the full TOC without resizing the rail", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
 	await gotoArticle(page, 1664, 900);
 
 	const rail = page.locator("#desktop-toc-rail");
-	const surface = rail.locator(".desktop-toc-surface");
-	const compactBox = await surface.boundingBox();
-	expect(compactBox).not.toBeNull();
-	if (!compactBox) return;
+	const compact = rail.locator(".desktop-toc-compact");
+	const panel = rail.locator(".desktop-toc-panel");
+	const initialRailBox = await rail.boundingBox();
+	const panelBox = await panel.boundingBox();
+	expect(initialRailBox).not.toBeNull();
+	expect(panelBox).not.toBeNull();
+	if (!initialRailBox || !panelBox) return;
 
-	expect(compactBox.width).toBeLessThan(120);
+	expect(initialRailBox.width).toBeLessThan(120);
+	expect(panelBox.width).toBeGreaterThanOrEqual(220);
+	await expect(compact).toHaveCSS("opacity", "1");
+	await expect(panel).toHaveCSS("opacity", "0");
 	expect(await documentWidth(page)).toBeLessThanOrEqual(1665);
 
 	await rail.hover();
-	await page.waitForTimeout(320);
+	await expect(panel).toHaveCSS("opacity", "1");
+	await page.waitForTimeout(260);
 
-	const expandedBox = await surface.boundingBox();
-	expect(expandedBox).not.toBeNull();
-	if (!expandedBox) return;
+	const expandedRailBox = await rail.boundingBox();
+	const expandedPanelBox = await panel.boundingBox();
+	expect(expandedRailBox).not.toBeNull();
+	expect(expandedPanelBox).not.toBeNull();
+	if (!expandedRailBox || !expandedPanelBox) return;
 
-	expect(expandedBox.width).toBeGreaterThanOrEqual(220);
-	expect(expandedBox.x).toBeGreaterThanOrEqual(0);
-	expect(expandedBox.x + expandedBox.width).toBeLessThanOrEqual(1664);
+	expect(Math.abs(expandedRailBox.width - initialRailBox.width)).toBeLessThan(1);
+	expect(expandedPanelBox.x).toBeGreaterThanOrEqual(0);
+	expect(expandedPanelBox.x + expandedPanelBox.width).toBeLessThanOrEqual(1664);
 	expect(await visibleLabelWidth(page)).toBeGreaterThanOrEqual(120);
 	expect(await documentWidth(page)).toBeLessThanOrEqual(1665);
 
 	const overlapLayerIsSafe = await page.evaluate(() => {
 		const surfaceElement = document.querySelector<HTMLElement>(
-			"#desktop-toc-rail .desktop-toc-surface",
+			"#desktop-toc-rail .desktop-toc-panel",
 		);
 		const categories = document.getElementById("categories");
 		if (!surfaceElement || !categories) return false;
@@ -69,9 +78,6 @@ test("1664px desktop uses a compact rail that expands inward without overflow", 
 		const right = Math.min(surfaceRect.right, categoriesRect.right);
 		const top = Math.max(surfaceRect.top, categoriesRect.top);
 		const bottom = Math.min(surfaceRect.bottom, categoriesRect.bottom);
-
-		// No overlap is already safe. If the two surfaces overlap, the TOC must own
-		// the sampled overlap point so category/music widgets cannot clip it.
 		if (left >= right || top >= bottom) return true;
 
 		const x = (left + right) / 2;
@@ -97,17 +103,18 @@ test("1664px desktop uses a compact rail that expands inward without overflow", 
 	});
 });
 
-test("1920px desktop keeps the full reading rail persistently readable", async ({
+test("1920px desktop keeps the full reading panel persistently readable", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
 	await gotoArticle(page, 1920, 1080);
 
-	const surface = page.locator("#desktop-toc-rail .desktop-toc-surface");
-	const box = await surface.boundingBox();
+	const panel = page.locator("#desktop-toc-rail .desktop-toc-panel");
+	const box = await panel.boundingBox();
 	expect(box).not.toBeNull();
 	if (!box) return;
 
+	await expect(panel).toHaveCSS("opacity", "1");
 	expect(box.width).toBeGreaterThanOrEqual(180);
 	expect(box.x).toBeGreaterThanOrEqual(0);
 	expect(box.x + box.width).toBeLessThanOrEqual(1920);
