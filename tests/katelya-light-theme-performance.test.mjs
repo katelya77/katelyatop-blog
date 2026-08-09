@@ -101,7 +101,7 @@ test("Live2D iframe stays network-idle until the widget is eligible", async () =
 	const pio = await read("src/components/features/pio/Pio.astro");
 
 	assert.match(pio, /data-src="\/pio\/live2d-host\.html"/);
-	assert.doesNotMatch(pio, /\bsrc="\/pio\/live2d-host\.html"/);
+	assert.doesNotMatch(pio, /\n\s*src="\/pio\/live2d-host\.html"/);
 	assert.match(pio, /function ensureFrameSource\(/);
 	assert.match(pio, /currentEl\.dataset\.src/);
 	assert.match(pio, /window\.innerWidth\s*<=\s*PIO_MOBILE_BREAKPOINT/);
