@@ -247,7 +247,17 @@ html.katelya-art-theme body.fullscreen-banner #main-grid::before {
 	inset: 0 0 auto !important;
 }
 
-@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+@media (pointer: coarse) {
+	.impasto-backdrop canvas {
+		filter: saturate(1.06) contrast(0.9);
+	}
+
+	.impasto-backdrop::after {
+		opacity: 0.075;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
 	.impasto-backdrop canvas,
 	.impasto-backdrop::before {
 		display: none !important;
