@@ -23,12 +23,7 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /document\.visibilityState/);
 	assert.match(renderer, /prefers-reduced-motion/);
 	assert.match(renderer, /const MAX_DPR = 1\.4/);
-	assert.match(renderer, /const MIN_DPR = 0\.85/);
 	assert.match(renderer, /const MAX_RENDER_PIXELS = 3_200_000/);
-	assert.match(
-		renderer,
-		/Math\.sqrt\(MAX_RENDER_PIXELS\s*\/\s*Math\.max\(cssPixels,\s*1\)\)/,
-	);
 	assert.match(renderer, /connection\?\.saveData/);
 	assert.match(renderer, /cancelAnimationFrame/);
 	assert.match(renderer, /swup:page:view/);
@@ -160,13 +155,21 @@ test("navigation and page content use independent stable geometry", async () => 
 	assert.doesNotMatch(backdrop, /background-attachment:\s*fixed/);
 });
 
-test("renderer and CSS expose static mobile and accessible fallbacks", async () => {
+test("touch clients keep dynamic impasto while accessibility fallbacks stay intact", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 	const geometry = await read("src/styles/impasto-geometry.css");
 
 	assert.match(renderer, /impasto-static/);
-	assert.match(renderer, /pointer: coarse/);
+	assert.match(renderer, /prefers-reduced-motion/);
+	assert.match(renderer, /connection\?\.saveData/);
+	assert.doesNotMatch(renderer, /coarsePointer\s*&&\s*window\.innerWidth\s*<\s*900/);
+	assert.match(renderer, /TOUCH_MIN_DPR/);
+	assert.match(renderer, /TOUCH_MAX_RENDER_PIXELS/);
+	assert.match(renderer, /TOUCH_POINTER_FPS/);
+	assert.match(renderer, /TOUCH_IDLE_FPS/);
+	assert.match(renderer, /\(pointer:\s*coarse\)/);
+
 	assert.match(backdrop, /impasto-day\.svg/);
 	assert.match(backdrop, /impasto-night\.svg/);
 	assert.match(backdrop, /\.impasto-backdrop::after/);
@@ -180,6 +183,10 @@ test("renderer and CSS expose static mobile and accessible fallbacks", async () 
 	);
 	assert.doesNotMatch(backdrop, /will-change/);
 	assert.match(backdrop, /@media \(prefers-reduced-motion:\s*reduce\)/);
+	assert.doesNotMatch(
+		backdrop,
+		/@media \(prefers-reduced-motion:\s*reduce\),\s*\(pointer:\s*coarse\)/,
+	);
 	assert.match(backdrop, /@media \(forced-colors:\s*active\)/);
 	assert.match(geometry, /@media print/);
 });
