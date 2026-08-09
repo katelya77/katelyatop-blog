@@ -8,14 +8,49 @@ import "../../styles/katelya-hero-depth.css";
 </div>
 
 <script>
-	import { initKatelyaHeroDepth } from "../../scripts/hero-depth";
-	import { initImpastoRenderer } from "../../scripts/impasto-renderer";
+	type ArtLayerModules = {
+		initImpastoRenderer: () => void;
+		initKatelyaHeroDepth: () => void;
+	};
+
+	type ArtLayerWindow = Window & {
+		__katelyaArtLayersPromise?: Promise<ArtLayerModules>;
+		__katelyaArtLayersFrame?: number;
+		__katelyaArtPageLoadBound?: boolean;
+	};
+
+	const artWindow = window as ArtLayerWindow;
+
+	function loadArtLayers(): Promise<ArtLayerModules> {
+		artWindow.__katelyaArtLayersPromise ??= Promise.all([
+			import("../../scripts/impasto-renderer"),
+			import("../../scripts/hero-depth"),
+		]).then(([impasto, depth]) => ({
+			initImpastoRenderer: impasto.initImpastoRenderer,
+			initKatelyaHeroDepth: depth.initKatelyaHeroDepth,
+		}));
+		return artWindow.__katelyaArtLayersPromise;
+	}
 
 	function initializeKatelyaArtLayers() {
-		initImpastoRenderer();
-		initKatelyaHeroDepth();
+		if (artWindow.__katelyaArtLayersFrame) {
+			cancelAnimationFrame(artWindow.__katelyaArtLayersFrame);
+		}
+
+		artWindow.__katelyaArtLayersFrame = requestAnimationFrame(() => {
+			artWindow.__katelyaArtLayersFrame = 0;
+			void loadArtLayers().then(
+				({ initImpastoRenderer, initKatelyaHeroDepth }) => {
+					initImpastoRenderer();
+					initKatelyaHeroDepth();
+				},
+			);
+		});
 	}
 
 	initializeKatelyaArtLayers();
-	document.addEventListener("astro:page-load", initializeKatelyaArtLayers);
+	if (!artWindow.__katelyaArtPageLoadBound) {
+		artWindow.__katelyaArtPageLoadBound = true;
+		document.addEventListener("astro:page-load", initializeKatelyaArtLayers);
+	}
 </script>
