@@ -1,10 +1,10 @@
 import { mkdir } from "node:fs/promises";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Browser } from "@playwright/test";
 
 const ARTIFACT_DIR = "artifacts/ui";
 
 async function openTouchPage(
-	browser: Parameters<Parameters<typeof test>[1]>[0]["browser"],
+	browser: Browser,
 	viewport: { width: number; height: number },
 ) {
 	const context = await browser.newContext({
