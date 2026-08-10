@@ -59,9 +59,10 @@ test("Hero uses broken paint ribbons and one depth controller", async () => {
 	}
 });
 
-test("Impasto backdrop owns art surfaces without legacy body wallpaper repair", async () => {
+test("Impasto backdrop stays continuous and waves own only the Hero boundary", async () => {
 	const gallery = await read("src/styles/katelya-van-gogh-gallery.css");
 	const backdrop = await read("src/styles/impasto-backdrop.css");
+	const renderer = await read("src/scripts/impasto-renderer.ts");
 	const performance = await read("src/styles/katelya-light-performance.css");
 	const legacy = await read("src/styles/katelya-impressionist.css");
 
@@ -77,7 +78,10 @@ test("Impasto backdrop owns art surfaces without legacy body wallpaper repair", 
 	assert.match(backdrop, /\.impasto-static-fallback/);
 	assert.match(backdrop, /\[data-impasto-canvas\]/);
 	assert.match(backdrop, /\.impasto-backdrop::before/);
-	assert.match(backdrop, /#header-waves\s*\{[\s\S]*display:\s*none/);
+	assert.doesNotMatch(backdrop, /#header-waves\s*\{\s*display:\s*none/);
+	assert.match(backdrop, /#header-waves\s*\{[\s\S]*display:\s*block/);
+	assert.doesNotMatch(backdrop, /impasto-reading/);
+	assert.doesNotMatch(renderer, /impasto-reading/);
 	assert.match(backdrop, /#banner-wrapper::before,[\s\S]*content:\s*none/);
 	assert.doesNotMatch(performance, /\.katelya-hero-copy::before/);
 	assert.doesNotMatch(

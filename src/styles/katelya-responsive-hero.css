@@ -1,18 +1,23 @@
 html.katelya-art-theme {
+	--katelya-banner-hero-height: clamp(32rem, 63svh, 38rem);
 	--katelya-fullscreen-hero-height: 100svh;
 	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
 }
 
 /*
  * Responsive hero geometry.
- * - svh is the stable fallback for older mobile Safari.
- * - dvh follows the actually visible browser viewport when supported.
- * - the content shell always stays in normal flow after the artwork.
+ * - Banner is a bounded horizontal art frame over the same fixed Impasto canvas.
+ * - Fullscreen follows the visible viewport and hands off in normal document flow.
+ * - The page background itself never changes ownership while scrolling.
  */
 @supports (height: 100dvh) {
 	html.katelya-art-theme {
 		--katelya-fullscreen-hero-height: 100dvh;
 	}
+}
+
+html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage {
+	--katelya-active-hero-height: var(--katelya-banner-hero-height) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
@@ -48,6 +53,25 @@ html.katelya-art-theme .banner-image-slot-mobile,
 html.katelya-art-theme .banner-image-slot-desktop {
 	box-sizing: border-box;
 	max-width: 100%;
+}
+
+/* Phone portrait keeps the full title inside a real visual gutter. */
+@media (max-width: 767px) and (orientation: portrait) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
+		.katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: max(64svh, 34rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-copy {
+		width: min(92vw, 23rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		max-width: 100% !important;
+		font-size: clamp(2.05rem, 10vw, 2.65rem) !important;
+		line-height: 0.98 !important;
+		white-space: nowrap;
+	}
 }
 
 /* iPad and compact desktop widths retain the orbit composition at a calmer scale. */
