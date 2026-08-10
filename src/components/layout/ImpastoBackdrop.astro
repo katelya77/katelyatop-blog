@@ -8,28 +8,53 @@ import "../../styles/katelya-hero-depth.css";
 </div>
 
 <script>
-	type ArtLayerModules = {
+	type RendererModule = {
 		initImpastoRenderer: () => void;
-		initKatelyaHeroDepth: () => void;
 	};
 
 	type ArtLayerWindow = Window & {
-		__katelyaArtLayersPromise?: Promise<ArtLayerModules>;
+		__katelyaRendererPromise?: Promise<RendererModule>;
 		__katelyaArtLayersFrame?: number;
 		__katelyaArtPageLoadBound?: boolean;
+		__katelyaDepthIdleId?: number;
+		__katelyaDepthTimerId?: number;
 	};
 
 	const artWindow = window as ArtLayerWindow;
 
-	function loadArtLayers(): Promise<ArtLayerModules> {
-		artWindow.__katelyaArtLayersPromise ??= Promise.all([
-			import("../../scripts/impasto-renderer"),
-			import("../../scripts/hero-depth"),
-		]).then(([impasto, depth]) => ({
+	function loadRenderer(): Promise<RendererModule> {
+		artWindow.__katelyaRendererPromise ??= import(
+			"../../scripts/impasto-renderer"
+		).then((impasto) => ({
 			initImpastoRenderer: impasto.initImpastoRenderer,
-			initKatelyaHeroDepth: depth.initKatelyaHeroDepth,
 		}));
-		return artWindow.__katelyaArtLayersPromise;
+		return artWindow.__katelyaRendererPromise;
+	}
+
+	function scheduleHeroDepth() {
+		if (artWindow.__katelyaDepthIdleId && "cancelIdleCallback" in window) {
+			window.cancelIdleCallback(artWindow.__katelyaDepthIdleId);
+		}
+		if (artWindow.__katelyaDepthTimerId) {
+			window.clearTimeout(artWindow.__katelyaDepthTimerId);
+		}
+
+		const initialize = () => {
+			artWindow.__katelyaDepthIdleId = undefined;
+			artWindow.__katelyaDepthTimerId = undefined;
+			void import("../../scripts/hero-depth").then(({ initKatelyaHeroDepth }) => {
+				initKatelyaHeroDepth();
+			});
+		};
+
+		if ("requestIdleCallback" in window) {
+			artWindow.__katelyaDepthIdleId = window.requestIdleCallback(initialize, {
+				timeout: 650,
+			});
+			return;
+		}
+
+		artWindow.__katelyaDepthTimerId = window.setTimeout(initialize, 180);
 	}
 
 	function initializeKatelyaArtLayers() {
@@ -39,12 +64,10 @@ import "../../styles/katelya-hero-depth.css";
 
 		artWindow.__katelyaArtLayersFrame = requestAnimationFrame(() => {
 			artWindow.__katelyaArtLayersFrame = 0;
-			void loadArtLayers().then(
-				({ initImpastoRenderer, initKatelyaHeroDepth }) => {
-					initImpastoRenderer();
-					initKatelyaHeroDepth();
-				},
-			);
+			void loadRenderer().then(({ initImpastoRenderer }) => {
+				initImpastoRenderer();
+				scheduleHeroDepth();
+			});
 		});
 	}
 
