@@ -97,6 +97,7 @@ test("stale disabled waves preference migrates to the new painterly handoff once
 		localStorage.removeItem("katelyaWavesRolloutVersion");
 	});
 	await page.reload({ waitUntil: "domcontentloaded" });
+	await waitForImpasto(page);
 
 	const stored = await page.evaluate(() => ({
 		wavesEnabled: localStorage.getItem("wavesEnabled"),
