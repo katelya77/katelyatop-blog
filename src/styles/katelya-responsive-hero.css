@@ -56,11 +56,22 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	max-width: 100%;
 }
 
-/* Phone portrait keeps a complete Hero instead of collapsing to a half-screen crop. */
+/* Phone portrait keeps a complete Hero and a visible title safety gutter. */
 @media (max-width: 767px) and (orientation: portrait) {
 	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
 		.katelya-hero-stage.is-home-hero {
 		--katelya-active-hero-height: max(64svh, 34rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-copy {
+		width: min(94vw, 24rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		max-width: 100% !important;
+		font-size: clamp(2.25rem, 11.5vw, 3rem) !important;
+		line-height: 0.98 !important;
+		white-space: nowrap;
 	}
 }
 
