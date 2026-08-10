@@ -210,3 +210,13 @@ test("Hero wave handoff is perceptible without becoming an opaque page band", as
 		/#header-waves\s*\{[^}]*opacity:\s*1(?:\.0+)?\s*;/s,
 	);
 });
+
+test("art theme neutralizes the legacy negative Banner inline offset", async () => {
+	const backdrop = await read("src/styles/impasto-backdrop.css");
+
+	assert.match(
+		backdrop,
+		/html\.katelya-art-theme #banner-wrapper,[\s\S]*?top:\s*0\s*!important;/,
+		"the art-theme Banner wrapper must override Banner.astro's legacy inline top:-30vh",
+	);
+});
