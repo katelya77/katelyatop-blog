@@ -1,5 +1,5 @@
 html.katelya-art-theme {
-	--katelya-banner-hero-height: clamp(30rem, 48svh, 34rem);
+	--katelya-banner-hero-height: clamp(32rem, 58svh, 38rem);
 	--katelya-fullscreen-hero-height: 100svh;
 	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
 	--katelya-fullscreen-overlap: clamp(2.25rem, 5svh, 4rem);
@@ -54,6 +54,14 @@ html.katelya-art-theme .banner-image-slot-mobile,
 html.katelya-art-theme .banner-image-slot-desktop {
 	box-sizing: border-box;
 	max-width: 100%;
+}
+
+/* Phone portrait keeps a complete Hero instead of collapsing to a half-screen crop. */
+@media (max-width: 767px) and (orientation: portrait) {
+	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
+		.katelya-hero-stage.is-home-hero {
+		--katelya-active-hero-height: max(64svh, 34rem) !important;
+	}
 }
 
 /* iPad and compact desktop widths retain the orbit composition at a calmer scale. */
