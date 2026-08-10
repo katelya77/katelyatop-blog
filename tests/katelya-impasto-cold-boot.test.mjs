@@ -4,35 +4,35 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("boot surface is neutral and generated SVG artwork is static-mode only", async () => {
+test("boot surface is the complete generated painterly poster", async () => {
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 	const defaultFallback =
 		backdrop.match(/\.impasto-static-fallback\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
 
 	assert.match(
 		defaultFallback,
-		/background-image:\s*var\(--impasto-boot-underpaint\)/,
+		/background-image:\s*var\(--impasto-boot-wash\),\s*var\(--impasto-boot-poster\)/,
 	);
-	assert.doesNotMatch(defaultFallback, /impasto-(?:day|night)\.svg/);
-	assert.match(
-		backdrop,
-		/html\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*impasto-day\.svg[\s\S]*\}/,
-	);
-	assert.match(
-		backdrop,
-		/html\.dark\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*impasto-night\.svg[\s\S]*\}/,
-	);
+	assert.match(backdrop, /--impasto-boot-poster:\s*url\("\/assets\/impasto\/impasto-day\.svg"\)/);
+	assert.match(backdrop, /--impasto-boot-poster:\s*url\("\/assets\/impasto\/impasto-night\.svg"\)/);
+	assert.match(defaultFallback, /opacity:\s*1/);
+	assert.match(defaultFallback, /visibility:\s*visible/);
 });
 
-test("ready swap is immediate after a successfully painted frame", async () => {
+test("ready handoff cross-fades Canvas over the completed poster", async () => {
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 
 	assert.match(
 		backdrop,
-		/html\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*1[^}]*transition:\s*none/s,
+		/\[data-impasto-canvas\]\s*\{[^}]*transition:[^}]*opacity 180ms/s,
 	);
 	assert.match(
 		backdrop,
-		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*transition:\s*none/s,
+		/html\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*1/s,
 	);
+	assert.match(
+		backdrop,
+		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0\.16[^}]*visibility:\s*visible/s,
+	);
+	assert.doesNotMatch(backdrop, /html\.impasto-ready[\s\S]{0,240}transition:\s*none/);
 });
