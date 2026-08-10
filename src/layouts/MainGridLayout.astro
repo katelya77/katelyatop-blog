@@ -24,7 +24,6 @@ import "../styles/impasto-geometry.css";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import {
 	calculateGridLayout,
-	getBannerImages,
 	getTransparencyClass,
 	shouldEnableTransparency,
 } from "../utils/grid-layout-utils";
@@ -46,7 +45,12 @@ interface Props {
 	wordCount?: number;
 }
 
-const bannerImages = await getBannerImages(siteConfig);
+/*
+ * Painterly Engine owns the visible Hero surface. Keep the generic Banner
+ * component for waves/overlay compatibility, but do not render its legacy
+ * image carousel underneath an opaque art layer.
+ */
+const bannerImages = { desktop: [] as string[], mobile: [] as string[] };
 const {
 	title,
 	banner,
