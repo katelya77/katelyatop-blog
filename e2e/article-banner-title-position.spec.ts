@@ -9,8 +9,15 @@ async function openArticleInBannerMode(page: import("@playwright/test").Page) {
 		localStorage.setItem("wavesEnabled", "true");
 	});
 	await page.goto(ARTICLE_PATH, { waitUntil: "load" });
-	await expect(page.locator("#page-overlay-title")).toContainText("思囿随笔正式上线");
 	await expect(page.locator("#banner-page-overlay")).toBeVisible();
+
+	// This test owns geometry, not the asynchronous SWUP metadata hydration.
+	// Give the existing overlay representative article content so its measured
+	// height is stable even if the content hook is late on a busy CI runner.
+	await page.locator("#page-overlay-title").evaluate((element) => {
+		element.textContent = "Katelya · 思囿随笔正式上线";
+	});
+	await expect(page.locator("#page-overlay-title")).toContainText("思囿随笔正式上线");
 }
 
 for (const viewport of [
