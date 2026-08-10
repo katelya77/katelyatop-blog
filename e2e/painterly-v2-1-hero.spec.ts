@@ -20,6 +20,22 @@ async function setWallpaperMode(page, mode: "banner" | "fullscreen") {
 	await page.waitForTimeout(220);
 }
 
+async function readBackdropState(page) {
+	return page.evaluate(() => {
+		const canvas = document.querySelector<HTMLElement>("[data-impasto-canvas]");
+		const fallback = document.querySelector<HTMLElement>(".impasto-static-fallback");
+		if (!canvas || !fallback) throw new Error("Impasto layers missing");
+		const canvasStyle = getComputedStyle(canvas);
+		const fallbackStyle = getComputedStyle(fallback);
+		return {
+			canvasOpacity: Number(canvasStyle.opacity),
+			fallbackOpacity: Number(fallbackStyle.opacity),
+			fallbackVisibility: fallbackStyle.visibility,
+			reading: document.documentElement.classList.contains("impasto-reading"),
+		};
+	});
+}
+
 test("banner and fullscreen have visibly different Hero geometry and visible handoff waves", async ({ browser }) => {
 	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
 	const page = await context.newPage();
@@ -39,6 +55,28 @@ test("banner and fullscreen have visibly different Hero geometry and visible han
 	const fullscreenHero = await page.locator(".katelya-hero-stage").boundingBox();
 	expect(fullscreenHero?.height ?? 0).toBeGreaterThanOrEqual(919);
 	expect((fullscreenHero?.height ?? 0) - (bannerHero?.height ?? 0)).toBeGreaterThan(250);
+
+	await context.close();
+});
+
+test("the same live Impasto canvas stays dominant from Hero through footer", async ({ browser }) => {
+	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
+	const page = await context.newPage();
+	await page.goto("/", { waitUntil: "domcontentloaded" });
+	await page.waitForFunction(() => document.documentElement.classList.contains("impasto-ready"));
+
+	for (const position of [0, 0.55, 1]) {
+		await page.evaluate((ratio) => {
+			const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+			window.scrollTo({ top: max * ratio, behavior: "instant" });
+		}, position);
+		await page.waitForTimeout(180);
+		const state = await readBackdropState(page);
+		expect(state.reading).toBe(false);
+		expect(state.canvasOpacity).toBeGreaterThanOrEqual(0.9);
+		expect(state.fallbackOpacity).toBeLessThanOrEqual(0.2);
+		expect(state.fallbackVisibility).toBe("hidden");
+	}
 
 	await context.close();
 });
