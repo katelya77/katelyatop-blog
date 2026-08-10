@@ -1,18 +1,24 @@
 html.katelya-art-theme {
+	--katelya-banner-hero-height: clamp(30rem, 48svh, 34rem);
 	--katelya-fullscreen-hero-height: 100svh;
 	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
+	--katelya-fullscreen-overlap: clamp(2.25rem, 5svh, 4rem);
 }
 
 /*
  * Responsive hero geometry.
- * - svh is the stable fallback for older mobile Safari.
- * - dvh follows the actually visible browser viewport when supported.
- * - the content shell always stays in normal flow after the artwork.
+ * - Banner is a bounded horizontal art frame, not a cropped fullscreen scene.
+ * - Fullscreen follows the actually visible viewport when supported.
+ * - The content shell remains in normal flow with only a deliberate handoff overlap.
  */
 @supports (height: 100dvh) {
 	html.katelya-art-theme {
 		--katelya-fullscreen-hero-height: 100dvh;
 	}
+}
+
+html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage {
+	--katelya-active-hero-height: var(--katelya-banner-hero-height) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
@@ -21,11 +27,11 @@ html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
 }
 
 html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
-	margin-top: 0 !important;
+	margin-top: calc(-1 * var(--katelya-fullscreen-overlap)) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner #main-grid {
-	padding-top: var(--katelya-hero-handoff-space) !important;
+	padding-top: calc(var(--katelya-hero-handoff-space) + var(--katelya-fullscreen-overlap)) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner #main-grid::before {
