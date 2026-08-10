@@ -1,112 +1,220 @@
-# Painterly Engine V2.1 Hero Restoration Implementation Plan
+# Painterly Engine V2.1 Continuous Canvas Hero Fix Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Restore a distinct banner/fullscreen Hero, remove the rough cold-boot flash, re-enable painterly wave handoff, and reduce first-screen/GPU cost without changing content, navigation, TOC, music, deployment, or CDN semantics.
+**Goal:** Preserve the original full-page continuous Impasto WebGL background while fixing only Hero banner/fullscreen geometry, painterly wave handoff, and mobile/iPad Hero safety.
 
-**Architecture:** Keep the existing single WebGL2 renderer, but make a full-quality SVG painterly poster the complete first paint and let WebGL cross-fade in as an enhancement layer. Restore Hero geometry and waves in CSS, reduce runtime startup quality, defer hero-depth after the renderer is alive, and stop invisible legacy banner imagery from competing for first-screen bandwidth. The page below the Hero uses the poster as the dominant background while Canvas contrast/opacity is reduced after scrolling beyond the Hero.
+**Architecture:** Restore the background lifecycle and renderer behavior to the current `master` Painterly V2 baseline, removing the preview-only `impasto-reading`/poster-dominant content stage. Keep a single fixed Canvas from Hero through footer. Layer only a bounded Hero geometry and lightweight SVG wave handoff above that continuous background, while preserving the already-validated phone/iPad Hero safety rules.
 
 **Tech Stack:** Astro, TypeScript, CSS, WebGL2, Node test runner, Playwright, GitHub Actions, Cloudflare Pages, DogeCloud CDN.
 
 ## Global Constraints
 
-- Preserve the current Painterly Engine V2 palette/shader language; no runtime image or package dependency.
+- One fixed Impasto Canvas must remain visually continuous from the top Hero through the footer.
+- No `impasto-reading` mode, no poster-dominant content stage, and no scroll-triggered background ownership switch.
+- Preserve the Painterly Engine V2 shader/palette from `master` unless a change is strictly required for Hero geometry.
 - Preserve `prefers-reduced-motion`, save-data and WebGL-unavailable static fallbacks.
-- Preserve adaptive desktop TOC, music, SWUP, content, metadata, Cloudflare Pages and DogeCloud refresh workflow.
-- PC, iPad and mobile use the same artistic language; device tiers may use different DPR/FPS/micro-detail budgets.
-- Banner mode must be a bounded horizontal art frame; fullscreen mode must be 100dvh/100svh.
-- Normal cold boot must never show a plain gradient-only placeholder.
-- Hidden legacy banner imagery must not retain eager/high fetch priority under the Katelya art experience.
+- Banner and fullscreen must have distinct geometry; fullscreen remains 100dvh/100svh.
+- Keep the validated phone portrait title gutter and iPad/compact-desktop Hero safety rules.
+- Restore waves only as a lightweight visual boundary; waves must not replace or recolor the page background.
+- Do not change content, TOC, music, SWUP, Cloudflare Pages or DogeCloud workflow semantics.
 
 ---
 
-### Task 1: Lock V2.1 contracts with RED tests
+### Task 1: Lock the continuous-background regression contract
 
 **Files:**
-- Create: `tests/katelya-painterly-v2-1.test.mjs`
-- Create: `e2e/painterly-v2-1-hero.spec.ts`
+- Modify: `tests/katelya-painterly-v2-1.test.mjs`
+- Modify: `e2e/painterly-v2-1-hero.spec.ts`
+- Modify: `e2e/painterly-responsive-matrix.spec.ts`
 
 **Interfaces:**
-- Consumes: existing `impasto-backdrop.css`, `ImpastoBackdrop.astro`, `Banner.astro`, `impasto-renderer.ts`.
-- Produces: source-level and browser-level contracts for Tasks 2–5.
+- Consumes: current DOM classes `impasto-ready`, `impasto-static`, `[data-impasto-canvas]`, `.impasto-static-fallback`, `#header-waves`.
+- Produces: regression coverage that prevents any scroll-triggered background switch from returning.
 
-- [ ] **Step 1: Write source contract tests** asserting: poster SVG is the normal boot background; Canvas/fallback cross-fade is non-zero duration; art-theme waves are not hard-hidden; renderer and hero-depth are not loaded by the same `Promise.all`; desktop starts medium and touch starts low/medium-first; legacy Banner assets are lazy/low priority.
-- [ ] **Step 2: Push tests and verify CI fails for the current V2 behavior**, with failures tied to the contracts above rather than syntax/setup.
-- [ ] **Step 3: Write Playwright browser contracts** for desktop banner/fullscreen height separation, visible wave handoff, cold boot poster completeness with delayed renderer, and no horizontal overflow at desktop/iPad/mobile.
-- [ ] **Step 4: Commit RED tests.**
+- [ ] **Step 1: Write failing static assertions**
 
-### Task 2: Instant painterly poster and seamless Canvas handoff
+Require that `src/styles/impasto-backdrop.css` and `src/scripts/impasto-renderer.ts` do not contain `impasto-reading`, and that waves remain visible in the art theme.
 
-**Files:**
-- Modify: `src/styles/impasto-backdrop.css`
-- Modify: `src/components/layout/ImpastoBackdrop.astro`
+- [ ] **Step 2: Write failing browser continuity assertion**
 
-**Interfaces:**
-- Consumes: `/assets/impasto/impasto-day.svg`, `/assets/impasto/impasto-night.svg`, `initImpastoRenderer()`.
-- Produces: complete poster first paint and non-blocking renderer/depth loading.
+In the homepage Playwright test, capture computed `opacity` / `visibility` of the Canvas and fallback at the Hero, mid-list, and footer. For normal WebGL mode, require the same Canvas to remain visible and require fallback not to become the dominant background after scrolling.
 
-- [ ] **Step 1: Replace normal boot underpaint with the existing V2 painterly SVG poster plus a light colour wash**, for both light and dark modes.
-- [ ] **Step 2: Keep poster visible during boot and cross-fade Canvas over 160–180ms**; remove `transition:none` ready-state hard cuts.
-- [ ] **Step 3: Load `impasto-renderer` first on the next animation frame; initialize `hero-depth` only after renderer scheduling via idle callback/short fallback timeout.**
-- [ ] **Step 4: Run source tests and commit.**
+- [ ] **Step 3: Run CI and verify RED**
 
-### Task 3: Restore real Banner / Fullscreen Hero ownership and painterly waves
+Expected: the current preview branch fails because `impasto-reading` still exists and scrolling changes Canvas/fallback ownership.
 
-**Files:**
-- Modify: `src/styles/impasto-backdrop.css`
-- Modify: `src/styles/katelya-responsive-hero.css`
+- [ ] **Step 4: Commit the RED test contract**
 
-**Interfaces:**
-- Consumes: current `.katelya-hero-stage`, `body.fullscreen-banner`, `#header-waves` DOM.
-- Produces: distinct banner/fullscreen geometry and Hero→content handoff.
+Commit only the tests before production rollback.
 
-- [ ] **Step 1: Make Banner Hero a bounded 35–40vh desktop art frame while retaining tablet/mobile responsive heights.**
-- [ ] **Step 2: Keep fullscreen at 100dvh/100svh and restore a deliberate overlap/handoff region before the content shell instead of forcing zero overlap.**
-- [ ] **Step 3: Re-enable `#header-waves` under the art theme, tune the four existing SVG layers to restrained painterly opacity/speed, and keep them static under reduced motion.**
-- [ ] **Step 4: Add Hero-specific poster/canvas energy masks so the Hero remains more vivid than the reading stage without adding another renderer.**
-- [ ] **Step 5: Run tests and commit.**
+---
 
-### Task 4: Reduce renderer startup cost and reading-stage activity
+### Task 2: Restore the master continuous Impasto lifecycle
 
 **Files:**
 - Modify: `src/scripts/impasto-renderer.ts`
+- Modify: `src/components/layout/ImpastoBackdrop.astro`
+- Modify: `src/styles/impasto-backdrop.css`
 
 **Interfaces:**
-- Consumes: current quality governor and renderer scheduling.
-- Produces: startup-first quality profile and scroll-aware low-energy reading mode.
+- Consumes: `master` Painterly V2 renderer/background lifecycle.
+- Produces: one fixed Canvas that remains active from Hero through footer.
 
-- [ ] **Step 1: Change initial quality to desktop `medium`, touch `low`, with medium DPR scale below 1.0.**
-- [ ] **Step 2: Add a short startup governor window that may upgrade after fast initial samples rather than starting HIGH and waiting for downgrade.**
-- [ ] **Step 3: Track whether the home Hero is visible with IntersectionObserver; outside Hero reduce idle FPS and micro detail while preserving colour continuity.**
-- [ ] **Step 4: Keep pointer bursts limited to Hero-visible state so article reading does not pay high interactive FPS.**
-- [ ] **Step 5: Run tests and commit.**
+- [ ] **Step 1: Restore renderer lifecycle from `master`**
 
-### Task 5: Stop invisible legacy Banner requests from competing with first paint
+Remove Hero IntersectionObserver, `impasto-reading`, reading-only FPS/micro-detail caps, and preview-only quality-governor changes. Keep the existing V2 shader untouched.
+
+- [ ] **Step 2: Restore backdrop ownership from `master`**
+
+Return normal ready-state behavior to `Canvas opacity: 1` and hidden static fallback. Remove poster-dominant reading-stage selectors and page-level poster ownership.
+
+- [ ] **Step 3: Restore normal art-layer initialization from `master`**
+
+Undo preview-only renderer/depth scheduling changes unless they are required by an independent existing regression. The objective is to minimize diff and recover the known-good baseline.
+
+- [ ] **Step 4: Run the continuity tests**
+
+Expected: static and browser continuity checks pass, and scrolling does not change background ownership.
+
+- [ ] **Step 5: Commit**
+
+Commit the continuous-background rollback separately.
+
+---
+
+### Task 3: Keep only the Hero geometry and wave handoff
 
 **Files:**
-- Modify: `src/components/layout/Banner.astro`
+- Modify: `src/styles/katelya-responsive-hero.css`
+- Modify: `src/styles/impasto-backdrop.css`
+- Restore unrelated preview changes in: `src/layouts/MainGridLayout.astro`, `src/components/misc/FullscreenWallpaper.astro`, `src/components/organisms/navigation/DropdownMenu.astro` unless still required by pre-existing tests.
 
 **Interfaces:**
-- Consumes: existing Banner image/carousel implementation.
-- Produces: legacy fallback images that remain available but are not first-screen-critical.
+- Produces: bounded Banner, 100dvh Fullscreen, lightweight waves, mobile/iPad safety.
 
-- [ ] **Step 1: Change first and template Banner images from eager/high to lazy/low priority.**
-- [ ] **Step 2: Change single-image DOM creation to `loading="lazy"` and `fetchPriority="low"`.**
-- [ ] **Step 3: Preserve existing carousel/fallback behavior and wave/page-overlay DOM.**
-- [ ] **Step 4: Run tests and commit.**
+- [ ] **Step 1: Preserve Banner / Fullscreen geometry**
 
-### Task 6: Browser matrix, visual review, PR and production validation
+Keep desktop Banner at the validated bounded height (`clamp(32rem, 63svh, 38rem)`), fullscreen at `100dvh/100svh`, and the deliberate fullscreen handoff overlap.
+
+- [ ] **Step 2: Preserve phone/iPad Hero safety**
+
+Keep phone portrait Hero minimum height, `92vw` copy width, `10vw` title size with `2.65rem` max, and existing compact/iPad orbit safety rules.
+
+- [ ] **Step 3: Restore waves without changing page background**
+
+Keep `#header-waves` visible with four restrained parallax layers and reduced-motion static behavior. Ensure the wave region is narrow enough to read as the Hero edge rather than a broad opaque horizontal band.
+
+- [ ] **Step 4: Revert unrelated preview changes**
+
+Reset legacy Banner network ownership, dropdown behavior, overlay loading, and any other files that are not necessary to the Hero/wave scope back to `master`, so PR #28 becomes focused and reviewable.
+
+- [ ] **Step 5: Run targeted Hero tests**
+
+Expected: 1440/1664 orbit cards fit; mobile title keeps a real gutter; fullscreen handoff remains within the allowed overlap region.
+
+- [ ] **Step 6: Commit**
+
+Commit the minimal Hero/wave implementation.
+
+---
+
+### Task 4: Migrate tests back to the narrowed design
 
 **Files:**
-- Update tests only if a failing assumption is proven incorrect; production files change only for demonstrated regressions.
+- Modify only tests whose assertions were introduced for the abandoned poster/reading-stage design.
+- Delete no longstanding unrelated regression coverage.
 
 **Interfaces:**
-- Consumes: Tasks 1–5.
-- Produces: mergeable production evidence.
+- Produces: tests that verify continuous Canvas + Hero geometry instead of the abandoned content-stage split.
 
-- [ ] **Step 1: Run GitHub CI gates:** Node tests, Biome, Astro Type Check, Build, Playwright.
-- [ ] **Step 2: Review real browser screenshots for desktop 1664/1920, iPad portrait/landscape, mobile portrait/landscape in light/dark × banner/fullscreen.**
-- [ ] **Step 3: Verify cold boot with delayed renderer shows the painterly poster, not a gradient flash.**
-- [ ] **Step 4: Mark Draft PR ready and squash merge only when every gate is green and screenshots pass visual review.**
-- [ ] **Step 5: Wait for the matching Cloudflare Pages production deployment and DogeCloud URL/PATH refresh workflow; verify both complete successfully.**
-- [ ] **Step 6: Re-run/observe `master` CI after merge and record final production evidence on the PR.**
+- [ ] **Step 1: Remove obsolete reading-stage expectations**
+
+Delete assertions that require poster dominance, reading-mode FPS, reading micro-detail caps, or delayed background ownership.
+
+- [ ] **Step 2: Keep cold-boot and responsive coverage only where compatible with the master background lifecycle**
+
+Do not force a new poster architecture. Cold boot may keep the existing V2 fallback contract from `master`.
+
+- [ ] **Step 3: Run `pnpm test`**
+
+Expected: PASS.
+
+- [ ] **Step 4: Run Biome / Astro Check / Build**
+
+Expected: all PASS.
+
+- [ ] **Step 5: Commit**
+
+Commit only test migrations needed for the narrowed scope.
+
+---
+
+### Task 5: Real-browser visual verification
+
+**Files:**
+- Use existing Playwright specs and `artifacts/ui/*.png` output.
+
+**Interfaces:**
+- Produces: evidence that the background stays continuous and Hero boundaries are visually correct.
+
+- [ ] **Step 1: Run full Playwright matrix**
+
+Require all tests green across desktop, iPad and phone configurations.
+
+- [ ] **Step 2: Inspect desktop Banner screenshots**
+
+Confirm 1440/1664 Banner contains all orbit cards, waves form a subtle lower boundary, and the first article starts below the Hero without a hard color cut.
+
+- [ ] **Step 3: Inspect mid-page and footer screenshots**
+
+Confirm the same Van-Gogh/Impasto visual language remains behind cards and footer; no green-water or static-poster transition is allowed.
+
+- [ ] **Step 4: Inspect Fullscreen and dark mode**
+
+Confirm 100dvh composition, handoff overlap, and continuous dark Impasto background.
+
+- [ ] **Step 5: Inspect phone/iPad screenshots**
+
+Confirm title gutters and Hero safety without horizontal clipping.
+
+---
+
+### Task 6: PR, merge and production deployment
+
+**Files:**
+- PR #28 metadata only; no deployment workflow changes.
+
+**Interfaces:**
+- Consumes: green feature HEAD.
+- Produces: merged `master`, Cloudflare Pages production deployment, DogeCloud refresh.
+
+- [ ] **Step 1: Audit final PR diff**
+
+Ensure the production diff is focused on Hero/wave/responsive behavior plus directly related tests/docs. No unrelated dependency or runtime behavior drift.
+
+- [ ] **Step 2: Confirm all five feature-branch gates are green**
+
+Tests, Biome, Type Check, Build, Playwright must all be successful on the same HEAD.
+
+- [ ] **Step 3: Confirm latest Cloudflare Pages Preview**
+
+Preview must correspond to the final feature HEAD and deploy successfully.
+
+- [ ] **Step 4: Mark PR #28 Ready and squash merge into `master`**
+
+Use expected head SHA to prevent merging stale code.
+
+- [ ] **Step 5: Verify merged `master` CI**
+
+Wait for Tests, Biome, Type Check, Build and Playwright to finish successfully on the squash commit.
+
+- [ ] **Step 6: Verify production deployment**
+
+Confirm Cloudflare Pages production deployment matches the squash commit.
+
+- [ ] **Step 7: Verify DogeCloud refresh**
+
+Confirm the `Refresh DogeCloud CDN` workflow completes successfully and creates URL/path refresh tasks without exposing secrets.
+
+- [ ] **Step 8: Report final production SHA and validation evidence**
