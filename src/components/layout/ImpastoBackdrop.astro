@@ -54,7 +54,7 @@ import "../../styles/katelya-hero-depth.css";
 			return;
 		}
 
-		artWindow.__katelyaDepthTimerId = window.setTimeout(initialize, 180);
+		artWindow.__katelyaDepthTimerId = globalThis.setTimeout(initialize, 180);
 	}
 
 	function initializeKatelyaArtLayers() {
