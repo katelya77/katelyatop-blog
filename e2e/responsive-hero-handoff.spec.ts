@@ -76,7 +76,7 @@ async function readHeroGeometry(page: Page) {
 	});
 }
 
-function expectContainedAndConnected(
+function expectContained(
 	geometry: NonNullable<Awaited<ReturnType<typeof readHeroGeometry>>>,
 ) {
 	expect(
@@ -91,15 +91,36 @@ function expectContainedAndConnected(
 		geometry.copyBottom,
 		"hero copy must remain inside the visual hero stage",
 	).toBeLessThanOrEqual(geometry.heroBottom - 12);
+}
+
+function expectBannerHandoff(
+	geometry: NonNullable<Awaited<ReturnType<typeof readHeroGeometry>>>,
+) {
 	expect(
 		geometry.shellTop,
-		"main content must never overlap the hero",
+		"banner content should begin after the bounded Hero frame",
 	).toBeGreaterThanOrEqual(geometry.heroBottom - 1);
 	expect(
 		geometry.gridTop - geometry.heroBottom,
-		"the handoff from hero artwork to content should not leave a dead band",
+		"banner handoff should not leave a dead band",
 	).toBeGreaterThanOrEqual(0);
 	expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(56);
+}
+
+function expectFullscreenHandoff(
+	geometry: NonNullable<Awaited<ReturnType<typeof readHeroGeometry>>>,
+) {
+	const overlap = geometry.heroBottom - geometry.shellTop;
+	expect(
+		overlap,
+		"fullscreen content shell should intentionally overlap the Hero tail",
+	).toBeGreaterThanOrEqual(24);
+	expect(overlap).toBeLessThanOrEqual(90);
+	expect(
+		geometry.gridTop - geometry.heroBottom,
+		"grid content should emerge just after the painterly overlap zone",
+	).toBeGreaterThanOrEqual(0);
+	expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(64);
 }
 
 test.describe("responsive banner and fullscreen hero handoff", () => {
@@ -119,7 +140,8 @@ test.describe("responsive banner and fullscreen hero handoff", () => {
 			expect(geometry).not.toBeNull();
 			if (!geometry) return;
 
-			expectContainedAndConnected(geometry);
+			expectContained(geometry);
+			expectBannerHandoff(geometry);
 			expect(
 				geometry.heroHeight / geometry.viewportHeight,
 				"banner hero must not collapse on short landscape clients",
@@ -146,7 +168,8 @@ test.describe("responsive banner and fullscreen hero handoff", () => {
 			expect(geometry).not.toBeNull();
 			if (!geometry) return;
 
-			expectContainedAndConnected(geometry);
+			expectContained(geometry);
+			expectFullscreenHandoff(geometry);
 			expect(
 				Math.abs(geometry.heroHeight - geometry.viewportHeight),
 				"fullscreen artwork should occupy exactly one visual viewport",
