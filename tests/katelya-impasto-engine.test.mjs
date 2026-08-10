@@ -66,7 +66,7 @@ test("first painted frame owns readiness while the painterly poster bridges boot
 	);
 	assert.match(
 		backdrop,
-		/html\.impasto-reading\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0\.94/s,
+		/html\.impasto-reading\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0\.78/s,
 	);
 	assert.match(
 		backdrop,
@@ -190,7 +190,7 @@ test("touch clients keep dynamic impasto while accessibility fallbacks stay inta
 	);
 	assert.match(
 		backdrop,
-		/html\.impasto-reading\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*0\.3/s,
+		/html\.impasto-reading\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*0\.26/s,
 	);
 	assert.match(backdrop, /will-change:\s*opacity/);
 	assert.match(backdrop, /@media \(prefers-reduced-motion:\s*reduce\)/);
