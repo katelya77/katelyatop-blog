@@ -4,12 +4,13 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const readTheme = async () => {
-	const [gallery, safety, geometry] = await Promise.all([
+	const [gallery, safety, geometry, backdrop] = await Promise.all([
 		read("src/styles/katelya-van-gogh-gallery.css"),
 		read("src/styles/katelya-van-gogh-safety.css"),
 		read("src/styles/impasto-geometry.css"),
+		read("src/styles/impasto-backdrop.css"),
 	]);
-	return `${gallery}\n${safety}\n${geometry}`;
+	return `${gallery}\n${safety}\n${geometry}\n${backdrop}`;
 };
 
 test("legacy banner title cannot reappear over the gallery hero", async () => {
@@ -46,10 +47,10 @@ test("full page uses day-night painterly artwork and clips overflow", async () =
 		"public/assets/art/katelya-van-gogh-night.svg",
 	);
 
-	assert.match(theme, /katelya-van-gogh-day\.svg/);
-	assert.match(theme, /katelya-van-gogh-night\.svg/);
+	assert.match(theme, /impasto-day\.svg/);
+	assert.match(theme, /impasto-night\.svg/);
 	assert.match(theme, /overflow-x:\s*clip/);
-	assert.match(theme, /background-attachment:\s*scroll\s*!important/);
+	assert.match(theme, /background-attachment:\s*scroll/);
 	assert.match(dayArtwork, /stroke-linecap="round"/);
 	assert.match(nightArtwork, /stroke-linecap="round"/);
 });
@@ -281,7 +282,7 @@ test("mobile toc panel is a native popover without panel manager", async () => {
 	assert.doesNotMatch(handler, /id:\s*"mobile-toc-panel"/);
 });
 
-test("legacy #navbar > div paint rules exclude navbar shell children", async () => {
+test("navbar paint rules exclude shell children and retired art stays inert", async () => {
 	// These pre-art-theme rules paint every direct child div of #navbar with a
 	// translucent background — the source of the scrolled ghost rectangle when
 	// the in-flow mobile toc panel inflated .katelya-navbar-tools.
@@ -309,6 +310,11 @@ test("legacy #navbar > div paint rules exclude navbar shell children", async () 
 					m[1].includes(":not(.katelya-navbar-tools)"),
 				`${file}: legacy navbar paint rule must exclude shell children: ${m[0].slice(0, 120)}`,
 			);
+		}
+		if (file === "src/styles/katelya-impressionist.css") {
+			assert.equal(count, 0, "retired theme must not retain navbar paint");
+			assert.doesNotMatch(css, /background|box-shadow|backdrop-filter/);
+			continue;
 		}
 		assert.ok(
 			count > 0,

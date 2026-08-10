@@ -62,7 +62,7 @@ html.katelya-art-theme .banner-image-slot-desktop {
 
 	html.katelya-art-theme .katelya-orbit-stage {
 		top: 56% !important;
-		width: min(92vw, 66rem) !important;
+		width: min(calc(100% - 3rem), 66rem) !important;
 		height: min(46vw, 30rem) !important;
 	}
 
@@ -72,6 +72,22 @@ html.katelya-art-theme .banner-image-slot-desktop {
 		min-height: 3.75rem !important;
 		padding: 0.62rem 0.72rem !important;
 	}
+
+	html.katelya-art-theme .katelya-orbit-card--1 {
+		left: 1.35rem !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--2 {
+		right: 2.5rem !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--3 {
+		left: 1.85rem !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--4 {
+		right: 3.65rem !important;
+	}
 }
 
 /* Portrait tablets keep a generous vertical canvas without becoming a full page. */
@@ -79,6 +95,14 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
 		.katelya-hero-stage.is-home-hero {
 		--katelya-active-hero-height: clamp(36rem, 70svh, 52rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--3 {
+		bottom: -10% !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-card--4 {
+		bottom: -8% !important;
 	}
 }
 

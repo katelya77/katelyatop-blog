@@ -1,11 +1,11 @@
 {
-  "generator": "katelya-impasto-svg-v1",
+  "generator": "katelya-impasto-svg-v2",
   "fieldGenerator": "katelya-structure-tensor-v1",
   "sourceSha256": "a3b393e0db81c87280fa10f0d1988bb4461fdc46f28202cce8791d8b00277c27",
   "sourcePathCount": 172000,
   "fieldWidth": 32,
   "fieldHeight": 18,
-  "dayBytes": 62507,
-  "nightBytes": 64606,
+  "dayBytes": 89992,
+  "nightBytes": 98576,
   "fieldSha256": "fb735527c13f2cc14580035fecc8ec973fa1a582f2782127ea72b6c2ec2a6325"
 }

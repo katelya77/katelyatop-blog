@@ -16,6 +16,17 @@ type ThemeChangeDetail = {
 	dark?: boolean;
 };
 
+type QualityLevel = "high" | "medium" | "low";
+
+type QualityGovernorState = {
+	level: QualityLevel;
+	averageCost: number;
+	samples: number;
+	slowSamples: number;
+	fastSamples: number;
+	lastSwitchAt: number;
+};
+
 const THEME_BURST_MS = 220;
 const POINTER_BURST_MS = 650;
 const MAX_DPR = 1.4;
@@ -30,6 +41,10 @@ const TOUCH_MAX_RENDER_PIXELS = 1_150_000;
 const TOUCH_POINTER_FPS = 30;
 const TOUCH_THEME_FPS = 24;
 const TOUCH_IDLE_FPS = 10;
+const QUALITY_SWITCH_COOLDOWN_MS = 8_000;
+const QUALITY_DOWNGRADE_THRESHOLD_MS = 20;
+const QUALITY_UPGRADE_THRESHOLD_MS = 11;
+const QUALITY_MIN_SAMPLES = 36;
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -50,6 +65,7 @@ uniform vec2 uPointer;
 uniform float uTime;
 uniform float uDark;
 uniform float uMotion;
+uniform float uMicroDetail;
 
 float hash21(vec2 point) {
 	point = fract(point * vec2(123.34, 456.21));
@@ -111,28 +127,62 @@ float paintEdge(float value, float width) {
 	return smoothstep(0.0, width, value) * (1.0 - smoothstep(1.0 - width, 1.0, value));
 }
 
-vec3 dayPalette(float value, float accent, float violet) {
-	vec3 deep = vec3(0.035, 0.215, 0.25);
-	vec3 teal = vec3(0.10, 0.48, 0.46);
-	vec3 celadon = vec3(0.46, 0.73, 0.63);
-	vec3 cream = vec3(0.94, 0.91, 0.74);
-	vec3 colour = mix(deep, teal, smoothstep(0.05, 0.43, value));
-	colour = mix(colour, celadon, smoothstep(0.36, 0.72, value));
-	colour = mix(colour, cream, smoothstep(0.70, 1.0, value));
-	colour = mix(colour, vec3(0.40, 0.27, 0.63), violet * 0.32);
-	return mix(colour, vec3(0.95, 0.78, 0.34), accent * 0.16);
+float broadUnderpainting(vec2 point, float seed) {
+	vec2 warp = vec2(
+		noise(point * 0.73 + seed * 4.1),
+		noise(point * 0.61 - seed * 3.7)
+	) - 0.5;
+	return fbm(point * 0.82 + warp * 0.58 + seed * 7.3);
 }
 
-vec3 nightPalette(float value, float accent, float violet) {
-	vec3 navy = vec3(0.008, 0.035, 0.12);
-	vec3 ultramarine = vec3(0.025, 0.12, 0.36);
-	vec3 cobalt = vec3(0.035, 0.27, 0.49);
-	vec3 petrol = vec3(0.035, 0.38, 0.43);
-	vec3 colour = mix(navy, ultramarine, smoothstep(0.04, 0.38, value));
-	colour = mix(colour, cobalt, smoothstep(0.33, 0.68, value));
-	colour = mix(colour, petrol, smoothstep(0.67, 0.96, value));
-	colour = mix(colour, vec3(0.26, 0.17, 0.49), violet * 0.42);
-	return mix(colour, vec3(0.98, 0.67, 0.15), accent * 0.20);
+float midStrokeMask(vec2 brush, float seed, float phase) {
+	vec2 cells = brush * vec2(16.0 + seed * 7.0, 28.0 + seed * 13.0);
+	vec2 local = fract(cells + vec2(seed * 5.7 + phase, seed * 2.3));
+	float cellSeed = hash21(floor(cells) + seed * 17.0);
+	float start = 0.05 + cellSeed * 0.15;
+	float finish = 0.58 + cellSeed * 0.32;
+	float along = smoothstep(start, start + 0.08, local.x) *
+		(1.0 - smoothstep(finish - 0.10, finish, local.x));
+	float progress = clamp((local.x - start) / max(finish - start, 0.01), 0.0, 1.0);
+	float taper = pow(max(sin(progress * 3.14159265), 0.0), 0.42);
+	float curve = sin(progress * 5.4 + cellSeed * 6.2) * 0.075;
+	float width = mix(0.16, 0.38, cellSeed) * taper;
+	float cross = 1.0 - smoothstep(width * 0.48, width, abs(local.y - 0.5 + curve));
+	float chip = smoothstep(0.20, 0.78, noise(cells * vec2(1.7, 2.9) + cellSeed * 11.0));
+	return along * cross * mix(0.54, 1.0, chip);
+}
+
+float microBristleRidge(vec2 brush, float seed, float strokeBody) {
+	float bristle = pow(
+		max(0.0, 0.5 + 0.5 * sin(brush.y * (118.0 + seed * 94.0) + seed * 19.0)),
+		9.0
+	);
+	float breakup = smoothstep(0.42, 0.76, noise(brush * vec2(21.0, 47.0) + seed * 8.0));
+	return bristle * mix(0.45, 1.0, breakup) * strokeBody * uMicroDetail;
+}
+
+vec3 dayUnderpaint(float value) {
+	return mix(vec3(0.055, 0.27, 0.29), vec3(0.34, 0.56, 0.49), smoothstep(0.2, 0.88, value));
+}
+
+vec3 nightUnderpaint(float value) {
+	return mix(vec3(0.006, 0.025, 0.105), vec3(0.025, 0.19, 0.32), smoothstep(0.18, 0.9, value));
+}
+
+vec3 dayBrokenPalette(float family, float lightness) {
+	vec3 colour = vec3(0.08, 0.43, 0.42);
+	if (family > 0.24) colour = vec3(0.43, 0.69, 0.57);
+	if (family > 0.50) colour = vec3(0.91, 0.88, 0.69);
+	if (family > 0.74) colour = vec3(0.37, 0.24, 0.58);
+	return mix(colour * 0.78, colour * 1.08, lightness);
+}
+
+vec3 nightBrokenPalette(float family, float lightness) {
+	vec3 colour = vec3(0.018, 0.075, 0.28);
+	if (family > 0.22) colour = vec3(0.025, 0.23, 0.48);
+	if (family > 0.48) colour = vec3(0.025, 0.34, 0.38);
+	if (family > 0.73) colour = vec3(0.22, 0.12, 0.42);
+	return mix(colour * 0.72, colour * 1.16, lightness);
 }
 
 void main() {
@@ -140,10 +190,13 @@ void main() {
 	float aspect = uResolution.x / max(uResolution.y, 1.0);
 	vec2 aspectUv = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
 	vec4 tensor = texture(uField, uv);
-	float coherence = tensor.b;
 	float energy = tensor.a;
 	float time = uTime * uMotion;
-	float flowTime = time * 0.18;
+	float flowTime = time * 0.15;
+	vec2 readingPoint = vec2((uv.x - 0.5) / 0.39, (uv.y - 0.43) / 0.31);
+	float readingCalm = exp(-dot(readingPoint, readingPoint) * 1.72);
+	float peripheralEnergy = 1.0 - readingCalm * 0.76;
+	float coherence = tensor.b * mix(0.26, 1.0, peripheralEnergy);
 
 	vec2 vortexCenterA = vec2(
 		0.22 * aspect + sin(flowTime * 0.73 + 0.4) * 0.026 * aspect,
@@ -161,118 +214,104 @@ void main() {
 		vortexWarp(aspectUv, vortexCenterA, 0.24, 0.39) +
 		vortexWarp(aspectUv, vortexCenterB, -0.17, 0.31) +
 		vortexWarp(aspectUv, vortexCenterC, 0.14, 0.25);
-	float curl = curlNoise(
-		aspectUv * 1.31 + vec2(3.1, -1.8) + vec2(flowTime * 0.017, -flowTime * 0.011)
-	);
-	float curlAngle = curl * mix(0.48, 0.84, uDark);
+	vec2 regionCoordinate = uv * vec2(3.4, 2.7);
+	float regionSeed = noise(regionCoordinate + vec2(7.3, 2.9));
+	float phaseSeed = noise(regionCoordinate * 0.71 + vec2(-2.4, 5.8));
+	float localPhase = flowTime * mix(0.17, 0.43, phaseSeed) + phaseSeed * 8.0;
+	float curl = curlNoise(aspectUv * 1.27 + vec2(3.1, -1.8) + localWarp * 0.9);
+	float curlAngle = curl * mix(0.62, 1.02, uDark) + localPhase * 0.035;
 	vec2 curlVector = vec2(cos(curlAngle), sin(curlAngle));
+	float regionAngle = mix(-1.35, 1.52, regionSeed) + sin(localPhase * 0.57) * 0.18;
+	vec2 regionBias = vec2(cos(regionAngle), sin(regionAngle));
 	vec2 tensorDirection = normalize(tensor.rg * 2.0 - 1.0 + vec2(0.0001));
 	vec2 direction = normalize(
-		tensorDirection * (0.56 + coherence * 0.24) +
-		localWarp * mix(0.54, 0.88, uDark) +
-		curlVector * (0.14 + (1.0 - coherence) * 0.22)
+		tensorDirection * (0.13 + coherence * 0.17) +
+		localWarp * mix(0.42, 0.69, uDark) * peripheralEnergy +
+		curlVector * (0.28 + (1.0 - coherence) * 0.24) +
+		regionBias * mix(0.34, 0.47, peripheralEnergy)
 	);
 	vec2 tangent = vec2(-direction.y, direction.x);
-	vec2 drift =
-		direction * sin(flowTime * 0.71 + energy * 5.7) * 0.0021 +
-		tangent * cos(flowTime * 0.43 + coherence * 4.9) * 0.0013;
-	vec2 scaled = aspectUv + drift + localWarp * 0.042;
+	vec2 drift = direction * sin(localPhase + energy * 5.7) * 0.0052 +
+		tangent * cos(localPhase * 0.73 + coherence * 4.9) * 0.0036;
+	vec2 scaled = aspectUv + drift + localWarp * 0.038;
 	vec2 brushSpace = vec2(dot(scaled, direction), dot(scaled, tangent));
-
-	vec2 broadFlow = vec2(flowTime * 0.026, -flowTime * 0.014);
-	vec2 secondaryFlow = vec2(-flowTime * 0.041, flowTime * 0.023);
-	vec2 ridgeFlow = vec2(flowTime * 0.061, flowTime * 0.037);
-	float broad = fbm(scaled * 2.18 + direction * 1.43 + broadFlow);
-	float secondary = fbm(
-		scaled * 5.15 - tangent * 1.92 + vec2(8.2, -4.7) + secondaryFlow
+	vec2 secondaryDirection = normalize(direction + regionBias * 0.42 - tangent * 0.18);
+	vec2 secondaryTangent = vec2(-secondaryDirection.y, secondaryDirection.x);
+	vec2 secondaryBrush = vec2(dot(scaled, secondaryDirection), dot(scaled, secondaryTangent));
+	float broad = broadUnderpainting(scaled * 1.46 + localWarp * 0.37, regionSeed);
+	float strokeSeed = mix(regionSeed, phaseSeed, 0.43);
+	float primaryStroke = midStrokeMask(
+		brushSpace + broad * 0.019,
+		strokeSeed,
+		localPhase * 0.022
 	);
-	float ridges = fbm(
-		scaled * 10.7 + tangent * broad * 2.15 + direction * secondary + ridgeFlow
-	);
-	float cellSeed = hash21(floor(brushSpace * vec2(6.1, 13.7)) + vec2(2.7, 11.3));
-	float brokenMask = brokenStroke(
-		brushSpace + vec2(flowTime * 0.021, broad * 0.08),
-		cellSeed
-	) * mix(0.58, 1.0, coherence);
-	float strokeSegment = smoothstep(0.18, 0.86, brokenMask + ridges * 0.15);
-	float bristleRidge = pow(
-		1.0 - abs(sin(brushSpace.y * (82.0 + cellSeed * 71.0) + ridges * 6.1)),
-		5.2
-	) * mix(0.48, 1.0, coherence);
-	float chippedPigment = smoothstep(0.34, 0.76, noise(scaled * 29.0 + cellSeed * 9.0));
-	float edgeMask = paintEdge(fract(brushSpace.x * (2.8 + cellSeed * 3.5)), 0.17);
-	float shortStroke = strokeSegment * mix(0.64, 1.0, chippedPigment);
-	float pigmentGlaze = smoothstep(
-		0.22,
-		0.90,
-		broad * 0.50 + secondary * 0.32 + ridges * 0.18
-	);
-	float pigment = clamp(
-		0.10 + broad * 0.38 + secondary * 0.21 + energy * 0.20 +
-		shortStroke * 0.22 + bristleRidge * 0.075 + edgeMask * 0.04,
-		0.0,
-		1.0
-	);
+	float secondaryStroke = midStrokeMask(
+		secondaryBrush * 1.21 + vec2(3.7, -5.2),
+		fract(strokeSeed + 0.41),
+		-localPhase * 0.017
+	) * 0.72;
+	float strokeBody = max(primaryStroke, secondaryStroke) * mix(0.64, 1.0, peripheralEnergy);
+	float bristleRidge = microBristleRidge(brushSpace, strokeSeed, strokeBody);
+	float dryBreak = smoothstep(0.34, 0.76, noise(scaled * 31.0 + strokeSeed * 9.0));
+	float edgeMask = paintEdge(clamp(strokeBody, 0.0, 1.0), 0.22) * dryBreak;
+	float pigmentGlaze = smoothstep(0.18, 0.88, broad * 0.76 + strokeBody * 0.24);
 	float goldDeposit = smoothstep(
-		0.79,
+		0.90,
 		0.985,
-		energy * 0.47 + ridges * 0.16 + shortStroke * 0.20 + cellSeed * 0.19
-	) * mix(0.45, 1.0, coherence);
-	float violetDeposit = smoothstep(
-		0.64,
-		0.94,
-		secondary * 0.60 + curl * 0.15 + cellSeed * 0.25
-	);
-
-	vec3 base = mix(
-		dayPalette(pigment, goldDeposit, violetDeposit),
-		nightPalette(pigment, goldDeposit, violetDeposit),
+		energy * 0.42 + strokeBody * 0.25 + strokeSeed * 0.27
+	) * peripheralEnergy;
+	float brokenColour = noise(scaled * vec2(7.1, 11.3) + vec2(4.7, -3.2));
+	float familyA = fract(strokeSeed + brokenColour * 0.58 + regionSeed * 0.37);
+	float familyB = fract(strokeSeed + 0.47 + broad * 0.19 + brokenColour * 0.31);
+	float broadColour = mix(0.5, broad, 0.22);
+	vec3 underpaint = mix(dayUnderpaint(broadColour), nightUnderpaint(broadColour), uDark);
+	vec3 primaryColour = mix(
+		dayBrokenPalette(familyA, energy),
+		nightBrokenPalette(familyA, energy),
 		uDark
 	);
-	vec3 underpaint = mix(
-		vec3(0.045, 0.25, 0.27),
-		vec3(0.006, 0.035, 0.13),
+	vec3 secondaryColour = mix(
+		dayBrokenPalette(familyB, 1.0 - energy * 0.45),
+		nightBrokenPalette(familyB, 1.0 - energy * 0.38),
 		uDark
 	);
-	base = mix(underpaint, base, 0.66 + pigmentGlaze * 0.28);
+	vec3 base = mix(underpaint, primaryColour, primaryStroke * 0.78);
+	base = mix(base, secondaryColour, secondaryStroke * 0.62);
+	base = mix(underpaint * 0.92, base, 0.62 + pigmentGlaze * 0.31);
 	vec3 mineralGold = mix(vec3(0.94, 0.78, 0.35), vec3(1.0, 0.65, 0.12), uDark);
-	base = mix(base, mineralGold, goldDeposit * mix(0.08, 0.17, uDark));
+	base = mix(base, mineralGold, goldDeposit * mix(0.55, 0.72, uDark));
 
 	float height =
-		broad * 0.18 +
-		secondary * 0.13 +
-		ridges * 0.08 +
-		shortStroke * 0.32 +
-		bristleRidge * 0.16 +
-		edgeMask * 0.05;
-	vec3 normal = normalize(vec3(-dFdx(height) * 22.0, -dFdy(height) * 22.0, 1.0));
+		(primaryStroke * 0.36 + secondaryStroke * 0.24 + bristleRidge * 0.14 +
+		edgeMask * 0.10 + goldDeposit * 0.12 + broad * 0.025) *
+		mix(0.50, 1.0, peripheralEnergy);
+	vec3 normal = normalize(vec3(-dFdx(height) * 16.0, -dFdy(height) * 16.0, 1.0));
 	vec3 lightDirection = normalize(vec3(
-		(uPointer.x - 0.5) * 1.18 + 0.18,
-		(0.5 - uPointer.y) * 0.94 - 0.12,
-		0.90
+		(uPointer.x - 0.5) * 0.28 + 0.16,
+		(0.5 - uPointer.y) * 0.22 - 0.10,
+		0.96
 	));
 	float diffuse = max(dot(normal, lightDirection), 0.0);
 	float roughness = clamp(
-		0.86 - coherence * 0.25 - shortStroke * 0.24 + ridges * 0.06,
-		0.31,
-		0.91
+		0.89 - strokeBody * 0.23 - goldDeposit * 0.24 + dryBreak * 0.10,
+		0.38,
+		0.94
 	);
 	vec3 halfVector = normalize(lightDirection + vec3(0.0, 0.0, 1.0));
 	float specular = pow(max(dot(normal, halfVector), 0.0), mix(7.0, 34.0, 1.0 - roughness));
 	vec3 lightColour = mix(vec3(1.0, 0.94, 0.76), vec3(1.0, 0.73, 0.23), uDark);
 	base *= 0.72 + diffuse * 0.38;
 	base += lightColour * specular *
-		(0.05 + energy * 0.11 + bristleRidge * 0.07 + edgeMask * 0.035);
+		(0.035 + strokeBody * 0.10 + bristleRidge * 0.08 + goldDeposit * 0.13);
 
-	vec2 center = vec2((uv.x - 0.5) / 0.37, (uv.y - 0.43) / 0.28);
-	float readingProtection = exp(-dot(center, center) * 1.78);
-	vec3 calm = mix(vec3(0.82, 0.90, 0.84), vec3(0.032, 0.105, 0.22), uDark);
-	base = mix(base, calm, readingProtection * mix(0.29, 0.21, uDark));
+	float readingProtection = readingCalm;
+	vec3 calm = mix(vec3(0.61, 0.73, 0.65), vec3(0.032, 0.105, 0.22), uDark);
+	base = mix(base, calm, readingProtection * mix(0.22, 0.17, uDark));
 
 	float canvasWeave =
-		sin(gl_FragCoord.x * 1.57 + broad * 2.0) *
-		sin(gl_FragCoord.y * 1.43 - broad * 1.4);
-	base += canvasWeave * mix(0.007, 0.010, uDark) * (1.0 - readingProtection * 0.42);
+		sin(gl_FragCoord.x * 1.57 + broad * 1.2) *
+		sin(gl_FragCoord.y * 1.43 - broad * 0.9);
+	base += canvasWeave * mix(0.004, 0.006, uDark) * (1.0 - readingProtection * 0.52);
 	float pigmentGrain = hash21(gl_FragCoord.xy * 0.73) - 0.5;
 	base += pigmentGrain * 0.008;
 	float vignette = 1.0 - smoothstep(0.24, 1.10, length((uv - 0.5) * vec2(1.0, 0.76)));
@@ -334,17 +373,75 @@ function shouldUseStaticMode(): boolean {
 	return reducedMotion || saveData;
 }
 
-function getAdaptiveDpr(cssWidth: number, cssHeight: number): number {
+function qualityDprScale(level: QualityLevel): number {
+	if (level === "high") return 1;
+	if (level === "medium") return 1;
+	return 0.76;
+}
+
+function qualityMicroDetail(level: QualityLevel): number {
+	if (level === "high") return 1;
+	if (level === "medium") return 0.72;
+	return 0.38;
+}
+
+function updateQualityGovernor(
+	state: QualityGovernorState,
+	frameCost: number,
+	now: number,
+): { state: QualityGovernorState; changed: boolean } {
+	const averageCost =
+		state.samples === 0 ? frameCost : state.averageCost * 0.92 + frameCost * 0.08;
+	const samples = Math.min(state.samples + 1, 10_000);
+	const slowSamples =
+		averageCost > QUALITY_DOWNGRADE_THRESHOLD_MS ? state.slowSamples + 1 : 0;
+	const fastSamples =
+		averageCost < QUALITY_UPGRADE_THRESHOLD_MS ? state.fastSamples + 1 : 0;
+	const next = { ...state, averageCost, samples, slowSamples, fastSamples };
+
+	if (
+		samples < QUALITY_MIN_SAMPLES ||
+		now - state.lastSwitchAt < QUALITY_SWITCH_COOLDOWN_MS
+	) {
+		return { state: next, changed: false };
+	}
+
+	let level = state.level;
+	if (slowSamples >= 12) {
+		level = state.level === "high" ? "medium" : "low";
+	} else if (fastSamples >= 72) {
+		level = state.level === "low" ? "medium" : "high";
+	}
+	if (level === state.level) return { state: next, changed: false };
+	return {
+		state: {
+			...next,
+			level,
+			samples: 0,
+			slowSamples: 0,
+			fastSamples: 0,
+			lastSwitchAt: now,
+		},
+		changed: true,
+	};
+}
+
+function getAdaptiveDpr(
+	cssWidth: number,
+	cssHeight: number,
+	qualityLevel: QualityLevel,
+): number {
 	const touch = isCoarsePointer();
 	const cssPixels = Math.max(1, cssWidth * cssHeight);
 	const maxRenderPixels = touch ? TOUCH_MAX_RENDER_PIXELS : MAX_RENDER_PIXELS;
 	const minDpr = touch ? TOUCH_MIN_DPR : MIN_DPR;
 	const maxDpr = touch ? TOUCH_MAX_DPR : MAX_DPR;
 	const pixelBudgetDpr = Math.sqrt(maxRenderPixels / Math.max(cssPixels, 1));
-	return Math.max(
+	const boundedDpr = Math.max(
 		minDpr,
 		Math.min(window.devicePixelRatio || 1, maxDpr, pixelBudgetDpr),
 	);
+	return Math.max(minDpr, boundedDpr * qualityDprScale(qualityLevel));
 }
 
 export function initImpastoRenderer(): void {
@@ -364,6 +461,7 @@ export function initImpastoRenderer(): void {
 	const setStatic = () => {
 		root.classList.remove("impasto-ready", "impasto-booting");
 		root.classList.add("impasto-static");
+		root.removeAttribute("data-impasto-quality");
 	};
 	if (shouldUseStaticMode()) {
 		setStatic();
@@ -427,6 +525,7 @@ export function initImpastoRenderer(): void {
 		time: gl.getUniformLocation(program, "uTime"),
 		dark: gl.getUniformLocation(program, "uDark"),
 		motion: gl.getUniformLocation(program, "uMotion"),
+		microDetail: gl.getUniformLocation(program, "uMicroDetail"),
 	};
 
 	let pointerX = 0.5;
@@ -443,6 +542,16 @@ export function initImpastoRenderer(): void {
 	let firstFrameReady = hadReadyFrame;
 	const startedAt = performance.now();
 	const touch = isCoarsePointer();
+	let qualityState: QualityGovernorState = {
+		level: touch ? "medium" : "high",
+		averageCost: 0,
+		samples: 0,
+		slowSamples: 0,
+		fastSamples: 0,
+		lastSwitchAt: performance.now(),
+	};
+	root.setAttribute("data-impasto-quality", qualityState.level);
+	let lastDrawAt = 0;
 	const pointerFps = touch ? TOUCH_POINTER_FPS : POINTER_FPS;
 	const themeFps = touch ? TOUCH_THEME_FPS : THEME_FPS;
 	const idleFps = touch ? TOUCH_IDLE_FPS : IDLE_FPS;
@@ -451,7 +560,7 @@ export function initImpastoRenderer(): void {
 		resizeFrame = 0;
 		const cssWidth = Math.max(1, document.documentElement.clientWidth);
 		const cssHeight = Math.max(1, document.documentElement.clientHeight);
-		const dpr = getAdaptiveDpr(cssWidth, cssHeight);
+		const dpr = getAdaptiveDpr(cssWidth, cssHeight, qualityState.level);
 		const width = Math.max(1, Math.round(cssWidth * dpr));
 		const height = Math.max(1, Math.round(cssHeight * dpr));
 		if (canvas.width === width && canvas.height === height) return;
@@ -482,6 +591,7 @@ export function initImpastoRenderer(): void {
 	const draw = (now: number) => {
 		frameId = 0;
 		if (!visible) return;
+		const renderStartedAt = performance.now();
 
 		const pointerActive = now < pointerActiveUntil;
 		const themeActive = now < themeBurstUntil;
@@ -496,8 +606,24 @@ export function initImpastoRenderer(): void {
 		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
 		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
 		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.58 : 0.22);
+		gl.uniform1f(uniforms.microDetail, qualityMicroDetail(qualityState.level));
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		if (!firstFrameReady) markFirstFrameReady();
+		const renderCost = performance.now() - renderStartedAt;
+		const schedulingCost = lastDrawAt
+			? Math.max(0, now - lastDrawAt - 1000 / fps)
+			: 0;
+		lastDrawAt = now;
+		const governor = updateQualityGovernor(
+			qualityState,
+			Math.max(renderCost, schedulingCost),
+			now,
+		);
+		qualityState = governor.state;
+		if (governor.changed) {
+			root.setAttribute("data-impasto-quality", qualityState.level);
+			queueResize();
+		}
 		schedule(1000 / fps);
 	};
 
@@ -565,5 +691,6 @@ export function initImpastoRenderer(): void {
 		gl.deleteTexture(texture);
 		gl.deleteVertexArray(vao);
 		gl.deleteProgram(program);
+		root.removeAttribute("data-impasto-quality");
 	};
 }

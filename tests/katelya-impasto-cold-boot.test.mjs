@@ -6,11 +6,13 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("boot surface is neutral and generated SVG artwork is static-mode only", async () => {
 	const backdrop = await read("src/styles/impasto-backdrop.css");
-	const defaultFallback = backdrop.match(
-		/\.impasto-static-fallback\s*\{([\s\S]*?)\n\}/,
-	)?.[1] ?? "";
+	const defaultFallback =
+		backdrop.match(/\.impasto-static-fallback\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
 
-	assert.match(defaultFallback, /background-image:\s*var\(--impasto-boot-underpaint\)/);
+	assert.match(
+		defaultFallback,
+		/background-image:\s*var\(--impasto-boot-underpaint\)/,
+	);
 	assert.doesNotMatch(defaultFallback, /impasto-(?:day|night)\.svg/);
 	assert.match(
 		backdrop,
@@ -27,7 +29,7 @@ test("ready swap is immediate after a successfully painted frame", async () => {
 
 	assert.match(
 		backdrop,
-		/html\.impasto-ready \.impasto-backdrop canvas\s*\{[^}]*opacity:\s*1[^}]*transition:\s*none/s,
+		/html\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*1[^}]*transition:\s*none/s,
 	);
 	assert.match(
 		backdrop,

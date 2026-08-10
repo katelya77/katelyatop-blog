@@ -51,10 +51,15 @@ function flowDirection(x, y, tensor, dark, random) {
 	const first = vortexVector(x, y, WIDTH * 0.21, HEIGHT * 0.30, dark ? 1.05 : 0.66, 540);
 	const second = vortexVector(x, y, WIDTH * 0.72, HEIGHT * 0.19, dark ? -0.82 : -0.46, 390);
 	const third = vortexVector(x, y, WIDTH * 0.61, HEIGHT * 0.73, dark ? 0.59 : 0.38, 310);
-	const wobble = (random() - 0.5) * (dark ? 0.48 : 0.34);
+	const regionAngle =
+		Math.sin(x * 0.0023 + y * 0.0011) * 1.08 +
+		Math.cos(y * 0.0031 - x * 0.0014) * 0.62;
+	const regionX = Math.cos(regionAngle);
+	const regionY = Math.sin(regionAngle);
+	const wobble = (random() - 0.5) * (dark ? 0.72 : 0.58);
 	return Math.atan2(
-		tensor.dy + first.y + second.y + third.y + Math.sin(x * 0.0037 + y * 0.0021) * wobble,
-		tensor.dx + first.x + second.x + third.x + Math.cos(y * 0.0041 - x * 0.0018) * wobble,
+		tensor.dy * 0.24 + first.y + second.y + third.y + regionY * 0.52 + wobble,
+		tensor.dx * 0.24 + first.x + second.x + third.x + regionX * 0.52 - wobble * 0.38,
 	);
 }
 
@@ -72,6 +77,42 @@ function buildStroke({ x, y, theta, length, width, bend, colour, opacity, random
 	return `<path d="M${x.toFixed(1)} ${y.toFixed(1)} C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${(x + dx).toFixed(1)} ${(y + dy).toFixed(1)}" stroke="${colour}" stroke-width="${width.toFixed(1)}" opacity="${opacity.toFixed(3)}"/>`;
 }
 
+function buildUnderpaintingBands(dark, random) {
+	const colours = dark
+		? ["#123b72", "#075667", "#302b69", "#1c5792"]
+		: ["#8fc9b8", "#4f9b92", "#d8dfbd", "#67549a"];
+	return Array.from({ length: 7 }, (_, index) => {
+		const startX = -180 + random() * 260;
+		const startY = 80 + index * 156 + (random() - 0.5) * 125;
+		const endX = WIDTH + 140 + random() * 180;
+		const endY = startY + (random() - 0.5) * 430;
+		const c1x = WIDTH * (0.20 + random() * 0.18);
+		const c1y = startY + (random() - 0.5) * 360;
+		const c2x = WIDTH * (0.62 + random() * 0.22);
+		const c2y = endY + (random() - 0.5) * 330;
+		const width = 112 + random() * 146;
+		return `<path d="M${startX.toFixed(1)} ${startY.toFixed(1)} C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${endX.toFixed(1)} ${endY.toFixed(1)}" stroke="${colours[index % colours.length]}" stroke-width="${width.toFixed(1)}" opacity="${(0.035 + random() * 0.045).toFixed(3)}"/>`;
+	}).join("");
+}
+
+function buildBrokenHalo(x, y, radius, opacity, random) {
+	const arcs = Array.from({ length: 3 }, (_, index) => {
+		const start = random() * Math.PI * 2 + index * 1.7;
+		const sweep = 0.44 + random() * 0.76;
+		const r = radius * (1.5 + random() * 1.2);
+		const x1 = x + Math.cos(start) * r;
+		const y1 = y + Math.sin(start) * r * 0.72;
+		const x2 = x + Math.cos(start + sweep) * r;
+		const y2 = y + Math.sin(start + sweep) * r * 0.72;
+		const controlAngle = start + sweep * 0.5;
+		const cx = x + Math.cos(controlAngle) * r * (1.13 + random() * 0.18);
+		const cy = y + Math.sin(controlAngle) * r * 0.78;
+		return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="#e5b84b" stroke-width="${(1.2 + random() * 2.6).toFixed(1)}" stroke-linecap="round"/>`;
+	}).join("");
+	const markLength = radius * (0.8 + random() * 1.5);
+	return `<g opacity="${opacity.toFixed(2)}">${arcs}<path d="M${(x - markLength * 0.45).toFixed(1)} ${(y + random() * 2).toFixed(1)} Q${x.toFixed(1)} ${(y - radius * 0.34).toFixed(1)} ${(x + markLength * 0.55).toFixed(1)} ${(y - random() * 3).toFixed(1)}" fill="none" stroke="#f2c85b" stroke-width="${Math.max(2.2, radius * 0.54).toFixed(1)}" stroke-linecap="round"/></g>`;
+}
+
 function buildSvg(dark) {
 	const random = mulberry32(dark ? 260805 : 260804);
 	const palette = dark
@@ -79,7 +120,7 @@ function buildSvg(dark) {
 		: ["#185d62", "#2f8984", "#63ada2", "#a4d0bc", "#e1ead5", "#68519a", "#d7b759"];
 	const background = dark
 		? ["#061333", "#123b72", "#075667"]
-		: ["#174f55", "#66aaa1", "#dfece0"];
+		: ["#164b52", "#3f918b", "#b7d5c3"];
 	const light = dark ? "#f1bd4d" : "#ead06c";
 	const title = dark
 		? "Katelya asymmetric nocturne impasto field"
@@ -95,21 +136,21 @@ function buildSvg(dark) {
 		const ny = (y - HEIGHT * 0.42) / (HEIGHT * 0.25);
 		const calm = Math.exp(-(nx * nx + ny * ny) * 1.78);
 		const length =
-			(28 + random() * 92) *
-			(0.58 + tensor.coherence * 0.62) *
-			(1 - calm * 0.42) *
-			(0.72 + random() * 0.42);
+			(22 + random() ** 0.72 * 118) *
+			(0.78 + tensor.coherence * 0.22) *
+			(1 - calm * 0.48) *
+			(0.66 + random() * 0.52);
 		const width =
-			(4.2 + random() * 15.5) *
+			(3.4 + random() ** 1.35 * 17.5) *
 			(0.60 + tensor.energy * 0.76) *
-			(1 - calm * 0.33);
-		const bend = (random() - 0.5) * (dark ? 1.48 : 1.12) * (1 - tensor.coherence * 0.32);
+			(1 - calm * 0.38);
+		const bend = (random() - 0.5) * (dark ? 1.62 : 1.28) * (0.88 + tensor.coherence * 0.12);
 		const colourIndex =
 			Math.floor(
-				(tensor.energy * 0.45 + tensor.coherence * 0.30 + random() * 0.37) *
+				(tensor.energy * 0.20 + tensor.coherence * 0.08 + random() * 0.82) *
 					(palette.length - 1),
 			) % palette.length;
-		const opacity = (0.18 + 0.58 * tensor.coherence) * (1 - calm * 0.52) * (0.75 + random() * 0.25);
+		const opacity = (0.24 + 0.34 * tensor.energy) * (1 - calm * 0.58) * (0.68 + random() * 0.32);
 		strokes.push(
 			buildStroke({
 				x,
@@ -125,25 +166,40 @@ function buildSvg(dark) {
 		);
 	}
 
-	const underpainting = dark
-		? `<g fill="none" stroke-linecap="round" opacity=".28"><path d="M-80 370 C260 92 470 330 742 180 C1020 26 1212 245 1510 92 C1690 0 1818 44 1990 -42" stroke="#49aeb2" stroke-width="58"/><path d="M-130 702 C210 534 434 731 710 584 C1002 430 1162 582 1450 414 C1645 301 1810 334 2024 244" stroke="#31549a" stroke-width="73"/><path d="M30 896 C302 742 552 905 807 786 C1090 654 1322 826 1590 688 C1760 600 1870 604 1974 556" stroke="#172653" stroke-width="92"/></g>`
-		: `<g fill="none" stroke-linecap="round" opacity=".24"><path d="M-70 346 C238 126 482 320 746 194 C1016 65 1230 234 1490 112 C1694 16 1840 72 1994 -18" stroke="#9ad0c2" stroke-width="62"/><path d="M-110 706 C184 532 438 724 718 590 C1014 448 1196 592 1456 472 C1648 384 1828 400 2012 300" stroke="#5a9f99" stroke-width="76"/></g>`;
+	const underpainting = `<g fill="none" stroke-linecap="round">${buildUnderpaintingBands(dark, random)}</g>`;
 
-	const accents = dark
-		? `<g opacity=".88"><path d="M66 1080 C98 836 88 650 136 414 C151 340 170 258 198 192 C230 420 223 594 264 790 C287 900 301 990 300 1080Z" fill="#04172b"/><path d="M1580 1080 C1588 912 1570 806 1604 640 C1623 548 1646 490 1671 448 C1690 620 1717 781 1749 927 C1762 986 1770 1036 1768 1080Z" fill="#08283a" opacity=".72"/></g>`
-		: `<g fill="#65509b" opacity=".37"><path d="M78 720 C8 646 52 536 154 580 C214 485 304 555 276 650 C250 736 148 775 78 720Z"/><path d="M1530 670 C1462 610 1514 522 1598 558 C1643 474 1722 530 1704 606 C1687 676 1592 718 1530 670Z"/></g>`;
+	const accentColour = dark ? "#07162f" : "#66509a";
+	const accents = `<g fill="none" stroke="${accentColour}" stroke-linecap="round" opacity="${dark ? ".54" : ".34"}">${Array.from(
+		{ length: 18 },
+		(_, index) => {
+			const leftCluster = index < 9;
+			const x = leftCluster ? 72 + random() * 230 : 1530 + random() * 250;
+			const y = 570 + random() * 470;
+			const theta = (leftCluster ? -1.28 : -1.82) + (random() - 0.5) * 0.72;
+			return buildStroke({
+				x,
+				y,
+				theta,
+				length: 70 + random() * 210,
+				width: 7 + random() * 24,
+				bend: (random() - 0.5) * 1.3,
+				colour: accentColour,
+				opacity: 0.35 + random() * 0.45,
+				random,
+			});
+		},
+	).join("")}</g>`;
 
 	const stars = dark
 		? Array.from({ length: 17 }, (_, index) => {
 			const x = 90 + random() * 1740;
 			const y = 54 + random() * 520;
 			const radius = 2.2 + random() * (index % 5 === 0 ? 10 : 5.4);
-			const halo = radius * (2.1 + random() * 1.8);
-			return `<g opacity="${(0.34 + random() * 0.52).toFixed(2)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${halo.toFixed(1)}" fill="none" stroke="#e5b84b" stroke-width="${(1.3 + random() * 2.2).toFixed(1)}"/><circle cx="${(x + (random() - 0.5) * 4).toFixed(1)}" cy="${(y + (random() - 0.5) * 4).toFixed(1)}" r="${radius.toFixed(1)}" fill="#f2c85b"/></g>`;
+			return buildBrokenHalo(x, y, radius, 0.34 + random() * 0.52, random);
 		}).join("")
 		: "";
 
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${title}"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${background[0]}"/><stop offset=".52" stop-color="${background[1]}"/><stop offset="1" stop-color="${background[2]}"/></linearGradient><radialGradient id="glow" cx="49%" cy="39%" r="55%"><stop stop-color="${light}" stop-opacity=".20"/><stop offset="1" stop-color="${light}" stop-opacity="0"/></radialGradient><filter id="canvas" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".007 .032" numOctaves="3" seed="47" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/><feBlend in="d" in2="n" mode="soft-light"/></filter><filter id="impasto" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="turbulence" baseFrequency=".016 .075" numOctaves="2" seed="71" result="grain"/><feDiffuseLighting in="grain" surfaceScale="2.8" diffuseConstant=".60" lighting-color="${light}" result="diff"><feDistantLight azimuth="218" elevation="46"/></feDiffuseLighting><feSpecularLighting in="grain" surfaceScale="3.8" specularConstant=".38" specularExponent="16" lighting-color="#fff8dc" result="spec"><feDistantLight azimuth="214" elevation="51"/></feSpecularLighting><feComposite in="spec" in2="SourceAlpha" operator="in" result="spec2"/><feBlend in="SourceGraphic" in2="diff" mode="soft-light" result="lit"/><feBlend in="lit" in2="spec2" mode="screen"/></filter></defs><rect width="1920" height="1080" fill="url(#bg)"/><rect width="1920" height="1080" fill="url(#glow)"/>${underpainting}<g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#canvas)">${strokes.join("")}</g><g filter="url(#impasto)">${accents}${stars}</g><rect x="18" y="18" width="1884" height="1044" rx="38" fill="none" stroke="#e5c970" stroke-opacity=".18" stroke-width="3"/></svg>`;
+	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" aria-label="${title}"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${background[0]}"/><stop offset=".52" stop-color="${background[1]}"/><stop offset="1" stop-color="${background[2]}"/></linearGradient><radialGradient id="glow" cx="49%" cy="39%" r="55%"><stop stop-color="${light}" stop-opacity=".20"/><stop offset="1" stop-color="${light}" stop-opacity="0"/></radialGradient><filter id="canvas" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".007 .032" numOctaves="3" seed="47" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/></filter><filter id="impasto" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="turbulence" baseFrequency=".016 .075" numOctaves="2" seed="71" result="grain"/><feDiffuseLighting in="grain" surfaceScale="2.8" diffuseConstant=".60" lighting-color="${light}" result="diff"><feDistantLight azimuth="218" elevation="46"/></feDiffuseLighting><feSpecularLighting in="grain" surfaceScale="3.8" specularConstant=".38" specularExponent="16" lighting-color="#fff8dc" result="spec"><feDistantLight azimuth="214" elevation="51"/></feSpecularLighting><feComposite in="spec" in2="SourceAlpha" operator="in" result="spec2"/><feBlend in="SourceGraphic" in2="diff" mode="soft-light" result="lit"/><feBlend in="lit" in2="spec2" mode="screen"/></filter></defs><rect width="1920" height="1080" fill="url(#bg)"/><rect width="1920" height="1080" fill="url(#glow)"/>${underpainting}<g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#canvas)">${strokes.join("")}</g><g filter="url(#impasto)">${accents}${stars}</g></svg>`;
 }
 
 await mkdir(OUTPUT_URL, { recursive: true });
@@ -152,7 +208,7 @@ const night = buildSvg(true);
 await writeFile(new URL("impasto-day.svg", OUTPUT_URL), day);
 await writeFile(new URL("impasto-night.svg", OUTPUT_URL), night);
 const metadata = {
-	generator: "katelya-impasto-svg-v1",
+	generator: "katelya-impasto-svg-v2",
 	fieldGenerator: field.generator,
 	sourceSha256: field.sourceSha256,
 	sourcePathCount: field.sourcePathCount,
