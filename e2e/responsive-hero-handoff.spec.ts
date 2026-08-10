@@ -120,9 +120,9 @@ function expectFullscreenHandoff(
 	).toBeGreaterThanOrEqual(24);
 	expect(overlap).toBeLessThanOrEqual(90);
 	expect(
-		geometry.gridContentTop - geometry.heroBottom,
-		"padded grid content should emerge at the painterly overlap edge",
-	).toBeGreaterThanOrEqual(-12);
+		geometry.gridContentTop,
+		"grid content must stay inside the intentional painterly overlap zone",
+	).toBeGreaterThanOrEqual(geometry.shellTop - 1);
 	expect(geometry.gridContentTop - geometry.heroBottom).toBeLessThanOrEqual(72);
 }
 
