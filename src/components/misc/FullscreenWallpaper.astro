@@ -56,9 +56,9 @@ const blurAmount = config.blur ?? 0;
 					alt=""
 					aria-hidden="true"
 					class={`katelya-wallpaper-layer katelya-wallpaper--day hidden md:block absolute inset-0 w-full h-full object-cover ${positionClass}`}
-					loading="eager"
+					loading="lazy"
 					decoding="async"
-					fetchpriority="high"
+					fetchpriority="low"
 				/>
 			)}
 			{nightDesktop && (
@@ -67,8 +67,9 @@ const blurAmount = config.blur ?? 0;
 					alt=""
 					aria-hidden="true"
 					class={`katelya-wallpaper-layer katelya-wallpaper--night hidden md:block absolute inset-0 w-full h-full object-cover ${positionClass}`}
-					loading="eager"
+					loading="lazy"
 					decoding="async"
+					fetchpriority="low"
 				/>
 			)}
 			{dayMobile && (
@@ -77,9 +78,9 @@ const blurAmount = config.blur ?? 0;
 					alt=""
 					aria-hidden="true"
 					class={`katelya-wallpaper-layer katelya-wallpaper--day block md:hidden absolute inset-0 w-full h-full object-cover ${positionClass}`}
-					loading="eager"
+					loading="lazy"
 					decoding="async"
-					fetchpriority="high"
+					fetchpriority="low"
 				/>
 			)}
 			{nightMobile && (
@@ -88,8 +89,9 @@ const blurAmount = config.blur ?? 0;
 					alt=""
 					aria-hidden="true"
 					class={`katelya-wallpaper-layer katelya-wallpaper--night block md:hidden absolute inset-0 w-full h-full object-cover ${positionClass}`}
-					loading="eager"
+					loading="lazy"
 					decoding="async"
+					fetchpriority="low"
 				/>
 			)}
 
