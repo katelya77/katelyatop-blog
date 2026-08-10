@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const ARTIFACT_DIR = "artifacts/ui";
 
-test("impasto first frame keeps fallback until the first successful WebGL paint", async ({
+test("impasto first frame keeps the poster as a subtle bridge after the first successful WebGL paint", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -30,7 +30,7 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 	const canvasLocator = page.locator("[data-impasto-canvas]");
 	const fallbackLocator = page.locator(".impasto-static-fallback");
 	await expect(canvasLocator).toHaveCSS("opacity", "1");
-	await expect(fallbackLocator).toHaveCSS("visibility", "hidden");
+	await expect(fallbackLocator).toHaveCSS("visibility", "visible");
 
 	const result = await page.evaluate(() => {
 		const fallback = document.querySelector<HTMLElement>(
@@ -63,9 +63,10 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 	expect(result.canvasSize[0]).toBeGreaterThan(0);
 	expect(result.canvasSize[1]).toBeGreaterThan(0);
 	expect(Number(result.canvasOpacity)).toBeGreaterThan(0.9);
-	expect(result.fallbackOpacity).toBe("0");
-	expect(result.fallbackVisibility).toBe("hidden");
-	expect(result.bodyBackgroundImage).toBe("none");
+	expect(Number(result.fallbackOpacity)).toBeGreaterThan(0.1);
+	expect(Number(result.fallbackOpacity)).toBeLessThan(0.25);
+	expect(result.fallbackVisibility).toBe("visible");
+	expect(result.bodyBackgroundImage).toContain("impasto-day.svg");
 
 	await page.screenshot({
 		path: `${ARTIFACT_DIR}/impasto-day-first-frame.png`,
@@ -87,7 +88,7 @@ test("impasto first frame keeps fallback until the first successful WebGL paint"
 			document.querySelector<HTMLElement>("#banner-wrapper")!,
 		).backgroundImage,
 	}));
-	expect(darkSurface.bodyBackgroundImage).toBe("none");
+	expect(darkSurface.bodyBackgroundImage).toContain("impasto-night.svg");
 	expect(darkSurface.bannerBackgroundImage).toBe("none");
 	await page.screenshot({
 		path: `${ARTIFACT_DIR}/impasto-night-first-frame.png`,
