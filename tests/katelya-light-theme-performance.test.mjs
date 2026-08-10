@@ -95,14 +95,31 @@ test("theme switching uses one lightweight 180ms transition path", async () => {
 	assert.match(renderer, /const THEME_BURST_MS = 220/);
 });
 
-test("Impasto and hero-depth modules start after the first paint opportunity", async () => {
+test("Impasto renderer gets first-paint priority while hero-depth waits for idle time", async () => {
 	const backdrop = await read("src/components/layout/ImpastoBackdrop.astro");
 
 	assert.doesNotMatch(backdrop, /import \{ initImpastoRenderer \} from/);
 	assert.doesNotMatch(backdrop, /import \{ initKatelyaHeroDepth \} from/);
-	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/impasto-renderer"\)/);
-	assert.match(backdrop, /import\("\.\.\/\.\.\/scripts\/hero-depth"\)/);
+	assert.match(
+		backdrop,
+		/import\(\s*"\.\.\/\.\.\/scripts\/impasto-renderer"\s*\)/,
+	);
+	assert.match(backdrop, /import\(\s*"\.\.\/\.\.\/scripts\/hero-depth"\s*\)/);
 	assert.match(backdrop, /requestAnimationFrame/);
+	assert.match(backdrop, /requestIdleCallback|setTimeout/);
+	const frameIndex = backdrop.indexOf("requestAnimationFrame");
+	const rendererIndex = backdrop.indexOf('"../../scripts/impasto-renderer"');
+	const depthIndex = backdrop.indexOf('"../../scripts/hero-depth"');
+	const scheduleDepthIndex = backdrop.indexOf("scheduleHeroDepth();");
+	assert.ok(frameIndex >= 0 && rendererIndex >= 0 && depthIndex >= 0);
+	assert.ok(
+		depthIndex > rendererIndex,
+		"hero-depth must be a lower-priority module than the renderer",
+	);
+	assert.ok(
+		scheduleDepthIndex > rendererIndex,
+		"hero-depth scheduling must happen only after renderer initialization is available",
+	);
 	assert.match(backdrop, /astro:page-load/);
 });
 
