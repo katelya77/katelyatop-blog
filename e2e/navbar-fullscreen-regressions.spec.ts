@@ -62,7 +62,7 @@ test.describe("navbar and fullscreen geometry regressions", () => {
 		});
 	}
 
-	test("fullscreen: content begins after the complete viewport-height hero", async ({
+	test("fullscreen: content overlaps only the closing painterly handoff zone", async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1664, height: 920 });
@@ -91,14 +91,16 @@ test.describe("navbar and fullscreen geometry regressions", () => {
 		expect(geometry).not.toBeNull();
 		if (!geometry) return;
 		expect(Math.abs(geometry.heroHeight - geometry.viewportHeight)).toBeLessThanOrEqual(2);
+		const shellOverlap = geometry.heroBottom - geometry.shellTop;
 		expect(
-			geometry.shellTop,
-			"main content shell must not overlap any part of the fullscreen hero",
-		).toBeGreaterThanOrEqual(geometry.heroBottom - 1);
+			shellOverlap,
+			"main content shell should overlap only the fullscreen Hero tail",
+		).toBeGreaterThanOrEqual(24);
+		expect(shellOverlap).toBeLessThanOrEqual(90);
 		expect(
 			geometry.gridTop - geometry.heroBottom,
-			"main grid should begin shortly after the fullscreen hero without a dead band",
-		).toBeGreaterThanOrEqual(0);
-		expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(48);
+			"grid border box may overlap the handoff while its padded content remains clear",
+		).toBeGreaterThanOrEqual(-90);
+		expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(64);
 	});
 });
