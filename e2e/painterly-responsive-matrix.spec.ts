@@ -112,6 +112,16 @@ for (const viewport of viewports) {
 			expect(geometry.title?.right ?? viewport.width + 2).toBeLessThanOrEqual(
 				viewport.width + 1,
 			);
+			if (viewport.width < 768 && viewport.height > viewport.width) {
+				expect(
+					geometry.title?.left ?? 0,
+					`${viewport.name} title needs a visible left safety gutter`,
+				).toBeGreaterThanOrEqual(8);
+				expect(
+					geometry.title?.right ?? viewport.width,
+					`${viewport.name} title needs a visible right safety gutter`,
+				).toBeLessThanOrEqual(viewport.width - 8);
+			}
 			expect(geometry.title?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
 				(geometry.hero?.bottom ?? 0) + 1,
 			);
