@@ -6,7 +6,8 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), "
 
 const backdrop = read("src/styles/impasto-backdrop.css");
 const loader = read("src/components/layout/ImpastoBackdrop.astro");
-const banner = read("src/components/layout/Banner.astro");
+const mainLayout = read("src/layouts/MainGridLayout.astro");
+const fullscreenWallpaper = read("src/components/misc/FullscreenWallpaper.astro");
 const renderer = read("src/scripts/impasto-renderer.ts");
 const responsiveHero = read("src/styles/katelya-responsive-hero.css");
 
@@ -29,7 +30,7 @@ test("art theme restores painterly waves rather than hard-hiding header waves", 
 
 test("renderer is prioritized before hero-depth", () => {
 	assert.doesNotMatch(loader, /Promise\.all\(\[/);
-	assert.match(loader, /import\("\.\.\/\.\.\/scripts\/impasto-renderer"\)/);
+	assert.match(loader, /import\([\s\S]*"\.\.\/\.\.\/scripts\/impasto-renderer"[\s\S]*\)/);
 	assert.match(loader, /requestIdleCallback|setTimeout/);
 });
 
@@ -40,12 +41,13 @@ test("startup quality favours first-frame speed", () => {
 	assert.match(renderer, /IntersectionObserver/);
 });
 
-test("legacy banner imagery is not first-screen critical", () => {
-	assert.doesNotMatch(banner, /loading="eager"/);
-	assert.doesNotMatch(banner, /fetchpriority="high"/);
-	assert.doesNotMatch(banner, /fetchPriority = "high"/);
-	assert.match(banner, /loading="lazy"/);
-	assert.match(banner, /fetchpriority="low"/);
+test("legacy banner imagery cannot compete with Painterly first paint", () => {
+	assert.match(mainLayout, /const bannerImages = \{ desktop: \[\] as string\[\], mobile: \[\] as string\[\] \}/);
+	assert.doesNotMatch(mainLayout, /await getBannerImages/);
+	assert.doesNotMatch(fullscreenWallpaper, /loading="eager"/);
+	assert.doesNotMatch(fullscreenWallpaper, /fetchpriority="high"/);
+	assert.match(fullscreenWallpaper, /loading="lazy"/);
+	assert.match(fullscreenWallpaper, /fetchpriority="low"/);
 });
 
 test("banner and fullscreen keep distinct Hero geometry", () => {
