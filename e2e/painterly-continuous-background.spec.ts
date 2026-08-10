@@ -72,13 +72,18 @@ test("banner is bounded while fullscreen remains immersive", async ({ browser })
 	await context.close();
 });
 
-test("phone portrait keeps a real title gutter", async ({ browser }) => {
+test("phone portrait keeps the complete title inside a real visual gutter", async ({ browser }) => {
 	const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
 	const page = await context.newPage();
 	await page.goto("/", { waitUntil: "domcontentloaded" });
-	const title = await page.locator(".katelya-hero-title").boundingBox();
+	const titleLocator = page.locator(".katelya-hero-title");
+	const title = await titleLocator.boundingBox();
 	expect(title).not.toBeNull();
 	expect(title?.x ?? 0).toBeGreaterThanOrEqual(8);
 	expect((title?.x ?? 0) + (title?.width ?? 0)).toBeLessThanOrEqual(382);
+	const textFits = await titleLocator.evaluate((element) =>
+		element.scrollWidth <= element.clientWidth + 1,
+	);
+	expect(textFits).toBe(true);
 	await context.close();
 });
