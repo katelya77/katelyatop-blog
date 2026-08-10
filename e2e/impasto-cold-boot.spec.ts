@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const ARTIFACT_DIR = "artifacts/ui";
 
-test("cold boot never exposes the generated day or night fallback artwork", async ({
+test("cold boot exposes the complete painterly poster before WebGL is available", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -42,19 +42,26 @@ test("cold boot never exposes the generated day or night fallback artwork", asyn
 		fullPage: false,
 	});
 
+	expect(bootSurface.ready).toBe(false);
+	expect(bootSurface.opacity).toBe("1");
+	expect(bootSurface.visibility).toBe("visible");
+	expect(bootSurface.backgroundImage).toContain("impasto-day.svg");
+
 	releaseScripts();
 	await page.waitForFunction(() =>
 		document.documentElement.classList.contains("impasto-ready"),
 	);
 
-	expect(bootSurface.ready).toBe(false);
-	expect(bootSurface.opacity).toBe("1");
-	expect(bootSurface.visibility).toBe("visible");
-	expect(bootSurface.backgroundImage).not.toContain("impasto-day.svg");
-	expect(bootSurface.backgroundImage).not.toContain("impasto-night.svg");
 	await expect(page.locator("[data-impasto-canvas]")).toHaveCSS("opacity", "1");
 	await expect(page.locator(".impasto-static-fallback")).toHaveCSS(
 		"visibility",
-		"hidden",
+		"visible",
 	);
+	const readyOpacity = Number(
+		await page.locator(".impasto-static-fallback").evaluate((element) =>
+			getComputedStyle(element).opacity,
+		),
+	);
+	expect(readyOpacity).toBeGreaterThan(0.1);
+	expect(readyOpacity).toBeLessThan(0.25);
 });
