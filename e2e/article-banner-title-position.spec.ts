@@ -17,7 +17,7 @@ for (const viewport of [
 	{ width: 1664, height: 920 },
 	{ width: 1440, height: 900 },
 ]) {
-	test(`article banner title sits in the lower visual center (${viewport.width}x${viewport.height})`, async ({
+	test(`article banner title remains centered inside the actual Hero (${viewport.width}x${viewport.height})`, async ({
 		page,
 	}) => {
 		await page.setViewportSize(viewport);
@@ -25,13 +25,15 @@ for (const viewport of [
 
 		const geometry = await page.evaluate(() => {
 			const hero = document.querySelector<HTMLElement>(".katelya-hero-stage");
+			const banner = document.getElementById("banner-wrapper");
 			const overlayContent = document.querySelector<HTMLElement>(
 				"#banner-page-overlay > div",
 			);
 			const navbar = document.getElementById("navbar");
-			if (!hero || !overlayContent || !navbar) return null;
+			if (!hero || !banner || !overlayContent || !navbar) return null;
 
 			const heroRect = hero.getBoundingClientRect();
+			const bannerRect = banner.getBoundingClientRect();
 			const overlayRect = overlayContent.getBoundingClientRect();
 			const navbarRect = navbar.getBoundingClientRect();
 			const overlayCenter = (overlayRect.top + overlayRect.bottom) / 2;
@@ -40,6 +42,8 @@ for (const viewport of [
 				heroTop: heroRect.top,
 				heroBottom: heroRect.bottom,
 				heroHeight: heroRect.height,
+				bannerTop: bannerRect.top,
+				bannerBottom: bannerRect.bottom,
 				overlayTop: overlayRect.top,
 				overlayBottom: overlayRect.bottom,
 				overlayCenterRatio: (overlayCenter - heroRect.top) / heroRect.height,
@@ -51,10 +55,18 @@ for (const viewport of [
 		if (!geometry) return;
 
 		expect(
+			Math.abs(geometry.bannerTop - geometry.heroTop),
+			"the Banner wrapper must start at the Hero top instead of inheriting the legacy -30vh offset",
+		).toBeLessThanOrEqual(2);
+		expect(
+			Math.abs(geometry.bannerBottom - geometry.heroBottom),
+			"the Banner wrapper must fill the Hero stage exactly",
+		).toBeLessThanOrEqual(2);
+		expect(
 			geometry.overlayCenterRatio,
-			"article title/meta block should sit below the mathematical center of the banner",
-		).toBeGreaterThanOrEqual(0.58);
-		expect(geometry.overlayCenterRatio).toBeLessThanOrEqual(0.7);
+			"article title/meta block should remain around the Hero visual center",
+		).toBeGreaterThanOrEqual(0.44);
+		expect(geometry.overlayCenterRatio).toBeLessThanOrEqual(0.58);
 		expect(
 			geometry.overlayTop - geometry.navbarBottom,
 			"article title must retain breathing room below the fixed navbar",
