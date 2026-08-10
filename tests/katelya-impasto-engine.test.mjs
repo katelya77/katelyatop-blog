@@ -29,13 +29,15 @@ test("renderer is lightweight, lifecycle-aware, and WebGL2-first", async () => {
 	assert.match(renderer, /swup:page:view/);
 	assert.match(renderer, /const POINTER_FPS = 48/);
 	assert.match(renderer, /const THEME_FPS = 36/);
-	assert.match(renderer, /const IDLE_FPS = 14/);
+	assert.match(renderer, /const IDLE_FPS = 12/);
+	assert.match(renderer, /const READING_IDLE_FPS = 6/);
+	assert.match(renderer, /IntersectionObserver/);
 	assert.match(renderer, /katelya-theme-change/);
 	assert.doesNotMatch(renderer, /MutationObserver/);
 	assert.doesNotMatch(packageJson, /["']three["']/);
 });
 
-test("first painted frame owns readiness and static fallback has one owner", async () => {
+test("first painted frame owns readiness while the painterly poster bridges boot and reading", async () => {
 	const renderer = await read("src/scripts/impasto-renderer.ts");
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 
@@ -51,15 +53,20 @@ test("first painted frame owns readiness and static fallback has one owner", asy
 		readyMutation > firstDraw,
 		"impasto-ready must only be set after a successful first draw",
 	);
-	assert.doesNotMatch(
-		backdrop,
-		/html\.katelya-art-theme body\s*\{[^}]*impasto-day\.svg/s,
-		"the component fallback must be the only static painted surface",
-	);
-	assert.match(backdrop, /transition:\s*opacity 260ms/);
+	assert.match(backdrop, /--impasto-boot-poster:\s*url\("\/assets\/impasto\/impasto-day\.svg"\)/);
+	assert.match(backdrop, /--impasto-boot-poster:\s*url\("\/assets\/impasto\/impasto-night\.svg"\)/);
 	assert.match(
 		backdrop,
-		/html\.katelya-art-theme\.dark\.impasto-ready body\s*\{[^}]*background-image:\s*none/s,
+		/\.impasto-static-fallback\s*\{[^}]*background-image:\s*var\(--impasto-boot-wash\),\s*var\(--impasto-boot-poster\)/s,
+	);
+	assert.match(backdrop, /opacity 180ms/);
+	assert.match(
+		backdrop,
+		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0\.16[^}]*visibility:\s*visible/s,
+	);
+	assert.match(
+		backdrop,
+		/html\.impasto-reading\.impasto-ready \.impasto-static-fallback\s*\{[^}]*opacity:\s*0\.94/s,
 	);
 	assert.match(
 		backdrop,
@@ -172,20 +179,25 @@ test("touch clients keep dynamic impasto while accessibility fallbacks stay inta
 	assert.match(renderer, /TOUCH_POINTER_FPS/);
 	assert.match(renderer, /TOUCH_IDLE_FPS/);
 	assert.match(renderer, /\(pointer:\s*coarse\)/);
+	assert.match(renderer, /level:\s*touch \? "low" : "medium"/);
 
 	assert.match(backdrop, /impasto-day\.svg/);
 	assert.match(backdrop, /impasto-night\.svg/);
 	assert.match(backdrop, /\.impasto-backdrop::after/);
 	assert.match(
 		backdrop,
-		/html\.katelya-art-theme\.impasto-ready body,[\s\S]*background-image:\s*none !important/,
+		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*visibility:\s*visible/s,
 	);
 	assert.match(
 		backdrop,
-		/html\.impasto-ready \.impasto-static-fallback\s*\{[^}]*visibility:\s*hidden/,
+		/html\.impasto-reading\.impasto-ready \[data-impasto-canvas\]\s*\{[^}]*opacity:\s*0\.3/s,
 	);
-	assert.doesNotMatch(backdrop, /will-change/);
+	assert.match(backdrop, /will-change:\s*opacity/);
 	assert.match(backdrop, /@media \(prefers-reduced-motion:\s*reduce\)/);
+	assert.match(
+		backdrop,
+		/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.impasto-static-fallback[\s\S]*var\(--impasto-boot-poster\)/,
+	);
 	assert.doesNotMatch(
 		backdrop,
 		/@media \(prefers-reduced-motion:\s*reduce\),\s*\(pointer:\s*coarse\)/,
