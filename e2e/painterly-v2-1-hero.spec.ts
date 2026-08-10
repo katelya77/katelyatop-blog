@@ -1,31 +1,44 @@
 import { expect, test } from "@playwright/test";
 
-const setMode = async (page, mode: "banner" | "fullscreen", theme: "light" | "dark") => {
-	await page.addInitScript(({ nextMode, nextTheme }) => {
+async function setStoredTheme(page, theme: "light" | "dark") {
+	await page.addInitScript((nextTheme) => localStorage.setItem("theme", nextTheme), theme);
+}
+
+async function setWallpaperMode(page, mode: "banner" | "fullscreen") {
+	await page.evaluate((nextMode) => {
 		localStorage.setItem("wallpaperMode", nextMode);
-		localStorage.setItem("theme", nextTheme);
-	}, { nextMode: mode, nextTheme: theme });
-};
+		window.dispatchEvent(
+			new CustomEvent("wallpaper-mode-change", { detail: { mode: nextMode } }),
+		);
+	}, mode);
+	await page.waitForFunction(
+		(nextMode) =>
+			document.body.classList.contains("fullscreen-banner") ===
+			(nextMode === "fullscreen"),
+		mode,
+	);
+	await page.waitForTimeout(220);
+}
 
 test("banner and fullscreen have visibly different Hero geometry and visible handoff waves", async ({ browser }) => {
 	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
 	const page = await context.newPage();
-
-	await setMode(page, "banner", "light");
+	await setStoredTheme(page, "light");
 	await page.goto("/", { waitUntil: "domcontentloaded" });
+
+	await setWallpaperMode(page, "banner");
 	const bannerHero = await page.locator(".katelya-hero-stage").boundingBox();
 	const bannerWave = page.locator("#header-waves");
 	await expect(bannerWave).toBeVisible();
 	const bannerWaveStyle = await bannerWave.evaluate((element) => getComputedStyle(element).display);
 	expect(bannerWaveStyle).not.toBe("none");
-	expect(bannerHero?.height ?? 0).toBeGreaterThan(280);
+	expect(bannerHero?.height ?? 0).toBeGreaterThan(480);
 	expect(bannerHero?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(700);
 
-	await page.evaluate(() => localStorage.setItem("wallpaperMode", "fullscreen"));
-	await page.reload({ waitUntil: "domcontentloaded" });
+	await setWallpaperMode(page, "fullscreen");
 	const fullscreenHero = await page.locator(".katelya-hero-stage").boundingBox();
 	expect(fullscreenHero?.height ?? 0).toBeGreaterThanOrEqual(919);
-	expect((fullscreenHero?.height ?? 0) - (bannerHero?.height ?? 0)).toBeGreaterThan(220);
+	expect((fullscreenHero?.height ?? 0) - (bannerHero?.height ?? 0)).toBeGreaterThan(250);
 
 	await context.close();
 });
@@ -62,10 +75,12 @@ for (const viewport of [
 			isMobile: false,
 		});
 		const page = await context.newPage();
+		await page.goto("/", { waitUntil: "domcontentloaded" });
 		for (const mode of ["banner", "fullscreen"] as const) {
-			await page.addInitScript((nextMode) => localStorage.setItem("wallpaperMode", nextMode), mode);
-			await page.goto("/", { waitUntil: "domcontentloaded" });
-			const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+			await setWallpaperMode(page, mode);
+			const overflow = await page.evaluate(() =>
+				document.documentElement.scrollWidth - document.documentElement.clientWidth,
+			);
 			expect(overflow).toBeLessThanOrEqual(1);
 			await expect(page.locator(".katelya-hero-stage")).toBeVisible();
 		}
