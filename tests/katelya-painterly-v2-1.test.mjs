@@ -55,3 +55,9 @@ test("banner and fullscreen keep distinct Hero geometry", () => {
 	assert.match(responsiveHero, /body\.enable-banner:not\(\.fullscreen-banner\)[\s\S]*--katelya-active-hero-height:\s*var\(--katelya-banner-hero-height\)/);
 	assert.match(responsiveHero, /body\.fullscreen-banner \.katelya-hero-stage[\s\S]*--katelya-active-hero-height:\s*var\(--katelya-fullscreen-hero-height\)/);
 });
+
+test("scrolling below the Hero never switches Impasto background ownership", () => {
+	assert.doesNotMatch(backdrop, /impasto-reading/);
+	assert.doesNotMatch(renderer, /impasto-reading/);
+	assert.doesNotMatch(renderer, /heroObserver|IntersectionObserver/);
+});
