@@ -246,14 +246,6 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 	-webkit-backdrop-filter: none !important;
 }
 
-html.katelya-art-theme body.fullscreen-banner #main-grid {
-	padding-top: clamp(1rem, 1.5vw, 1.5rem) !important;
-}
-
-html.katelya-art-theme body.fullscreen-banner #main-grid::before {
-	inset: 0 0 auto !important;
-}
-
 @media (pointer: coarse) {
 	[data-impasto-canvas] {
 		filter: saturate(1.04) contrast(0.92);
