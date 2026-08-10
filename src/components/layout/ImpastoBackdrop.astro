@@ -17,7 +17,7 @@ import "../../styles/katelya-hero-depth.css";
 		__katelyaArtLayersFrame?: number;
 		__katelyaArtPageLoadBound?: boolean;
 		__katelyaDepthIdleId?: number;
-		__katelyaDepthTimerId?: number;
+		__katelyaDepthTimerId?: ReturnType<typeof globalThis.setTimeout>;
 	};
 
 	const artWindow = window as ArtLayerWindow;
@@ -36,7 +36,7 @@ import "../../styles/katelya-hero-depth.css";
 			window.cancelIdleCallback(artWindow.__katelyaDepthIdleId);
 		}
 		if (artWindow.__katelyaDepthTimerId) {
-			window.clearTimeout(artWindow.__katelyaDepthTimerId);
+			globalThis.clearTimeout(artWindow.__katelyaDepthTimerId);
 		}
 
 		const initialize = () => {
