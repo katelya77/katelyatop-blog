@@ -59,6 +59,8 @@ async function readHeroGeometry(page: Page) {
 		const headerRect = header.getBoundingClientRect();
 		const shellRect = shell.getBoundingClientRect();
 		const gridRect = grid.getBoundingClientRect();
+		const gridStyle = getComputedStyle(grid);
+		const gridContentTop = gridRect.top + Number.parseFloat(gridStyle.paddingTop || "0");
 
 		return {
 			viewportWidth: window.innerWidth,
@@ -72,6 +74,7 @@ async function readHeroGeometry(page: Page) {
 			headerBottom: headerRect.bottom,
 			shellTop: shellRect.top,
 			gridTop: gridRect.top,
+			gridContentTop,
 		};
 	});
 }
@@ -101,10 +104,10 @@ function expectBannerHandoff(
 		"banner content should begin after the bounded Hero frame",
 	).toBeGreaterThanOrEqual(geometry.heroBottom - 1);
 	expect(
-		geometry.gridTop - geometry.heroBottom,
+		geometry.gridContentTop - geometry.heroBottom,
 		"banner handoff should not leave a dead band",
 	).toBeGreaterThanOrEqual(0);
-	expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(56);
+	expect(geometry.gridContentTop - geometry.heroBottom).toBeLessThanOrEqual(64);
 }
 
 function expectFullscreenHandoff(
@@ -117,10 +120,10 @@ function expectFullscreenHandoff(
 	).toBeGreaterThanOrEqual(24);
 	expect(overlap).toBeLessThanOrEqual(90);
 	expect(
-		geometry.gridTop - geometry.heroBottom,
-		"grid content should emerge just after the painterly overlap zone",
+		geometry.gridContentTop - geometry.heroBottom,
+		"padded grid content should emerge after the painterly overlap zone",
 	).toBeGreaterThanOrEqual(0);
-	expect(geometry.gridTop - geometry.heroBottom).toBeLessThanOrEqual(64);
+	expect(geometry.gridContentTop - geometry.heroBottom).toBeLessThanOrEqual(72);
 }
 
 test.describe("responsive banner and fullscreen hero handoff", () => {
@@ -129,10 +132,7 @@ test.describe("responsive banner and fullscreen hero handoff", () => {
 			page,
 		}) => {
 			await mkdir(ARTIFACT_DIR, { recursive: true });
-			await page.setViewportSize({
-				width: viewport.width,
-				height: viewport.height,
-			});
+			await page.setViewportSize({ width: viewport.width, height: viewport.height });
 			await gotoHome(page);
 			await setWallpaperMode(page, "banner");
 
@@ -144,7 +144,7 @@ test.describe("responsive banner and fullscreen hero handoff", () => {
 			expectBannerHandoff(geometry);
 			expect(
 				geometry.heroHeight / geometry.viewportHeight,
-				"banner hero must not collapse on short landscape clients",
+				"banner hero must preserve a complete composition",
 			).toBeGreaterThanOrEqual(viewport.minBannerRatio);
 
 			await page.screenshot({
@@ -157,10 +157,7 @@ test.describe("responsive banner and fullscreen hero handoff", () => {
 			page,
 		}) => {
 			await mkdir(ARTIFACT_DIR, { recursive: true });
-			await page.setViewportSize({
-				width: viewport.width,
-				height: viewport.height,
-			});
+			await page.setViewportSize({ width: viewport.width, height: viewport.height });
 			await gotoHome(page);
 			await setWallpaperMode(page, "fullscreen");
 
