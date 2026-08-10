@@ -434,8 +434,10 @@ test.describe("desktop viewports", () => {
 		await page.setViewportSize({ width: 2560, height: 1418 });
 		await gotoHome(page);
 
-		const trigger = page.locator("[data-dropdown-trigger]").first();
-		const menu = page.locator("[data-dropdown-menu]").first();
+		const dropdown = page.locator("[data-dropdown]:visible").first();
+		const trigger = dropdown.locator("[data-dropdown-trigger]");
+		const menu = dropdown.locator("[data-dropdown-menu]");
+		await expect(trigger).toBeVisible();
 
 		// Open via click, close via Esc. The pointer must move away first —
 		// the menu also opens on :hover, which is intended.
