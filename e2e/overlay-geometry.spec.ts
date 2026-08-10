@@ -434,8 +434,8 @@ test.describe("desktop viewports", () => {
 		await page.setViewportSize({ width: 2560, height: 1418 });
 		await gotoHome(page);
 
-		const dropdown = page.locator("[data-dropdown]:visible").first();
-		const trigger = dropdown.locator("[data-dropdown-trigger]");
+		const trigger = page.locator("[data-dropdown-trigger]").first();
+		const dropdown = trigger.locator("..");
 		const menu = dropdown.locator("[data-dropdown-menu]");
 		await expect(trigger).toBeVisible();
 
