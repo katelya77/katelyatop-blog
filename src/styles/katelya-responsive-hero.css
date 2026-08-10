@@ -2,13 +2,12 @@ html.katelya-art-theme {
 	--katelya-banner-hero-height: clamp(32rem, 63svh, 38rem);
 	--katelya-fullscreen-hero-height: 100svh;
 	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
-	--katelya-fullscreen-overlap: clamp(2.25rem, 5svh, 4rem);
 }
 
 /*
  * Responsive hero geometry.
  * - Banner is a bounded horizontal art frame over the same fixed Impasto canvas.
- * - Fullscreen follows the visible viewport and keeps a small painterly handoff overlap.
+ * - Fullscreen follows the visible viewport and hands off in normal document flow.
  * - The page background itself never changes ownership while scrolling.
  */
 @supports (height: 100dvh) {
@@ -27,11 +26,11 @@ html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
 }
 
 html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
-	margin-top: calc(-1 * var(--katelya-fullscreen-overlap)) !important;
+	margin-top: 0 !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner #main-grid {
-	padding-top: calc(var(--katelya-hero-handoff-space) + var(--katelya-fullscreen-overlap)) !important;
+	padding-top: var(--katelya-hero-handoff-space) !important;
 }
 
 html.katelya-art-theme body.fullscreen-banner #main-grid::before {
