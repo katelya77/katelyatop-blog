@@ -34,17 +34,18 @@ const MIN_DPR = 0.85;
 const MAX_RENDER_PIXELS = 3_200_000;
 const POINTER_FPS = 48;
 const THEME_FPS = 36;
-const IDLE_FPS = 14;
+const IDLE_FPS = 12;
+const READING_IDLE_FPS = 6;
 const TOUCH_MAX_DPR = 1.0;
 const TOUCH_MIN_DPR = 0.55;
 const TOUCH_MAX_RENDER_PIXELS = 1_150_000;
 const TOUCH_POINTER_FPS = 30;
 const TOUCH_THEME_FPS = 24;
-const TOUCH_IDLE_FPS = 10;
-const QUALITY_SWITCH_COOLDOWN_MS = 8_000;
+const TOUCH_IDLE_FPS = 8;
+const QUALITY_SWITCH_COOLDOWN_MS = 3_000;
 const QUALITY_DOWNGRADE_THRESHOLD_MS = 20;
 const QUALITY_UPGRADE_THRESHOLD_MS = 11;
-const QUALITY_MIN_SAMPLES = 36;
+const QUALITY_MIN_SAMPLES = 18;
 
 const VERTEX_SHADER = `#version 300 es
 precision highp float;
@@ -375,14 +376,14 @@ function shouldUseStaticMode(): boolean {
 
 function qualityDprScale(level: QualityLevel): number {
 	if (level === "high") return 1;
-	if (level === "medium") return 1;
-	return 0.76;
+	if (level === "medium") return 0.86;
+	return 0.66;
 }
 
 function qualityMicroDetail(level: QualityLevel): number {
 	if (level === "high") return 1;
-	if (level === "medium") return 0.72;
-	return 0.38;
+	if (level === "medium") return 0.64;
+	return 0.3;
 }
 
 function updateQualityGovernor(
@@ -407,9 +408,9 @@ function updateQualityGovernor(
 	}
 
 	let level = state.level;
-	if (slowSamples >= 12) {
+	if (slowSamples >= 8) {
 		level = state.level === "high" ? "medium" : "low";
-	} else if (fastSamples >= 72) {
+	} else if (fastSamples >= 40) {
 		level = state.level === "low" ? "medium" : "high";
 	}
 	if (level === state.level) return { state: next, changed: false };
@@ -459,7 +460,7 @@ export function initImpastoRenderer(): void {
 	}
 
 	const setStatic = () => {
-		root.classList.remove("impasto-ready", "impasto-booting");
+		root.classList.remove("impasto-ready", "impasto-booting", "impasto-reading");
 		root.classList.add("impasto-static");
 		root.removeAttribute("data-impasto-quality");
 	};
@@ -532,7 +533,7 @@ export function initImpastoRenderer(): void {
 	let pointerY = 0.34;
 	let targetX = pointerX;
 	let targetY = pointerY;
-	let pointerActiveUntil = performance.now() + 500;
+	let pointerActiveUntil = performance.now() + 350;
 	let themeBurstUntil = 0;
 	let isDark = root.classList.contains("dark");
 	let visible = document.visibilityState === "visible";
@@ -542,13 +543,16 @@ export function initImpastoRenderer(): void {
 	let firstFrameReady = hadReadyFrame;
 	const startedAt = performance.now();
 	const touch = isCoarsePointer();
+	const hero = document.querySelector<HTMLElement>(".katelya-hero-stage.is-home-hero");
+	let heroVisible = Boolean(hero);
+	root.classList.toggle("impasto-reading", !heroVisible);
 	let qualityState: QualityGovernorState = {
-		level: touch ? "medium" : "high",
+		level: touch ? "low" : "medium",
 		averageCost: 0,
 		samples: 0,
 		slowSamples: 0,
 		fastSamples: 0,
-		lastSwitchAt: performance.now(),
+		lastSwitchAt: performance.now() - QUALITY_SWITCH_COOLDOWN_MS,
 	};
 	root.setAttribute("data-impasto-quality", qualityState.level);
 	let lastDrawAt = 0;
@@ -593,9 +597,15 @@ export function initImpastoRenderer(): void {
 		if (!visible) return;
 		const renderStartedAt = performance.now();
 
-		const pointerActive = now < pointerActiveUntil;
+		const pointerActive = heroVisible && now < pointerActiveUntil;
 		const themeActive = now < themeBurstUntil;
-		const fps = pointerActive ? pointerFps : themeActive ? themeFps : idleFps;
+		const fps = !heroVisible
+			? READING_IDLE_FPS
+			: pointerActive
+				? pointerFps
+				: themeActive
+					? themeFps
+					: idleFps;
 		pointerX += (targetX - pointerX) * (pointerActive ? 0.09 : 0.04);
 		pointerY += (targetY - pointerY) * (pointerActive ? 0.09 : 0.04);
 
@@ -605,8 +615,16 @@ export function initImpastoRenderer(): void {
 		gl.uniform2f(uniforms.pointer, pointerX, pointerY);
 		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
 		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
-		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.58 : 0.22);
-		gl.uniform1f(uniforms.microDetail, qualityMicroDetail(qualityState.level));
+		gl.uniform1f(
+			uniforms.motion,
+			heroVisible ? (pointerActive ? 1 : themeActive ? 0.58 : 0.22) : 0.08,
+		);
+		gl.uniform1f(
+			uniforms.microDetail,
+			heroVisible
+				? qualityMicroDetail(qualityState.level)
+				: Math.min(qualityMicroDetail(qualityState.level), 0.22),
+		);
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		if (!firstFrameReady) markFirstFrameReady();
 		const renderCost = performance.now() - renderStartedAt;
@@ -635,6 +653,7 @@ export function initImpastoRenderer(): void {
 	};
 
 	const onPointerMove = (event: PointerEvent) => {
+		if (!heroVisible) return;
 		targetX = event.clientX / Math.max(window.innerWidth, 1);
 		targetY = event.clientY / Math.max(window.innerHeight, 1);
 		pointerActiveUntil = performance.now() + POINTER_BURST_MS;
@@ -670,6 +689,24 @@ export function initImpastoRenderer(): void {
 		setStatic();
 	};
 
+	const heroObserver = hero
+		? new IntersectionObserver(
+				(entries) => {
+					const nextHeroVisible = entries.some(
+						(entry) => entry.isIntersecting && entry.intersectionRatio > 0.06,
+					);
+					if (nextHeroVisible === heroVisible) return;
+					heroVisible = nextHeroVisible;
+					root.classList.toggle("impasto-reading", !heroVisible);
+					clearSchedule();
+					schedule();
+				},
+				{ threshold: [0, 0.06, 0.2] },
+			)
+		: null;
+	heroObserver?.observe(hero as HTMLElement);
+	if (!hero) root.classList.add("impasto-reading");
+
 	window.addEventListener("pointermove", onPointerMove, { passive: true });
 	window.addEventListener("resize", queueResize, { passive: true });
 	window.addEventListener("katelya-theme-change", onThemeChange);
@@ -682,6 +719,7 @@ export function initImpastoRenderer(): void {
 	impastoWindow.__katelyaImpastoCleanup = () => {
 		clearSchedule();
 		if (resizeFrame) cancelAnimationFrame(resizeFrame);
+		heroObserver?.disconnect();
 		window.removeEventListener("pointermove", onPointerMove);
 		window.removeEventListener("resize", queueResize);
 		window.removeEventListener("katelya-theme-change", onThemeChange);
@@ -692,5 +730,6 @@ export function initImpastoRenderer(): void {
 		gl.deleteVertexArray(vao);
 		gl.deleteProgram(program);
 		root.removeAttribute("data-impasto-quality");
+		root.classList.remove("impasto-reading");
 	};
 }
