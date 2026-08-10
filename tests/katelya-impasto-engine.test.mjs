@@ -193,3 +193,20 @@ test("touch clients keep dynamic impasto while accessibility fallbacks stay inta
 	assert.match(backdrop, /@media \(forced-colors:\s*active\)/);
 	assert.match(geometry, /@media print/);
 });
+
+test("Hero wave handoff is perceptible without becoming an opaque page band", async () => {
+	const backdrop = await read("src/styles/impasto-backdrop.css");
+
+	assert.match(
+		backdrop,
+		/#header-waves\s*\{[^}]*opacity:\s*0\.72[^}]*mix-blend-mode:\s*normal/s,
+	);
+	assert.match(
+		backdrop,
+		/use:nth-child\(4\)\s*\{[^}]*opacity:\s*0\.48/s,
+	);
+	assert.doesNotMatch(
+		backdrop,
+		/#header-waves\s*\{[^}]*opacity:\s*1(?:\.0+)?\s*;/s,
+	);
+});
