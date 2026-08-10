@@ -189,40 +189,41 @@ html.katelya-art-theme #banner-wrapper img {
 }
 
 /*
- * The SVG waves are only a translucent Hero edge. The fixed Impasto Canvas
- * remains visible behind them and continues unchanged through the whole page.
+ * The SVG waves are a translucent but clearly readable Hero edge. Keep them
+ * perceptible over the noisy Impasto canvas without turning the handoff into
+ * an opaque page-colored band.
  */
 html.katelya-art-theme #header-waves {
 	display: block;
 	z-index: 18;
-	opacity: 0.46;
+	opacity: 0.72;
 	pointer-events: none;
-	mix-blend-mode: soft-light;
-	filter: saturate(0.86) contrast(0.92);
+	mix-blend-mode: normal;
+	filter: saturate(0.94) contrast(0.98);
 	transform: translateZ(0);
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(1) {
 	fill: var(--impasto-wave-far) !important;
-	opacity: 0.18 !important;
+	opacity: 0.24 !important;
 	animation-duration: 24s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(2) {
 	fill: var(--impasto-wave-mid) !important;
-	opacity: 0.22 !important;
+	opacity: 0.32 !important;
 	animation-duration: 30s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(3) {
-	fill: color-mix(in srgb, var(--impasto-wave-near) 62%, transparent) !important;
-	opacity: 0.28 !important;
+	fill: color-mix(in srgb, var(--impasto-wave-near) 72%, transparent) !important;
+	opacity: 0.4 !important;
 	animation-duration: 36s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(4) {
 	fill: var(--impasto-wave-near) !important;
-	opacity: 0.34 !important;
+	opacity: 0.48 !important;
 	animation-duration: 44s !important;
 }
 

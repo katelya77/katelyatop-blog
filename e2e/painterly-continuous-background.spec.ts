@@ -87,3 +87,48 @@ test("phone portrait keeps the complete title inside a real visual gutter", asyn
 	expect(textFits).toBe(true);
 	await context.close();
 });
+
+test("stale disabled waves preference migrates to the new painterly handoff once", async ({ browser }) => {
+	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
+	const page = await context.newPage();
+	await page.goto("/", { waitUntil: "domcontentloaded" });
+	await page.evaluate(() => {
+		localStorage.setItem("wavesEnabled", "false");
+		localStorage.removeItem("katelyaWavesRolloutVersion");
+	});
+	await page.reload({ waitUntil: "domcontentloaded" });
+	await waitForImpasto(page);
+
+	const stored = await page.evaluate(() => ({
+		wavesEnabled: localStorage.getItem("wavesEnabled"),
+		rollout: localStorage.getItem("katelyaWavesRolloutVersion"),
+		attribute: document.documentElement.getAttribute("data-waves-enabled"),
+		config: document.documentElement.getAttribute("data-waves-config-enabled"),
+	}));
+	expect(stored.config).toBe("true");
+	expect(stored.wavesEnabled).toBe("true");
+	expect(stored.rollout).toBe("impasto-handoff-v1");
+	expect(stored.attribute).not.toBe("false");
+	await expect(page.locator("#header-waves")).toBeVisible();
+	await page.screenshot({ path: "artifacts/ui/waves-migrated.png", fullPage: false });
+
+	await context.close();
+});
+
+test("waves can still be disabled after the painterly handoff migration", async ({ browser }) => {
+	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
+	const page = await context.newPage();
+	await page.goto("/", { waitUntil: "domcontentloaded" });
+	await page.evaluate(() => {
+		localStorage.setItem("katelyaWavesRolloutVersion", "impasto-handoff-v1");
+		localStorage.setItem("wavesEnabled", "false");
+	});
+	await page.reload({ waitUntil: "domcontentloaded" });
+
+	await expect(page.locator("#header-waves")).toBeHidden();
+	expect(
+		await page.evaluate(() => localStorage.getItem("wavesEnabled")),
+	).toBe("false");
+
+	await context.close();
+});
