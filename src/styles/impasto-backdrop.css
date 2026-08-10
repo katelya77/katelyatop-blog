@@ -9,11 +9,16 @@ html.katelya-art-theme {
 	--impasto-brush-glaze-opacity: 0.085;
 	--impasto-boot-poster: url("/assets/impasto/impasto-day.svg");
 	--impasto-boot-wash:
-		linear-gradient(180deg, rgba(225, 239, 224, 0.04), rgba(203, 228, 215, 0.12));
+		linear-gradient(
+			180deg,
+			rgba(18, 87, 84, 0.18),
+			rgba(26, 112, 102, 0.34) 52%,
+			rgba(29, 103, 90, 0.46)
+		);
 	--impasto-page-color: #dcebe2;
-	--impasto-wave-near: rgba(238, 242, 221, 0.96);
-	--impasto-wave-mid: rgba(214, 233, 218, 0.72);
-	--impasto-wave-far: rgba(179, 215, 205, 0.38);
+	--impasto-wave-near: rgba(238, 242, 221, 0.72);
+	--impasto-wave-mid: rgba(214, 233, 218, 0.42);
+	--impasto-wave-far: rgba(179, 215, 205, 0.2);
 }
 
 html.katelya-art-theme.dark {
@@ -22,11 +27,16 @@ html.katelya-art-theme.dark {
 	--impasto-brush-glaze-opacity: 0.105;
 	--impasto-boot-poster: url("/assets/impasto/impasto-night.svg");
 	--impasto-boot-wash:
-		linear-gradient(180deg, rgba(4, 15, 43, 0.02), rgba(4, 23, 49, 0.14));
+		linear-gradient(
+			180deg,
+			rgba(4, 18, 48, 0.22),
+			rgba(5, 32, 62, 0.34) 52%,
+			rgba(5, 28, 57, 0.44)
+		);
 	--impasto-page-color: #071a42;
-	--impasto-wave-near: rgba(7, 27, 63, 0.97);
-	--impasto-wave-mid: rgba(10, 47, 78, 0.7);
-	--impasto-wave-far: rgba(29, 74, 99, 0.34);
+	--impasto-wave-near: rgba(7, 27, 63, 0.78);
+	--impasto-wave-mid: rgba(10, 47, 78, 0.44);
+	--impasto-wave-far: rgba(29, 74, 99, 0.2);
 }
 
 html.katelya-art-theme body,
@@ -154,16 +164,17 @@ html.impasto-ready .impasto-static-fallback {
 
 /* Below the high-energy Hero, the poster carries the page while WebGL becomes a quiet enhancement. */
 html.impasto-reading.impasto-ready [data-impasto-canvas] {
-	opacity: 0.3;
-	filter: saturate(0.96) contrast(0.9) blur(0.18px);
+	opacity: 0.26;
+	filter: saturate(0.94) contrast(0.9) blur(0.18px);
 }
 
 html.impasto-reading.impasto-ready .impasto-static-fallback {
-	opacity: 0.94;
+	opacity: 0.78;
+	filter: saturate(0.88) contrast(0.92);
 }
 
 html.impasto-reading.impasto-ready .impasto-backdrop::before {
-	opacity: 0.045;
+	opacity: 0.04;
 }
 
 html.impasto-static [data-impasto-canvas],
@@ -198,7 +209,7 @@ html.katelya-art-theme #banner-wrapper img {
 html.katelya-art-theme #header-waves {
 	display: block;
 	z-index: 18;
-	opacity: 0.92;
+	opacity: 0.72;
 	pointer-events: none;
 	filter: saturate(0.9);
 	transform: translateZ(0);
@@ -206,25 +217,25 @@ html.katelya-art-theme #header-waves {
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(1) {
 	fill: var(--impasto-wave-far) !important;
-	opacity: 0.42 !important;
+	opacity: 0.28 !important;
 	animation-duration: 22s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(2) {
 	fill: var(--impasto-wave-mid) !important;
-	opacity: 0.48 !important;
+	opacity: 0.34 !important;
 	animation-duration: 28s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(3) {
-	fill: color-mix(in srgb, var(--impasto-wave-near) 68%, transparent) !important;
-	opacity: 0.64 !important;
+	fill: color-mix(in srgb, var(--impasto-wave-near) 64%, transparent) !important;
+	opacity: 0.42 !important;
 	animation-duration: 34s !important;
 }
 
 html.katelya-art-theme #header-waves .parallax > use:nth-child(4) {
 	fill: var(--impasto-wave-near) !important;
-	opacity: 0.9 !important;
+	opacity: 0.54 !important;
 	animation-duration: 42s !important;
 }
 
