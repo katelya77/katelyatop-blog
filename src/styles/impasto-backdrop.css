@@ -8,12 +8,13 @@ html.katelya-art-theme {
 	--impasto-brush-glaze: url("/assets/impasto/impasto-day.svg");
 	--impasto-brush-glaze-opacity: 0.085;
 	--impasto-boot-poster: url("/assets/impasto/impasto-day.svg");
+	--impasto-poster-base: #2d817a;
 	--impasto-boot-wash:
 		linear-gradient(
 			180deg,
-			rgba(18, 87, 84, 0.18),
-			rgba(26, 112, 102, 0.34) 52%,
-			rgba(29, 103, 90, 0.46)
+			rgba(18, 87, 84, 0.22),
+			rgba(26, 112, 102, 0.3) 52%,
+			rgba(29, 103, 90, 0.38)
 		);
 	--impasto-page-color: #dcebe2;
 	--impasto-wave-near: rgba(238, 242, 221, 0.72);
@@ -26,12 +27,13 @@ html.katelya-art-theme.dark {
 	--impasto-brush-glaze: url("/assets/impasto/impasto-night.svg");
 	--impasto-brush-glaze-opacity: 0.105;
 	--impasto-boot-poster: url("/assets/impasto/impasto-night.svg");
+	--impasto-poster-base: #082d55;
 	--impasto-boot-wash:
 		linear-gradient(
 			180deg,
-			rgba(4, 18, 48, 0.22),
-			rgba(5, 32, 62, 0.34) 52%,
-			rgba(5, 28, 57, 0.44)
+			rgba(4, 18, 48, 0.18),
+			rgba(5, 32, 62, 0.26) 52%,
+			rgba(5, 28, 57, 0.34)
 		);
 	--impasto-page-color: #071a42;
 	--impasto-wave-near: rgba(7, 27, 63, 0.78);
@@ -41,11 +43,12 @@ html.katelya-art-theme.dark {
 
 html.katelya-art-theme body,
 html.katelya-art-theme.dark body {
-	background-color: var(--impasto-page-color);
+	background-color: var(--impasto-poster-base);
 	background-image: var(--impasto-boot-wash), var(--impasto-boot-poster);
 	background-position: center top, center top;
 	background-size: cover, cover;
 	background-repeat: no-repeat;
+	background-blend-mode: normal, soft-light;
 	background-attachment: scroll;
 }
 
@@ -56,7 +59,7 @@ html.katelya-art-theme.dark body {
 	overflow: hidden;
 	pointer-events: none;
 	contain: strict;
-	background: var(--impasto-page-color);
+	background: var(--impasto-poster-base);
 }
 
 [data-impasto-canvas],
@@ -84,11 +87,12 @@ html.katelya-art-theme.dark body {
 
 .impasto-static-fallback {
 	z-index: 0;
-	background-color: var(--impasto-page-color);
+	background-color: var(--impasto-poster-base);
 	background-image: var(--impasto-boot-wash), var(--impasto-boot-poster);
 	background-position: center;
 	background-size: cover;
 	background-repeat: no-repeat;
+	background-blend-mode: normal, soft-light;
 	opacity: 1;
 	visibility: visible;
 	filter: saturate(1.02) contrast(0.96);
@@ -274,8 +278,9 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 	}
 
 	.impasto-static-fallback {
-		background-color: var(--impasto-page-color) !important;
+		background-color: var(--impasto-poster-base) !important;
 		background-image: var(--impasto-boot-wash), var(--impasto-boot-poster) !important;
+		background-blend-mode: normal, soft-light !important;
 		opacity: 1 !important;
 		visibility: visible !important;
 		filter: none !important;
