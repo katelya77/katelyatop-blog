@@ -62,28 +62,21 @@ for (const viewport of viewports) {
 						.map((element) => element.getBoundingClientRect().toJSON())
 						.filter((rect) => rect.width > 0 && rect.height > 0);
 				const overlaps = (first: DOMRect, second: DOMRect) =>
-					Math.min(first.right, second.right) -
-						Math.max(first.left, second.left) >
-						1 &&
-					Math.min(first.bottom, second.bottom) -
-						Math.max(first.top, second.top) >
-						1;
+					Math.min(first.right, second.right) - Math.max(first.left, second.left) > 1 &&
+					Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top) > 1;
 
 				const hero = rect(".katelya-hero-stage");
 				const title = rect("#katelya-hero-title");
 				const shell = rect(".katelya-main-shell");
 				const cards = visibleRects(".katelya-orbit-card");
 				const links = visibleRects(".katelya-hero-links a");
-				const canvas = document.querySelector<HTMLCanvasElement>(
-					"[data-impasto-canvas]",
-				);
+				const canvas = document.querySelector<HTMLCanvasElement>("[data-impasto-canvas]");
 
 				return {
 					dark: document.documentElement.classList.contains("dark"),
 					fullscreen: document.body.classList.contains("fullscreen-banner"),
 					documentOverflow:
-						document.documentElement.scrollWidth -
-						document.documentElement.clientWidth,
+						document.documentElement.scrollWidth - document.documentElement.clientWidth,
 					hero,
 					title,
 					shell,
@@ -94,9 +87,7 @@ for (const viewport of viewports) {
 					linkCollision: cards.some((card) =>
 						links.some((link) => overlaps(card as DOMRect, link as DOMRect)),
 					),
-					canvas: canvas
-						? { width: canvas.width, height: canvas.height }
-						: null,
+					canvas: canvas ? { width: canvas.width, height: canvas.height } : null,
 					quality: document.documentElement.dataset.impastoQuality ?? null,
 				};
 			});
@@ -121,29 +112,29 @@ for (const viewport of viewports) {
 			expect(geometry.title?.right ?? viewport.width + 2).toBeLessThanOrEqual(
 				viewport.width + 1,
 			);
-			expect(
-				geometry.title?.bottom ?? Number.POSITIVE_INFINITY,
-			).toBeLessThanOrEqual((geometry.hero?.bottom ?? 0) + 1);
-			expect(geometry.shell?.top ?? 0).toBeGreaterThanOrEqual(
-				(geometry.hero?.bottom ?? 0) - 1,
+			expect(geometry.title?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
+				(geometry.hero?.bottom ?? 0) + 1,
 			);
+
 			if (scenario.mode === "fullscreen") {
-				expect(geometry.hero?.height ?? 0).toBeGreaterThanOrEqual(
-					viewport.height - 1,
+				expect(geometry.hero?.height ?? 0).toBeGreaterThanOrEqual(viewport.height - 1);
+				const overlap = (geometry.hero?.bottom ?? 0) - (geometry.shell?.top ?? 0);
+				expect(overlap).toBeGreaterThanOrEqual(20);
+				expect(overlap).toBeLessThanOrEqual(96);
+			} else {
+				expect(geometry.shell?.top ?? 0).toBeGreaterThanOrEqual(
+					(geometry.hero?.bottom ?? 0) - 1,
 				);
 			}
+
 			for (const card of geometry.cards) {
 				expect(card.left).toBeGreaterThanOrEqual(-1);
 				expect(card.right).toBeLessThanOrEqual(viewport.width + 1);
 				expect(card.top).toBeGreaterThanOrEqual(-1);
-				expect(card.bottom).toBeLessThanOrEqual(
-					(geometry.hero?.bottom ?? 0) + 1,
-				);
+				expect(card.bottom).toBeLessThanOrEqual((geometry.hero?.bottom ?? 0) + 1);
 			}
 			expect(geometry.canvas).not.toBeNull();
-			expect(
-				geometry.canvas?.width ?? Number.POSITIVE_INFINITY,
-			).toBeLessThanOrEqual(
+			expect(geometry.canvas?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(
 				viewport.touch ? viewport.width : Math.ceil(viewport.width * 1.4),
 			);
 			expect(geometry.quality).toMatch(/^(high|medium|low)$/);
