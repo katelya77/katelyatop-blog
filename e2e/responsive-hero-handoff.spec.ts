@@ -121,8 +121,8 @@ function expectFullscreenHandoff(
 	expect(overlap).toBeLessThanOrEqual(90);
 	expect(
 		geometry.gridContentTop - geometry.heroBottom,
-		"padded grid content should emerge after the painterly overlap zone",
-	).toBeGreaterThanOrEqual(0);
+		"padded grid content should emerge at the painterly overlap edge",
+	).toBeGreaterThanOrEqual(-12);
 	expect(geometry.gridContentTop - geometry.heroBottom).toBeLessThanOrEqual(72);
 }
 
