@@ -1,5 +1,5 @@
 html.katelya-art-theme {
-	--katelya-banner-hero-height: clamp(32rem, 62svh, 38rem);
+	--katelya-banner-hero-height: clamp(32rem, 63svh, 38rem);
 	--katelya-fullscreen-hero-height: 100svh;
 	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
 	--katelya-fullscreen-overlap: clamp(2.25rem, 5svh, 4rem);
