@@ -7,24 +7,26 @@ html.katelya-art-theme {
 	--impasto-fiber-color: rgba(21, 82, 78, 0.11);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-day.svg");
 	--impasto-brush-glaze-opacity: 0.1;
+	--impasto-edge-far: rgba(38, 115, 101, 0.34);
+	--impasto-edge-mid: rgba(221, 196, 111, 0.3);
+	--impasto-edge-near: rgba(235, 230, 190, 0.28);
+	--impasto-edge-streak: rgba(185, 142, 47, 0.5);
 	--impasto-boot-underpaint:
 		radial-gradient(ellipse at 48% 38%, rgba(242, 235, 194, 0.44), transparent 34%),
 		linear-gradient(138deg, #174f55 0%, #66aaa1 52%, #dfece0 100%);
-	--impasto-wave-near: rgba(239, 242, 220, 0.44);
-	--impasto-wave-mid: rgba(214, 232, 216, 0.3);
-	--impasto-wave-far: rgba(177, 213, 202, 0.18);
 }
 
 html.katelya-art-theme.dark {
 	--impasto-fiber-color: rgba(215, 198, 134, 0.06);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-night.svg");
 	--impasto-brush-glaze-opacity: 0.13;
+	--impasto-edge-far: rgba(25, 91, 113, 0.42);
+	--impasto-edge-mid: rgba(38, 122, 126, 0.36);
+	--impasto-edge-near: rgba(88, 135, 132, 0.3);
+	--impasto-edge-streak: rgba(221, 173, 62, 0.42);
 	--impasto-boot-underpaint:
 		radial-gradient(ellipse at 58% 29%, rgba(239, 190, 72, 0.12), transparent 27%),
 		linear-gradient(142deg, #061333 0%, #123b72 50%, #075667 100%);
-	--impasto-wave-near: rgba(19, 54, 82, 0.52);
-	--impasto-wave-mid: rgba(16, 66, 92, 0.34);
-	--impasto-wave-far: rgba(35, 84, 106, 0.2);
 }
 
 html.katelya-art-theme body,
@@ -68,7 +70,7 @@ html.katelya-art-theme.dark.impasto-ready body {
 	z-index: 0;
 	display: block;
 	opacity: 0;
-	filter: saturate(1.08) contrast(0.88) blur(0.18px);
+	filter: saturate(1.07) contrast(0.96);
 	transition:
 		opacity 260ms cubic-bezier(0.22, 0.7, 0.28, 1),
 		filter 260ms ease;
@@ -189,42 +191,86 @@ html.katelya-art-theme #banner-wrapper img {
 }
 
 /*
- * The SVG waves are a translucent but clearly readable Hero edge. Keep them
- * perceptible over the noisy Impasto canvas without turning the handoff into
- * an opaque page-colored band.
+ * A bounded pigment edge, not a page-coloured wave. The translucent ribbons
+ * tint the same live Canvas beneath them, so Hero and content remain one
+ * continuous painting even when the edge is disabled.
  */
 html.katelya-art-theme #header-waves {
 	display: block;
+	bottom: -1px;
 	z-index: 18;
-	opacity: 0.72;
+	height: var(--katelya-paint-edge-height);
+	overflow: hidden;
 	pointer-events: none;
-	mix-blend-mode: normal;
-	filter: saturate(0.94) contrast(0.98);
-	transform: translateZ(0);
+	opacity: 0.78;
 }
 
-html.katelya-art-theme #header-waves .parallax > use:nth-child(1) {
-	fill: var(--impasto-wave-far) !important;
-	opacity: 0.24 !important;
-	animation-duration: 24s !important;
+html.katelya-art-theme #header-waves .katelya-paint-edge__canvas {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
 }
 
-html.katelya-art-theme #header-waves .parallax > use:nth-child(2) {
-	fill: var(--impasto-wave-mid) !important;
-	opacity: 0.32 !important;
-	animation-duration: 30s !important;
+html.katelya-art-theme #header-waves .katelya-pigment-ribbon {
+	fill: none;
+	stroke-linecap: round;
+	vector-effect: non-scaling-stroke;
+	transform-box: fill-box;
+	transform-origin: center;
 }
 
-html.katelya-art-theme #header-waves .parallax > use:nth-child(3) {
-	fill: color-mix(in srgb, var(--impasto-wave-near) 72%, transparent) !important;
-	opacity: 0.4 !important;
-	animation-duration: 36s !important;
+html.katelya-art-theme #header-waves .katelya-pigment-ribbon--far {
+	stroke: var(--impasto-edge-far);
+	stroke-width: 24;
+	stroke-dasharray: 224 38 71 29 318 62 116 41;
+	animation: pigment-drift-far 46s ease-in-out infinite alternate;
 }
 
-html.katelya-art-theme #header-waves .parallax > use:nth-child(4) {
-	fill: var(--impasto-wave-near) !important;
-	opacity: 0.48 !important;
-	animation-duration: 44s !important;
+html.katelya-art-theme #header-waves .katelya-pigment-ribbon--mid {
+	stroke: var(--impasto-edge-mid);
+	stroke-width: 14;
+	stroke-dasharray: 96 24 255 47 58 31 204 54;
+	animation: pigment-drift-mid 54s ease-in-out -17s infinite alternate;
+}
+
+html.katelya-art-theme #header-waves .katelya-pigment-ribbon--near {
+	stroke: var(--impasto-edge-near);
+	stroke-width: 8;
+	stroke-dasharray: 172 29 43 38 286 51 82 27;
+	animation: pigment-drift-near 63s ease-in-out -31s infinite alternate;
+}
+
+html.katelya-art-theme #header-waves .katelya-pigment-ribbon--streak {
+	fill: none;
+	stroke: var(--impasto-edge-streak);
+	stroke-width: 3;
+	stroke-dasharray: 118 34 42 61 176 48;
+	animation: pigment-drift-streak 58s ease-in-out -9s infinite alternate;
+}
+
+html[data-waves-enabled="false"] #header-waves {
+	display: none;
+}
+
+@keyframes pigment-drift-far {
+	from { transform: translate3d(-1.4%, 2px, 0) scaleX(1.015); }
+	to { transform: translate3d(1.1%, -3px, 0) scaleX(0.995); }
+}
+
+@keyframes pigment-drift-mid {
+	from { transform: translate3d(1.2%, -1px, 0) scaleX(1.01); }
+	to { transform: translate3d(-0.9%, 3px, 0) scaleX(0.99); }
+}
+
+@keyframes pigment-drift-near {
+	from { transform: translate3d(-0.7%, 1px, 0); }
+	to { transform: translate3d(0.8%, -2px, 0); }
+}
+
+@keyframes pigment-drift-streak {
+	from { transform: translate3d(-1.1%, -2px, 0); }
+	to { transform: translate3d(1.3%, 2px, 0); }
 }
 
 html.katelya-art-theme #banner-wrapper::before,
@@ -247,7 +293,7 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 
 @media (pointer: coarse) {
 	[data-impasto-canvas] {
-		filter: saturate(1.06) contrast(0.9);
+		filter: saturate(1.04) contrast(0.94);
 	}
 
 	.impasto-backdrop::after {
@@ -256,6 +302,10 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	html.katelya-art-theme #header-waves .katelya-pigment-ribbon {
+		animation: none;
+	}
+
 	[data-impasto-canvas],
 	.impasto-backdrop::before {
 		display: none !important;
@@ -275,10 +325,6 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 		background-image:
 			linear-gradient(rgba(2, 12, 35, 0.1), rgba(3, 18, 43, 0.23)),
 			url("/assets/impasto/impasto-night.svg") !important;
-	}
-
-	html.katelya-art-theme #header-waves .parallax > use {
-		animation: none !important;
 	}
 }
 

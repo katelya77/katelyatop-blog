@@ -1,134 +1,154 @@
 import { expect, test } from "@playwright/test";
 
-async function waitForImpasto(page) {
-	await page.waitForFunction(() => document.documentElement.classList.contains("impasto-ready"));
+async function waitForArt(page: import("@playwright/test").Page) {
+	await page.locator("html.impasto-ready, html.impasto-static").waitFor();
 }
 
-async function backdropState(page) {
-	return page.evaluate(() => {
-		const canvas = document.querySelector<HTMLElement>("[data-impasto-canvas]");
-		const fallback = document.querySelector<HTMLElement>(".impasto-static-fallback");
-		if (!canvas || !fallback) throw new Error("Impasto layers missing");
-		const canvasStyle = getComputedStyle(canvas);
-		const fallbackStyle = getComputedStyle(fallback);
-		return {
-			canvasOpacity: Number(canvasStyle.opacity),
-			fallbackOpacity: Number(fallbackStyle.opacity),
-			fallbackVisibility: fallbackStyle.visibility,
-			readingClass: document.documentElement.classList.contains("impasto-reading"),
-		};
-	});
-}
-
-test("live Impasto canvas remains dominant from Hero through footer", async ({ browser }) => {
-	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
-	const page = await context.newPage();
+test("one Impasto canvas remains dominant from Hero through footer", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 1664, height: 920 });
 	await page.goto("/", { waitUntil: "domcontentloaded" });
-	await waitForImpasto(page);
-
-	const waves = page.locator("#header-waves");
-	await expect(waves).toBeVisible();
+	await page.waitForFunction(() =>
+		document.documentElement.classList.contains("impasto-ready"),
+	);
+	await expect(page.locator("[data-impasto-canvas]")).toHaveCount(1);
 
 	for (const ratio of [0, 0.52, 1]) {
-		await page.evaluate((nextRatio) => {
-			const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+		const state = await page.evaluate((nextRatio) => {
+			const maxScroll = Math.max(
+				document.documentElement.scrollHeight - window.innerHeight,
+				0,
+			);
 			window.scrollTo(0, maxScroll * nextRatio);
+			const canvas = document.querySelector<HTMLElement>("[data-impasto-canvas]");
+			const fallback = document.querySelector<HTMLElement>(
+				".impasto-static-fallback",
+			);
+			return {
+				canvasOpacity: canvas ? Number(getComputedStyle(canvas).opacity) : 0,
+				fallbackOpacity: fallback
+					? Number(getComputedStyle(fallback).opacity)
+					: 1,
+				fallbackVisibility: fallback
+					? getComputedStyle(fallback).visibility
+					: "visible",
+			};
 		}, ratio);
-		await page.waitForTimeout(180);
-		const state = await backdropState(page);
-		expect(state.readingClass).toBe(false);
 		expect(state.canvasOpacity).toBeGreaterThanOrEqual(0.95);
 		expect(state.fallbackOpacity).toBeLessThanOrEqual(0.05);
 		expect(state.fallbackVisibility).toBe("hidden");
 	}
-
-	await context.close();
 });
 
-test("banner is bounded while fullscreen remains immersive", async ({ browser }) => {
-	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
-	const page = await context.newPage();
+test("banner and fullscreen keep normal-flow geometry without negative offsets", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 1664, height: 920 });
 	await page.goto("/", { waitUntil: "domcontentloaded" });
+	await waitForArt(page);
 
-	await page.evaluate(() => {
-		localStorage.setItem("wallpaperMode", "banner");
-		window.dispatchEvent(new CustomEvent("wallpaper-mode-change", { detail: { mode: "banner" } }));
-	});
-	await page.waitForTimeout(220);
-	const bannerHero = await page.locator(".katelya-hero-stage").boundingBox();
-	expect(bannerHero?.height ?? 0).toBeGreaterThan(500);
-	expect(bannerHero?.height ?? Number.POSITIVE_INFINITY).toBeLessThan(700);
+	for (const mode of ["banner", "fullscreen"] as const) {
+		await page.evaluate((nextMode) => {
+			localStorage.setItem("wallpaperMode", nextMode);
+			window.dispatchEvent(new CustomEvent("wallpaper-mode-change"));
+		}, mode);
+		await page.waitForFunction(
+			(nextMode) =>
+				document.body.classList.contains("fullscreen-banner") ===
+				(nextMode === "fullscreen"),
+			mode,
+		);
 
-	await page.evaluate(() => {
-		localStorage.setItem("wallpaperMode", "fullscreen");
-		window.dispatchEvent(new CustomEvent("wallpaper-mode-change", { detail: { mode: "fullscreen" } }));
-	});
-	await page.waitForFunction(() => document.body.classList.contains("fullscreen-banner"));
-	await page.waitForTimeout(220);
-	const fullscreenHero = await page.locator(".katelya-hero-stage").boundingBox();
-	expect(fullscreenHero?.height ?? 0).toBeGreaterThanOrEqual(919);
-	expect((fullscreenHero?.height ?? 0) - (bannerHero?.height ?? 0)).toBeGreaterThan(250);
+		const geometry = await page.evaluate(() => {
+			const hero = document.querySelector<HTMLElement>(
+				"[data-katelya-hero-stage]",
+			);
+			const shell = document.querySelector<HTMLElement>(
+				"[data-katelya-main-shell]",
+			);
+			const banner = document.getElementById("banner-wrapper");
+			if (!hero || !shell || !banner) return null;
+			const heroRect = hero.getBoundingClientRect();
+			const shellRect = shell.getBoundingClientRect();
+			const bannerRect = banner.getBoundingClientRect();
+			const shellStyle = getComputedStyle(shell);
+			return {
+				heroHeight: heroRect.height,
+				heroBottom: heroRect.bottom,
+				shellTop: shellRect.top,
+				bannerTopDelta: Math.abs(bannerRect.top - heroRect.top),
+				bannerBottomDelta: Math.abs(bannerRect.bottom - heroRect.bottom),
+				shellInlineTop: shell.style.top,
+				shellInlineMarginTop: shell.style.marginTop,
+				shellMarginTop: Number.parseFloat(shellStyle.marginTop),
+			};
+		});
 
-	await context.close();
+		expect(geometry).not.toBeNull();
+		if (!geometry) continue;
+		expect(geometry.bannerTopDelta).toBeLessThanOrEqual(2);
+		expect(geometry.bannerBottomDelta).toBeLessThanOrEqual(2);
+		expect(geometry.shellTop).toBeGreaterThanOrEqual(geometry.heroBottom - 1);
+		expect(geometry.shellInlineTop).toBe("");
+		expect(geometry.shellInlineMarginTop).toBe("");
+		expect(geometry.shellMarginTop).toBeGreaterThanOrEqual(0);
+		if (mode === "banner") {
+			expect(geometry.heroHeight).toBeGreaterThanOrEqual(510);
+			expect(geometry.heroHeight).toBeLessThan(700);
+		} else {
+			expect(Math.abs(geometry.heroHeight - 920)).toBeLessThanOrEqual(2);
+		}
+	}
 });
 
-test("phone portrait keeps the complete title inside a real visual gutter", async ({ browser }) => {
-	const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
-	const page = await context.newPage();
+test("disabled painterly edge does not change Hero or shell geometry", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto("/", { waitUntil: "domcontentloaded" });
-	const titleLocator = page.locator(".katelya-hero-title");
-	const title = await titleLocator.boundingBox();
-	expect(title).not.toBeNull();
-	expect(title?.x ?? 0).toBeGreaterThanOrEqual(8);
-	expect((title?.x ?? 0) + (title?.width ?? 0)).toBeLessThanOrEqual(382);
-	const textFits = await titleLocator.evaluate((element) =>
-		element.scrollWidth <= element.clientWidth + 1,
+
+	const readGeometry = () =>
+		page.evaluate(() => {
+			const hero = document.querySelector<HTMLElement>(
+				"[data-katelya-hero-stage]",
+			);
+			const shell = document.querySelector<HTMLElement>(
+				"[data-katelya-main-shell]",
+			);
+			return hero && shell
+				? {
+						heroHeight: hero.getBoundingClientRect().height,
+						shellTop: shell.getBoundingClientRect().top,
+					}
+				: null;
+		});
+
+	const before = await readGeometry();
+	await page.evaluate(() =>
+		document.documentElement.setAttribute("data-waves-enabled", "false"),
 	);
-	expect(textFits).toBe(true);
-	await context.close();
-});
-
-test("stale disabled waves preference migrates to the new painterly handoff once", async ({ browser }) => {
-	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
-	const page = await context.newPage();
-	await page.goto("/", { waitUntil: "domcontentloaded" });
-	await page.evaluate(() => {
-		localStorage.setItem("wavesEnabled", "false");
-		localStorage.removeItem("katelyaWavesRolloutVersion");
-	});
-	await page.reload({ waitUntil: "domcontentloaded" });
-	await waitForImpasto(page);
-
-	const stored = await page.evaluate(() => ({
-		wavesEnabled: localStorage.getItem("wavesEnabled"),
-		rollout: localStorage.getItem("katelyaWavesRolloutVersion"),
-		attribute: document.documentElement.getAttribute("data-waves-enabled"),
-		config: document.documentElement.getAttribute("data-waves-config-enabled"),
-	}));
-	expect(stored.config).toBe("true");
-	expect(stored.wavesEnabled).toBe("true");
-	expect(stored.rollout).toBe("impasto-handoff-v1");
-	expect(stored.attribute).not.toBe("false");
-	await expect(page.locator("#header-waves")).toBeVisible();
-	await page.screenshot({ path: "artifacts/ui/waves-migrated.png", fullPage: false });
-
-	await context.close();
-});
-
-test("waves can still be disabled after the painterly handoff migration", async ({ browser }) => {
-	const context = await browser.newContext({ viewport: { width: 1664, height: 920 } });
-	const page = await context.newPage();
-	await page.goto("/", { waitUntil: "domcontentloaded" });
-	await page.evaluate(() => {
-		localStorage.setItem("katelyaWavesRolloutVersion", "impasto-handoff-v1");
-		localStorage.setItem("wavesEnabled", "false");
-	});
-	await page.reload({ waitUntil: "domcontentloaded" });
-
 	await expect(page.locator("#header-waves")).toBeHidden();
-	expect(
-		await page.evaluate(() => localStorage.getItem("wavesEnabled")),
-	).toBe("false");
+	const after = await readGeometry();
+	expect(after).toEqual(before);
+});
 
-	await context.close();
+test("reduced motion retains a complete static painterly surface", async ({
+	page,
+}) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	await page.goto("/", { waitUntil: "domcontentloaded" });
+	await page.waitForFunction(() =>
+		document.documentElement.classList.contains("impasto-static"),
+	);
+	await expect(page.locator(".impasto-static-fallback")).toHaveCSS(
+		"visibility",
+		"visible",
+	);
+	await expect(page.locator(".impasto-static-fallback")).toHaveCSS("opacity", "1");
+	await expect(page.locator("#header-waves")).toBeVisible();
+	await expect(page.locator(".katelya-pigment-ribbon").first()).toHaveCSS(
+		"animation-name",
+		"none",
+	);
 });

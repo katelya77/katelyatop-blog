@@ -9,7 +9,6 @@ import Image from "@components/atoms/Image/Image.astro";
 import TypewriterText from "@components/atoms/typewriter-text/TypewriterText.astro";
 import { Icon } from "astro-icon/components";
 import { siteConfig } from "../../config";
-import { BANNER_HEIGHT_EXTEND } from "../../constants/constants";
 import { getImageFormats, getImageQuality } from "../../utils/image-utils";
 
 interface Props {
@@ -78,8 +77,7 @@ const bannerFormats = getImageFormats();
 
 <div
 	id="banner-wrapper"
-	class={`absolute z-10 w-full transition duration-700 overflow-hidden ${mobileNonHomeBannerClass}`}
-	style={`top: -${BANNER_HEIGHT_EXTEND}vh`}
+	class={`absolute inset-0 z-10 w-full transition duration-700 overflow-hidden ${mobileNonHomeBannerClass}`}
 >
 	{isCarouselEnabled ? (
 		/* 轮播图模式：Ken Burns + Crossfade */
@@ -641,8 +639,14 @@ const bannerFormats = getImageFormats();
 	)}
 
 	<!-- 非首页页面标题覆盖层（持久化容器，JS 动态填充文本） -->
-	<div id="banner-page-overlay" class="banner-page-overlay hidden lg:flex absolute inset-0 z-20 pointer-events-none">
-		<div class="flex flex-col items-center justify-center w-full text-center px-4">
+	<div
+		id="banner-page-overlay"
+		data-page-overlay
+		data-overlay-active="false"
+		aria-hidden="true"
+		class="banner-page-overlay hidden lg:flex absolute inset-0 z-20 pointer-events-none"
+	>
+		<div class="banner-page-overlay__content flex flex-col items-center justify-center w-full text-center px-4">
 			<h2 id="page-overlay-title" class="page-overlay-title text-3xl lg:text-5xl text-white font-bold drop-shadow-lg px-4"></h2>
 			<div id="page-overlay-meta" class="page-overlay-meta hidden flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/80 text-sm md:text-base mt-4">
 				<span class="inline-flex items-center gap-1.5">
@@ -664,55 +668,54 @@ const bannerFormats = getImageFormats();
 	<!-- 水波纹效果 -->
 	{showWave && (
 		<div
-			class="waves absolute -bottom-px h-[10vh] max-h-37.5 min-h-12.5 w-full md:h-[15vh]"
+			class="katelya-paint-edge absolute -bottom-px w-full"
 			id="header-waves"
-			style="transform: translateZ(0); will-change: fill;"
+			data-katelya-paint-edge
+			aria-hidden="true"
 		>
 			<svg
-				class="waves"
+				class="katelya-paint-edge__canvas"
 				xmlns="http://www.w3.org/2000/svg"
 				xmlns:xlink="http://www.w3.org/1999/xlink"
-				viewBox="0 20 150 32"
+				viewBox="0 0 1600 180"
 				preserveAspectRatio="none"
-				shape-rendering="auto"
-				style="transform: translateZ(0); backface-visibility: hidden;"
+				shape-rendering="geometricPrecision"
 			>
 				<defs>
 					<path
-						id="gentle-wave"
-						d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v48h-352z"
-					>
-					</path>
+						id="pigment-ribbon-far"
+						d="M-90 111 C52 65 164 134 307 91 C438 52 546 123 678 77 C835 22 942 111 1094 64 C1261 13 1398 95 1690 42"
+					/>
+					<path
+						id="pigment-ribbon-mid"
+						d="M-90 126 C76 91 151 151 292 116 C427 82 528 145 643 109 C774 68 879 143 1018 98 C1169 49 1280 132 1428 91 C1516 67 1596 76 1690 62"
+					/>
+					<path
+						id="pigment-ribbon-near"
+						d="M-90 145 C35 112 143 163 260 139 C379 114 463 161 589 130 C703 102 817 161 938 132 C1061 102 1141 152 1265 127 C1395 101 1502 142 1690 108"
+					/>
+					<path
+						id="pigment-ribbon-streak"
+						d="M-40 132 C112 103 211 145 347 119 C481 93 570 132 706 102 C865 67 952 127 1092 94 C1248 57 1399 108 1640 73"
+					/>
 				</defs>
-				<g class="parallax" style="transform: translateZ(0);">
+				<g class="katelya-pigment-ribbons">
 					<use
-						xlink:href="#gentle-wave"
-						x="48"
-						y="0"
-						class="opacity-25 fill-(--page-bg)"
-						style="animation-delay: -2s; animation-duration: 7s; will-change: transform;"
-					></use>
+						xlink:href="#pigment-ribbon-far"
+						class="katelya-pigment-ribbon katelya-pigment-ribbon--far"
+					/>
 					<use
-						xlink:href="#gentle-wave"
-						x="48"
-						y="3"
-						class="opacity-50 fill-(--page-bg)"
-						style="animation-delay: -3s; animation-duration: 10s; will-change: transform;"
-					></use>
+						xlink:href="#pigment-ribbon-mid"
+						class="katelya-pigment-ribbon katelya-pigment-ribbon--mid"
+					/>
 					<use
-						xlink:href="#gentle-wave"
-						x="48"
-						y="5"
-						class="opacity-75 fill-(--page-bg)"
-						style="animation-delay: -4s; animation-duration: 13s; will-change: transform;"
-					></use>
+						xlink:href="#pigment-ribbon-near"
+						class="katelya-pigment-ribbon katelya-pigment-ribbon--near"
+					/>
 					<use
-						xlink:href="#gentle-wave"
-						x="48"
-						y="7"
-						class="fill-(--page-bg)"
-						style="animation-delay: -5s; animation-duration: 20s; will-change: transform;"
-					></use>
+						xlink:href="#pigment-ribbon-streak"
+						class="katelya-pigment-ribbon katelya-pigment-ribbon--streak"
+					/>
 				</g>
 			</svg>
 		</div>

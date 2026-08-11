@@ -113,6 +113,38 @@ function buildBrokenHalo(x, y, radius, opacity, random) {
 	return `<g opacity="${opacity.toFixed(2)}">${arcs}<path d="M${(x - markLength * 0.45).toFixed(1)} ${(y + random() * 2).toFixed(1)} Q${x.toFixed(1)} ${(y - radius * 0.34).toFixed(1)} ${(x + markLength * 0.55).toFixed(1)} ${(y - random() * 3).toFixed(1)}" fill="none" stroke="#f2c85b" stroke-width="${Math.max(2.2, radius * 0.54).toFixed(1)}" stroke-linecap="round"/></g>`;
 }
 
+function compositionPoint(random) {
+	const pick = random();
+	if (pick < 0.3) {
+		const angle = random() * Math.PI * 2;
+		const radius = 90 + Math.sqrt(random()) * 560;
+		return {
+			x: WIDTH * 0.22 + Math.cos(angle) * radius,
+			y: HEIGHT * 0.3 + Math.sin(angle) * radius * 0.64,
+		};
+	}
+	if (pick < 0.54) {
+		const angle = random() * Math.PI * 1.7 - 0.5;
+		const radius = 80 + Math.sqrt(random()) * 430;
+		return {
+			x: WIDTH * 0.73 + Math.cos(angle) * radius,
+			y: HEIGHT * 0.2 + Math.sin(angle) * radius * 0.72,
+		};
+	}
+	if (pick < 0.7) {
+		const angle = random() * Math.PI * 1.85 + 0.4;
+		const radius = 55 + Math.sqrt(random()) * 350;
+		return {
+			x: WIDTH * 0.61 + Math.cos(angle) * radius,
+			y: HEIGHT * 0.73 + Math.sin(angle) * radius * 0.68,
+		};
+	}
+	return {
+		x: random() * (WIDTH + 120) - 60,
+		y: random() * (HEIGHT + 90) - 45,
+	};
+}
+
 function buildSvg(dark) {
 	const random = mulberry32(dark ? 260805 : 260804);
 	const palette = dark
@@ -128,15 +160,16 @@ function buildSvg(dark) {
 	const strokes = [];
 
 	for (let index = 0; index < 740; index += 1) {
-		const x = random() * (WIDTH + 120) - 60;
-		const y = random() * (HEIGHT + 90) - 45;
+		const point = compositionPoint(random);
+		const x = point.x;
+		const y = point.y;
 		const tensor = sample(x, y);
 		const theta = flowDirection(x, y, tensor, dark, random);
 		const nx = (x - WIDTH * 0.5) / (WIDTH * 0.30);
 		const ny = (y - HEIGHT * 0.42) / (HEIGHT * 0.25);
 		const calm = Math.exp(-(nx * nx + ny * ny) * 1.78);
 		const length =
-			(22 + random() ** 0.72 * 118) *
+			(24 + random() ** 0.68 * 138) *
 			(0.78 + tensor.coherence * 0.22) *
 			(1 - calm * 0.48) *
 			(0.66 + random() * 0.52);
@@ -164,6 +197,22 @@ function buildSvg(dark) {
 				random,
 			}),
 		);
+		if (index % 6 === 0) {
+			const splitOffset = (random() - 0.5) * width * 1.35;
+			strokes.push(
+				buildStroke({
+					x: x - Math.sin(theta) * splitOffset,
+					y: y + Math.cos(theta) * splitOffset,
+					theta: theta + (random() - 0.5) * 0.12,
+					length: length * (0.42 + random() * 0.36),
+					width: Math.max(1.6, width * (0.28 + random() * 0.24)),
+					bend: bend * 0.7,
+					colour: palette[(colourIndex + 1 + (index % 3)) % palette.length],
+					opacity: opacity * (0.48 + random() * 0.24),
+					random,
+				}),
+			);
+		}
 	}
 
 	const underpainting = `<g fill="none" stroke-linecap="round">${buildUnderpaintingBands(dark, random)}</g>`;

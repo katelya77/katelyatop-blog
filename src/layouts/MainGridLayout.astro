@@ -120,6 +120,8 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 	</div>
 
 	<div
+		id="katelya-hero-stage"
+		data-katelya-hero-stage
 		class:list={["katelya-hero-stage", { "is-home-hero": isHomePage }]}
 	>
 		<Banner
@@ -141,12 +143,12 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 	</div>
 
 	<div
+		id="katelya-main-shell"
+		data-katelya-main-shell
 		class:list={[
 			"katelya-main-shell w-full z-30 pointer-events-none",
 			{
 				"is-home-layout": isHomePage,
-				"mobile-main-no-banner": Boolean(mobileNonHomeBannerClass),
-				"no-banner-layout": siteConfig.wallpaperMode.defaultMode === "none",
 			},
 			transparentClass,
 		]}

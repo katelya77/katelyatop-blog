@@ -1,14 +1,12 @@
 html.katelya-art-theme {
-	--katelya-banner-hero-height: clamp(32rem, 63svh, 38rem);
 	--katelya-fullscreen-hero-height: 100svh;
-	--katelya-hero-handoff-space: clamp(1rem, 2.2svh, 1.5rem);
 }
 
 /*
  * Responsive hero geometry.
- * - Banner is a bounded horizontal art frame over the same fixed Impasto canvas.
- * - Fullscreen follows the visible viewport and hands off in normal document flow.
- * - The page background itself never changes ownership while scrolling.
+ * - svh is the stable fallback for older mobile Safari.
+ * - dvh follows the actually visible browser viewport when supported.
+ * - the content shell always stays in normal flow after the artwork.
  */
 @supports (height: 100dvh) {
 	html.katelya-art-theme {
@@ -16,32 +14,58 @@ html.katelya-art-theme {
 	}
 }
 
-html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage {
-	--katelya-active-hero-height: var(--katelya-banner-hero-height) !important;
-}
-
 html.katelya-art-theme body.fullscreen-banner .katelya-hero-stage {
 	--katelya-active-hero-height: var(--katelya-fullscreen-hero-height) !important;
 	min-height: 100svh;
-}
-
-html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
-	margin-top: 0 !important;
-}
-
-html.katelya-art-theme body.fullscreen-banner #main-grid {
-	padding-top: var(--katelya-hero-handoff-space) !important;
-}
-
-html.katelya-art-theme body.fullscreen-banner #main-grid::before {
-	inset: 0 0 auto !important;
-	height: clamp(4.75rem, 12svh, 7rem) !important;
 }
 
 html.katelya-art-theme .katelya-header-stage {
 	padding-top: max(var(--impasto-header-top), env(safe-area-inset-top)) !important;
 	padding-right: max(var(--impasto-page-gutter), env(safe-area-inset-right)) !important;
 	padding-left: max(var(--impasto-page-gutter), env(safe-area-inset-left)) !important;
+}
+
+html.katelya-art-theme .katelya-orbit-hero {
+	padding:
+		var(--hero-content-safe-top)
+		max(var(--impasto-page-gutter), env(safe-area-inset-right))
+		var(--hero-content-safe-bottom)
+		max(var(--impasto-page-gutter), env(safe-area-inset-left)) !important;
+	overflow: hidden;
+}
+
+html.katelya-art-theme .katelya-hero-copy {
+	width: min(78vw, 56rem) !important;
+	max-width: calc(100vw - var(--impasto-page-gutter) * 2);
+	margin-top: 0.8rem !important;
+}
+
+html.katelya-art-theme .katelya-hero-title {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 0.12em;
+	max-width: 100%;
+	font-size: clamp(3.15rem, 5.1vw, 5.8rem) !important;
+	line-height: 0.98 !important;
+	letter-spacing: 0.015em !important;
+	white-space: nowrap;
+}
+
+html.katelya-art-theme .katelya-orbit-stage {
+	top: 55% !important;
+	height: min(36vw, 32rem) !important;
+}
+
+html.katelya-art-theme .katelya-hero-title__separator {
+	font-size: 0.68em;
+	font-weight: 540;
+}
+
+html.katelya-art-theme .katelya-hero-title__cjk {
+	font-size: 0.84em;
+	font-weight: 720;
+	letter-spacing: 0.035em;
 }
 
 html.katelya-art-theme .katelya-hero-stage,
@@ -55,7 +79,22 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	max-width: 100%;
 }
 
-/* Phone portrait keeps the full title inside a real visual gutter. */
+@media (max-width: 767px) {
+	html.katelya-art-theme .katelya-hero-copy {
+		width: min(90vw, 34rem) !important;
+		margin-top: 0 !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-title {
+		font-size: clamp(2.35rem, 10vw, 4rem) !important;
+	}
+
+	html.katelya-art-theme .katelya-orbit-stage {
+		display: none;
+	}
+}
+
+/* Phone portrait uses a compact poster ratio with a guaranteed title gutter. */
 @media (max-width: 767px) and (orientation: portrait) {
 	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
 		.katelya-hero-stage.is-home-hero {
@@ -63,14 +102,26 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	}
 
 	html.katelya-art-theme .katelya-hero-copy {
-		width: min(92vw, 23rem) !important;
+		width: min(92vw, 24rem) !important;
 	}
 
 	html.katelya-art-theme .katelya-hero-title {
-		max-width: 100% !important;
-		font-size: clamp(2.05rem, 10vw, 2.65rem) !important;
-		line-height: 0.98 !important;
-		white-space: nowrap;
+		font-size: clamp(2rem, 9.2vw, 2.65rem) !important;
+		line-height: 1 !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-eyebrow {
+		max-width: 88vw;
+		line-height: 1.45;
+	}
+
+	html.katelya-art-theme .katelya-hero-links {
+		gap: 0.38rem !important;
+		margin-top: 1.1rem !important;
+	}
+
+	html.katelya-art-theme .katelya-hero-links a {
+		padding: 0.45rem 0.66rem !important;
 	}
 }
 
@@ -91,18 +142,18 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	}
 
 	html.katelya-art-theme .katelya-orbit-card {
-		width: 9.2rem !important;
+		width: 8.15rem !important;
 		min-width: 0 !important;
-		min-height: 3.75rem !important;
-		padding: 0.62rem 0.72rem !important;
+		min-height: 3.45rem !important;
+		padding: 0.55rem 0.62rem !important;
 	}
 
 	html.katelya-art-theme .katelya-orbit-card--1 {
-		left: 1.35rem !important;
+		left: 0.6rem !important;
 	}
 
 	html.katelya-art-theme .katelya-orbit-card--2 {
-		right: 2.5rem !important;
+		right: 0.6rem !important;
 	}
 
 	html.katelya-art-theme .katelya-orbit-card--3 {
@@ -114,6 +165,14 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	}
 }
 
+/* Low-height desktops need a shallower exhibit-note orbit than tall canvases. */
+@media (min-width: 1200px) and (max-height: 800px) {
+	html.katelya-art-theme .katelya-orbit-stage {
+		top: 52% !important;
+		height: min(31vw, 27rem) !important;
+	}
+}
+
 /* Portrait tablets keep a generous vertical canvas without becoming a full page. */
 @media (min-width: 768px) and (max-width: 1279px) and (orientation: portrait) {
 	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner)
@@ -122,11 +181,11 @@ html.katelya-art-theme .banner-image-slot-desktop {
 	}
 
 	html.katelya-art-theme .katelya-orbit-card--3 {
-		bottom: -10% !important;
+		bottom: 4% !important;
 	}
 
 	html.katelya-art-theme .katelya-orbit-card--4 {
-		bottom: -8% !important;
+		bottom: 6% !important;
 	}
 }
 

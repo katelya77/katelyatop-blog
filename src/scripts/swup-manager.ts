@@ -62,7 +62,7 @@ export class SwupManager {
 		const transitionEffect = getTransitionEffect();
 		transitionEffect.applyConfig();
 
-		await this.initPanelHandler();
+		const panelHandlerInitialization = this.initPanelHandler();
 
 		// 设置 Sakura 特效
 		this.setupSakura();
@@ -71,6 +71,8 @@ export class SwupManager {
 		this.initSwupHooks();
 
 		// 初始化返回顶部处理器
+		// The persistent overlay hooks above must register before this first await.
+		await panelHandlerInitialization;
 		initBackToTopHandler(this.bannerEnabled);
 
 		// 初始化 Banner
@@ -121,6 +123,9 @@ export class SwupManager {
 				checkKatex();
 			},
 		});
+		// Direct loads populate the persistent article Hero independently of the
+		// relative timing between Astro scripts and Swup's enable event.
+		this.hooksManager.syncPersistentPageState();
 
 		// 如果 Swup 已经就绪，直接设置钩子
 		if (window?.swup?.hooks) {

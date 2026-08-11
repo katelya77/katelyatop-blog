@@ -31,7 +31,7 @@ test("page geometry ships once from the root layout, not from the search island"
 	await assert.rejects(read("src/styles/katelya-runtime-repair.css"));
 });
 
-test("hero stage holds the height in flow and fullscreen content overlaps its closing edge", async () => {
+test("hero stage holds height in flow and fullscreen hands off without negative geometry", async () => {
 	const geometry = await read("src/styles/impasto-geometry.css");
 
 	// The hero stage sits in normal document flow and owns the hero height.
@@ -44,13 +44,14 @@ test("hero stage holds the height in flow and fullscreen content overlaps its cl
 		/body\.fullscreen-banner \.katelya-hero-stage\s*\{[\s\S]*?--katelya-active-hero-height:\s*100svh/,
 	);
 
-	// Content slides up over the hero's closing edge instead of leaving a dead band.
-	assert.match(geometry, /--katelya-fullscreen-content-overlap:/);
+	// The painterly edge owns the transition; content remains in normal flow.
+	assert.match(geometry, /--katelya-content-handoff-space:/);
 	assert.match(
 		geometry,
-		/body\.fullscreen-banner \.katelya-main-shell\s*\{[\s\S]*?margin-top:\s*calc\(-1 \* var\(--katelya-fullscreen-content-overlap\)\)/,
+		/body\.enable-banner #main-grid\s*\{[\s\S]*?padding-top:\s*var\(--katelya-content-handoff-space\)/,
 	);
-	assert.match(geometry, /body\.fullscreen-banner #main-grid::before/);
+	assert.doesNotMatch(geometry, /body\.fullscreen-banner \.katelya-main-shell[\s\S]*margin-top:\s*-/);
+	assert.doesNotMatch(geometry, /body\.fullscreen-banner #main-grid::before/);
 
 	// The 100svh padding placeholder is gone for good.
 	assert.doesNotMatch(
