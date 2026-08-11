@@ -65,6 +65,17 @@ export class SwupHooksManager {
 		this.cachedElements.clear();
 	}
 
+	/** Sync persistent route UI even when Swup has not emitted `swup:enable`. */
+	syncPersistentPageState(): void {
+		const dataEl = document.getElementById("page-overlay-data");
+		const isHomePage = dataEl
+			? dataEl.dataset.isHome === "true"
+			: pathsEqual(window.location.pathname, url("/"));
+		this.syncMainContentPosition(isHomePage);
+		this.ensureNavbarVisibleForFullscreen();
+		this.updatePageOverlay();
+	}
+
 	/**
 	 * 注册所有 Swup 钩子
 	 */
@@ -78,7 +89,7 @@ export class SwupHooksManager {
 		this.registerVisitStartHook();
 		this.registerPageViewHook();
 		this.registerVisitEndHook();
-		this.updatePageOverlay();
+		this.syncPersistentPageState();
 	}
 
 	private registerScrollTopHook(): void {
@@ -100,19 +111,10 @@ export class SwupHooksManager {
 
 		hooks.replace(
 			"scroll:top",
-			(visit: VisitObject, args: { options?: ScrollIntoViewOptions }) => {
-				const isFullscreen = this.getCurrentWallpaperMode() === "fullscreen";
-				const isHomePage = pathsEqual(visit.to.url, url("/"));
-				if (isFullscreen && !isHomePage) {
-					const mainGrid = this.getCachedElement("#main-grid") as HTMLElement | null;
-					if (mainGrid) {
-						mainGrid.scrollIntoView({
-							behavior: args.options?.behavior ?? "auto",
-						});
-						return true;
-					}
-				}
-
+			(_visit: VisitObject, args: { options?: ScrollIntoViewOptions }) => {
+				// Direct loads and Swup visits share the same Hero-first entry point in
+				// every wallpaper mode. Skipping to #main-grid in fullscreen made the
+				// persistent article overlay appear only after a hard refresh.
 				window.scrollTo({
 					top: 0,
 					left: 0,
@@ -232,6 +234,9 @@ export class SwupHooksManager {
 
 			// 触发页面加载完成事件
 			this.dispatchPageLoadedEvent();
+			// History traversal can skip the link/visit hook chain. Once the new view
+			// is ready it must never retain the previous transition marker.
+			document.documentElement.classList.remove("is-page-transitioning");
 		});
 	}
 
@@ -374,28 +379,9 @@ export class SwupHooksManager {
 		const bannerWrapper = this.getCachedElement(
 			SWUP_SELECTORS.bannerWrapper,
 		);
-		const mainContentWrapper = this.getCachedElement(
-			".absolute.w-full.z-30",
-		);
 
-		if (bannerWrapper && mainContentWrapper) {
-			if (isHomePage) {
-				// 首页：延迟移除隐藏类
-				setTimeout(() => {
-					bannerWrapper.classList.remove("mobile-hide-banner");
-				}, ANIMATION_CONFIG.mobileBannerDelay);
-				setTimeout(() => {
-					mainContentWrapper.classList.remove(
-						"mobile-main-no-banner",
-					);
-				}, ANIMATION_CONFIG.mobileContentDelay);
-			} else {
-				// 非首页：分阶段隐藏
-				bannerWrapper.classList.add("mobile-hide-banner");
-				setTimeout(() => {
-					mainContentWrapper.classList.add("mobile-main-no-banner");
-				}, ANIMATION_CONFIG.mobileBannerDelay);
-			}
+		if (bannerWrapper) {
+			bannerWrapper.classList.toggle("mobile-hide-banner", !isHomePage);
 		}
 	}
 
@@ -421,76 +407,16 @@ export class SwupHooksManager {
 	}
 
 	private syncMainContentPosition(isHomePage: boolean): void {
-		const mode = this.getCurrentWallpaperMode();
-		const mainContentWrapper = this.getCachedElement(
-			".absolute.w-full.z-30.pointer-events-none",
-		) as HTMLElement | null;
+		const heroStage = this.getCachedElement(SWUP_SELECTORS.heroStage);
+		const mainContentWrapper = this.getCachedElement(SWUP_SELECTORS.mainShell);
 		const bannerWrapper = this.getCachedElement(
 			SWUP_SELECTORS.bannerWrapper,
-		) as HTMLElement | null;
-		if (!mainContentWrapper) {
-			return;
-		}
+		);
 
-		const isMobile = window.innerWidth < 1280;
-		mainContentWrapper.classList.remove("mobile-main-no-banner", "no-banner-layout");
-		mainContentWrapper.style.removeProperty("min-height");
-
-		if (mode === "fullscreen") {
-			if (isMobile && !isHomePage) {
-				bannerWrapper?.classList.add("mobile-hide-banner");
-				mainContentWrapper.classList.add("mobile-main-no-banner", "no-banner-layout");
-				mainContentWrapper.style.position = "";
-				mainContentWrapper.style.zIndex = "";
-				mainContentWrapper.style.setProperty("top", "5.5rem", "important");
-				mainContentWrapper.style.setProperty("margin-top", "0", "important");
-				return;
-			}
-
-			bannerWrapper?.classList.remove("mobile-hide-banner");
-			mainContentWrapper.classList.add("no-banner-layout");
-			mainContentWrapper.style.position = "relative";
-			mainContentWrapper.style.zIndex = "30";
-			mainContentWrapper.style.setProperty("top", "0", "important");
-			mainContentWrapper.style.setProperty(
-				"margin-top",
-				isMobile ? "0" : "1rem",
-				"important",
-			);
-			return;
-		}
-
-		mainContentWrapper.style.position = "";
-		mainContentWrapper.style.zIndex = "";
-		mainContentWrapper.style.setProperty("margin-top", "0", "important");
-
-		if (mode === "banner") {
-			if (isMobile && !isHomePage) {
-				bannerWrapper?.classList.add("mobile-hide-banner");
-				mainContentWrapper.classList.add("mobile-main-no-banner");
-				mainContentWrapper.style.setProperty("top", "5.5rem", "important");
-				return;
-			}
-
-			if (isMobile) {
-				bannerWrapper?.classList.remove("mobile-hide-banner");
-				mainContentWrapper.style.removeProperty("top");
-				mainContentWrapper.style.removeProperty("min-height");
-				return;
-			}
-
-			bannerWrapper?.classList.remove("mobile-hide-banner");
-			mainContentWrapper.style.setProperty(
-				"top",
-				`${BANNER_HEIGHT}vh`,
-				"important",
-			);
-			return;
-		}
-
-		bannerWrapper?.classList.remove("mobile-hide-banner");
-		mainContentWrapper.classList.add("no-banner-layout");
-		mainContentWrapper.style.setProperty("top", "5.5rem", "important");
+		heroStage?.classList.toggle("is-home-hero", isHomePage);
+		mainContentWrapper?.classList.toggle("is-home-layout", isHomePage);
+		bannerWrapper?.classList.toggle("mobile-hide-banner", !isHomePage);
+		document.body.classList.toggle("katelya-home-page", isHomePage);
 	}
 
 	private ensureNavbarVisibleForFullscreen(): void {
@@ -518,7 +444,7 @@ export class SwupHooksManager {
 		}
 
 		const isHome = dataEl.dataset.isHome === "true";
-		const mode = dataEl.dataset.wallpaperMode || "";
+		const mode = this.getCurrentWallpaperMode();
 		const isBannerMode = mode === "banner" || mode === "fullscreen";
 
 		if (isHome || !isBannerMode) {
@@ -543,6 +469,8 @@ export class SwupHooksManager {
 
 		titleEl.textContent = title;
 		titleEl.classList.remove("anim-in");
+		overlay.dataset.overlayActive = "true";
+		overlay.setAttribute("aria-hidden", "false");
 
 		const isPost = dataEl.dataset.isPost === "true";
 		const date = dataEl.dataset.date || "";
@@ -556,19 +484,12 @@ export class SwupHooksManager {
 			metaEl.classList.remove("hidden");
 			metaEl.classList.remove("anim-in");
 
-			overlay.style.opacity = "1";
-			overlay.style.transform = "";
-			overlay.style.filter = "";
-
 			void titleEl.offsetWidth;
 			titleEl.classList.add("anim-in");
 			void metaEl.offsetWidth;
 			metaEl.classList.add("anim-in");
 		} else {
 			metaEl.classList.add("hidden");
-			overlay.style.opacity = "1";
-			overlay.style.transform = "";
-			overlay.style.filter = "";
 			void titleEl.offsetWidth;
 			titleEl.classList.add("anim-in");
 		}
@@ -585,9 +506,8 @@ export class SwupHooksManager {
 			metaEl.classList.add("hidden");
 			metaEl.classList.remove("anim-in");
 		}
-		overlay.style.opacity = "";
-		overlay.style.transform = "";
-		overlay.style.filter = "";
+		overlay.dataset.overlayActive = "false";
+		overlay.setAttribute("aria-hidden", "true");
 	}
 
 	/**

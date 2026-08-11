@@ -136,7 +136,13 @@ float broadUnderpainting(vec2 point, float seed) {
 }
 
 float midStrokeMask(vec2 brush, float seed, float phase) {
-	vec2 cells = brush * vec2(16.0 + seed * 7.0, 28.0 + seed * 13.0);
+	vec2 baseCells = brush * vec2(14.0 + seed * 6.0, 27.0 + seed * 12.0);
+	float coarseSeed = hash21(floor(baseCells * vec2(0.72, 1.0)) + seed * 23.0);
+	float lengthScale = mix(0.68, 1.42, coarseSeed);
+	vec2 cells = brush * vec2(
+		(14.0 + seed * 6.0) / lengthScale,
+		27.0 + seed * 12.0
+	);
 	vec2 local = fract(cells + vec2(seed * 5.7 + phase, seed * 2.3));
 	float cellSeed = hash21(floor(cells) + seed * 17.0);
 	float start = 0.05 + cellSeed * 0.15;
@@ -145,11 +151,16 @@ float midStrokeMask(vec2 brush, float seed, float phase) {
 		(1.0 - smoothstep(finish - 0.10, finish, local.x));
 	float progress = clamp((local.x - start) / max(finish - start, 0.01), 0.0, 1.0);
 	float taper = pow(max(sin(progress * 3.14159265), 0.0), 0.42);
-	float curve = sin(progress * 5.4 + cellSeed * 6.2) * 0.075;
-	float width = mix(0.16, 0.38, cellSeed) * taper;
+	float curve = sin(progress * mix(4.2, 6.4, cellSeed) + cellSeed * 6.2) * 0.085;
+	float width = mix(0.15, 0.41, fract(cellSeed + coarseSeed * 0.47)) * taper;
 	float cross = 1.0 - smoothstep(width * 0.48, width, abs(local.y - 0.5 + curve));
 	float chip = smoothstep(0.20, 0.78, noise(cells * vec2(1.7, 2.9) + cellSeed * 11.0));
-	return along * cross * mix(0.54, 1.0, chip);
+	float dryGap = smoothstep(
+		0.18,
+		0.72,
+		noise(vec2(floor(cells.x) * 0.37, local.x * 3.1) + cellSeed * 13.0)
+	);
+	return along * cross * mix(0.42, 1.0, chip) * mix(0.48, 1.0, dryGap);
 }
 
 float microBristleRidge(vec2 brush, float seed, float strokeBody) {
@@ -214,7 +225,7 @@ void main() {
 		vortexWarp(aspectUv, vortexCenterA, 0.24, 0.39) +
 		vortexWarp(aspectUv, vortexCenterB, -0.17, 0.31) +
 		vortexWarp(aspectUv, vortexCenterC, 0.14, 0.25);
-	vec2 regionCoordinate = uv * vec2(3.4, 2.7);
+	vec2 regionCoordinate = uv * vec2(2.8, 2.25);
 	float regionSeed = noise(regionCoordinate + vec2(7.3, 2.9));
 	float phaseSeed = noise(regionCoordinate * 0.71 + vec2(-2.4, 5.8));
 	float localPhase = flowTime * mix(0.17, 0.43, phaseSeed) + phaseSeed * 8.0;
@@ -239,18 +250,29 @@ void main() {
 	vec2 secondaryTangent = vec2(-secondaryDirection.y, secondaryDirection.x);
 	vec2 secondaryBrush = vec2(dot(scaled, secondaryDirection), dot(scaled, secondaryTangent));
 	float broad = broadUnderpainting(scaled * 1.46 + localWarp * 0.37, regionSeed);
+	float compositionPatch = noise(regionCoordinate * 0.61 + vec2(1.9, -4.7));
+	float compositionSweep = 0.5 + 0.5 * sin(
+		aspectUv.x * 4.2 - aspectUv.y * 3.1 + curl * 0.36 + regionSeed * 2.4
+	);
+	float strokeCluster = smoothstep(
+		0.19,
+		0.82,
+		compositionPatch * 0.58 + compositionSweep * 0.42
+	);
 	float strokeSeed = mix(regionSeed, phaseSeed, 0.43);
 	float primaryStroke = midStrokeMask(
 		brushSpace + broad * 0.019,
 		strokeSeed,
 		localPhase * 0.022
-	);
+	) * mix(0.62, 1.14, strokeCluster);
 	float secondaryStroke = midStrokeMask(
 		secondaryBrush * 1.21 + vec2(3.7, -5.2),
 		fract(strokeSeed + 0.41),
 		-localPhase * 0.017
-	) * 0.72;
-	float strokeBody = max(primaryStroke, secondaryStroke) * mix(0.64, 1.0, peripheralEnergy);
+	) * mix(0.48, 0.83, 1.0 - strokeCluster);
+	primaryStroke = clamp(primaryStroke, 0.0, 1.0);
+	secondaryStroke = clamp(secondaryStroke, 0.0, 1.0);
+	float strokeBody = max(primaryStroke, secondaryStroke) * mix(0.62, 1.0, peripheralEnergy);
 	float bristleRidge = microBristleRidge(brushSpace, strokeSeed, strokeBody);
 	float dryBreak = smoothstep(0.34, 0.76, noise(scaled * 31.0 + strokeSeed * 9.0));
 	float edgeMask = paintEdge(clamp(strokeBody, 0.0, 1.0), 0.22) * dryBreak;
@@ -259,10 +281,14 @@ void main() {
 		0.90,
 		0.985,
 		energy * 0.42 + strokeBody * 0.25 + strokeSeed * 0.27
-	) * peripheralEnergy;
+	) * peripheralEnergy * mix(0.58, 1.0, strokeCluster);
 	float brokenColour = noise(scaled * vec2(7.1, 11.3) + vec2(4.7, -3.2));
-	float familyA = fract(strokeSeed + brokenColour * 0.58 + regionSeed * 0.37);
-	float familyB = fract(strokeSeed + 0.47 + broad * 0.19 + brokenColour * 0.31);
+	float familyA = fract(
+		strokeSeed + brokenColour * 0.58 + regionSeed * 0.29 + compositionSweep * 0.23
+	);
+	float familyB = fract(
+		strokeSeed + 0.47 + broad * 0.19 + brokenColour * 0.31 - compositionSweep * 0.18
+	);
 	float broadColour = mix(0.5, broad, 0.22);
 	vec3 underpaint = mix(dayUnderpaint(broadColour), nightUnderpaint(broadColour), uDark);
 	vec3 primaryColour = mix(
@@ -282,10 +308,10 @@ void main() {
 	base = mix(base, mineralGold, goldDeposit * mix(0.55, 0.72, uDark));
 
 	float height =
-		(primaryStroke * 0.36 + secondaryStroke * 0.24 + bristleRidge * 0.14 +
-		edgeMask * 0.10 + goldDeposit * 0.12 + broad * 0.025) *
+		(primaryStroke * 0.38 + secondaryStroke * 0.25 + bristleRidge * 0.18 +
+		edgeMask * 0.13 + goldDeposit * 0.12 + broad * 0.018) *
 		mix(0.50, 1.0, peripheralEnergy);
-	vec3 normal = normalize(vec3(-dFdx(height) * 16.0, -dFdy(height) * 16.0, 1.0));
+	vec3 normal = normalize(vec3(-dFdx(height) * 17.5, -dFdy(height) * 17.5, 1.0));
 	vec3 lightDirection = normalize(vec3(
 		(uPointer.x - 0.5) * 0.28 + 0.16,
 		(0.5 - uPointer.y) * 0.22 - 0.10,
@@ -301,6 +327,7 @@ void main() {
 	float specular = pow(max(dot(normal, halfVector), 0.0), mix(7.0, 34.0, 1.0 - roughness));
 	vec3 lightColour = mix(vec3(1.0, 0.94, 0.76), vec3(1.0, 0.73, 0.23), uDark);
 	base *= 0.72 + diffuse * 0.38;
+	base *= 1.0 - edgeMask * (1.0 - diffuse) * 0.055;
 	base += lightColour * specular *
 		(0.035 + strokeBody * 0.10 + bristleRidge * 0.08 + goldDeposit * 0.13);
 

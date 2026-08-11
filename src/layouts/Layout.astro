@@ -9,10 +9,6 @@ import CodeGroupManager from "@/components/features/markdown/CodeGroupManager.as
 import DiagramManager from "@/components/features/markdown/DiagramManager.astro";
 import { pioConfig, profileConfig, siteConfig } from "@/config";
 
-const BANNER_HEIGHT = 35;
-const BANNER_HEIGHT_EXTEND = 30;
-const BANNER_HEIGHT_HOME = BANNER_HEIGHT + BANNER_HEIGHT_EXTEND;
-
 import { PAGE_WIDTH } from "../constants/constants";
 import "../styles/main.css";
 import "../styles/fancybox-custom.css";
@@ -90,13 +86,6 @@ if (siteConfig.generateOgImages && postSlug) {
 
 if (!lang) lang = `${siteConfig.lang}`;
 const siteLang = lang.replace("_", "-");
-const bannerOffsetByPosition = {
-	top: `${BANNER_HEIGHT_EXTEND}vh`,
-	center: `${BANNER_HEIGHT_EXTEND / 2}vh`,
-	bottom: "0",
-};
-const bannerOffset =
-	bannerOffsetByPosition[siteConfig.banner.position || "center"];
 ---
 
 <!doctype html>
@@ -123,6 +112,12 @@ const bannerOffset =
 					var cw = html.getAttribute("data-waves-config-enabled");
 					if (cw === "false") html.setAttribute("data-waves-enabled", "false");
 					else {
+						var rolloutKey = "katelyaWavesRolloutVersion";
+						var rolloutVersion = "impasto-ribbons-v2";
+						if (localStorage.getItem(rolloutKey) !== rolloutVersion) {
+							localStorage.setItem("wavesEnabled", "true");
+							localStorage.setItem(rolloutKey, rolloutVersion);
+						}
 						var w = localStorage.getItem("wavesEnabled");
 						if (w !== null) html.setAttribute("data-waves-enabled", w);
 					}
@@ -191,28 +186,6 @@ const bannerOffset =
 		<div id="page-height-extend" class="hidden h-[300vh]"></div>
 	</body>
 </html>
-
-<style
-	is:global
-	define:vars={{
-		bannerOffset,
-		"banner-height-home": `${BANNER_HEIGHT_HOME}vh`,
-		"banner-height": `${BANNER_HEIGHT}vh`,
-	}}
->
-	@reference "../styles/main.css";
-
-	@layer components {
-		.waves > .parallax use {
-			animation: wave 28s cubic-bezier(0.5, 0.5, 0.45, 0.5) infinite;
-			transform: translateZ(0);
-		}
-		@keyframes wave {
-			0% { transform: translate3d(-72px, 0, 0); }
-			100% { transform: translate3d(68px, 0, 0); }
-		}
-	}
-</style>
 
 <script>
 	import { initSwupManager } from "../scripts/swup-manager";

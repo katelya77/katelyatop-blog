@@ -16,6 +16,10 @@ interface Props {
 }
 
 const { title, subtitle, typewriterConfig, active = false } = Astro.props;
+const titleParts = title?.split("·").map((part) => part.trim()) ?? [];
+const titleLatin = titleParts.length > 1 ? titleParts[0] : title;
+const titleCjk =
+	titleParts.length > 1 ? titleParts.slice(1).join(" · ") : undefined;
 
 const orbitItems = [
 	{
@@ -82,7 +86,13 @@ const orbitItems = [
 		<p class="katelya-hero-eyebrow">PERSONAL DIGITAL GARDEN · 2026</p>
 		{title && (
 			<h1 id="katelya-hero-title" class="katelya-hero-title">
-				<span>{title}</span>
+				<span class="katelya-hero-title__latin">{titleLatin}</span>
+				{titleCjk && (
+					<>
+						<span class="katelya-hero-title__separator" aria-hidden="true">·</span>
+						<span class="katelya-hero-title__cjk">{titleCjk}</span>
+					</>
+				)}
 			</h1>
 		)}
 		{subtitle && (
@@ -136,9 +146,9 @@ const orbitItems = [
 		}
 
 		function syncKatelyaHomeState(isHomePage) {
-			var shell = document.querySelector(".katelya-main-shell");
+			var shell = document.querySelector("[data-katelya-main-shell]");
 			var navbar = document.getElementById("navbar");
-			var stage = hero.closest(".katelya-hero-stage");
+			var stage = document.querySelector("[data-katelya-hero-stage]");
 
 			document.body.classList.toggle("katelya-home-page", isHomePage);
 			hero.classList.toggle("is-home-active", isHomePage);
@@ -301,7 +311,9 @@ const orbitItems = [
 		padding: 0.72rem 0.9rem;
 		color: var(--katelya-text);
 		text-decoration: none;
+		border: 1px solid var(--katelya-border-bright);
 		border-radius: 1rem 0.78rem 1.08rem 0.82rem;
+		background: var(--katelya-surface-strong);
 		backdrop-filter: none;
 		transform-style: preserve-3d;
 	}
@@ -309,25 +321,25 @@ const orbitItems = [
 	.katelya-orbit-card--1 {
 		top: 8%;
 		left: 4%;
-		transform: translateZ(46px) rotate(-4deg);
+		transform: translateZ(46px) rotate(-2.4deg);
 	}
 
 	.katelya-orbit-card--2 {
 		top: 4%;
 		right: 3%;
-		transform: translateZ(70px) rotate(3deg);
+		transform: translateZ(70px) rotate(2deg);
 	}
 
 	.katelya-orbit-card--3 {
 		bottom: 2%;
 		left: 8%;
-		transform: translateZ(24px) rotate(2deg);
+		transform: translateZ(24px) rotate(1.4deg);
 	}
 
 	.katelya-orbit-card--4 {
 		right: 7%;
 		bottom: 4%;
-		transform: translateZ(38px) rotate(-3deg);
+		transform: translateZ(38px) rotate(-2deg);
 	}
 
 	.katelya-orbit-card__icon {
@@ -378,6 +390,8 @@ const orbitItems = [
 		color: var(--katelya-cream);
 		font-family: var(--font-cjk), var(--font-body), serif;
 		font-weight: 760;
+		font-synthesis: none;
+		text-rendering: optimizeLegibility;
 		text-wrap: balance;
 	}
 
@@ -407,7 +421,7 @@ const orbitItems = [
 		font-weight: 650;
 		text-decoration: none;
 		border: 1px solid var(--katelya-border-bright);
-		border-radius: 999px;
+		border-radius: 0.86rem 0.7rem 0.9rem 0.74rem;
 		background: color-mix(in srgb, var(--katelya-surface) 84%, transparent);
 		box-shadow: 0 5px 15px rgba(18, 58, 57, 0.1);
 		backdrop-filter: none;

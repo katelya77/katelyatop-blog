@@ -192,7 +192,7 @@ html.is-animating .transition-swup-fade {
 }
 
 /* 主题切换期间禁用复杂动画 */
-.is-theme-transitioning .waves > .parallax use,
+.is-theme-transitioning .katelya-pigment-ribbon,
 .is-theme-transitioning .sakura-canvas,
 .is-theme-transitioning .animation-element {
   animation-play-state: paused !important;
@@ -218,7 +218,7 @@ html.is-animating .transition-swup-fade {
   .transition-slide-in,
   .card-animation,
   .nav-animation,
-  .waves > .parallax use,
+  .katelya-pigment-ribbon,
   .sakura-canvas,
   .animation-element {
     animation-duration: 0.01ms !important;

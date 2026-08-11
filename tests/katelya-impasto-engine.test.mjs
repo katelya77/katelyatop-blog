@@ -92,9 +92,26 @@ test("shader builds irregular tensor-guided impasto instead of formulaic arcs", 
 	assert.match(renderer, /float broadUnderpainting/);
 	assert.match(renderer, /float microBristleRidge/);
 	assert.match(renderer, /float localPhase/);
-	assert.match(renderer, /normal = normalize\(vec3\(-dFdx\(height\) \* 16\.0/);
+	assert.match(renderer, /normal = normalize\(vec3\(-dFdx\(height\) \* 17\.5/);
 	assert.doesNotMatch(renderer, /new Image\(/);
 	assert.doesNotMatch(renderer, /fetch\(/);
+});
+
+test("painterly edge uses independent broken pigment ribbons", async () => {
+	const banner = await read("src/components/layout/Banner.astro");
+	const backdrop = await read("src/styles/impasto-backdrop.css");
+
+	for (const name of ["far", "mid", "near", "streak"]) {
+		assert.match(banner, new RegExp(`pigment-ribbon-${name}`));
+	}
+	assert.doesNotMatch(banner, /gentle-wave/);
+	assert.match(backdrop, /--impasto-edge-near:/);
+	assert.match(backdrop, /stroke-dasharray:/);
+	assert.match(backdrop, /pigment-drift-near 63s/);
+	assert.doesNotMatch(
+		backdrop,
+		/html\.katelya-art-theme #header-waves\s*\{\s*display:\s*none/,
+	);
 });
 
 test("quantized structure field and generated fallbacks stay compact", async () => {

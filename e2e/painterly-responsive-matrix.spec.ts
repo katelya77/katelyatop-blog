@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 const viewports = [
+	{ name: "phone-360", width: 360, height: 800, touch: true },
 	{ name: "iphone-portrait", width: 390, height: 844, touch: true },
+	{ name: "phone-430", width: 430, height: 932, touch: true },
 	{ name: "iphone-landscape", width: 844, height: 390, touch: true },
 	{ name: "android-portrait", width: 412, height: 915, touch: true },
 	{ name: "android-landscape", width: 915, height: 412, touch: true },
@@ -13,9 +15,10 @@ const viewports = [
 	{ name: "ipad-pro-landscape", width: 1366, height: 1024, touch: true },
 	{ name: "compact-laptop", width: 1280, height: 800, touch: false },
 	{ name: "desktop-1440", width: 1440, height: 900, touch: false },
+	{ name: "desktop-low-height", width: 1366, height: 768, touch: false },
 	{ name: "desktop-1664", width: 1664, height: 920, touch: false },
 	{ name: "desktop-1920", width: 1920, height: 1080, touch: false },
-	{ name: "desktop-2560", width: 2560, height: 1440, touch: false },
+	{ name: "desktop-ultrawide", width: 2560, height: 1080, touch: false },
 ] as const;
 
 const scenarios = [

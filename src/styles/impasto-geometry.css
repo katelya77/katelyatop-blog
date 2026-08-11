@@ -1,11 +1,25 @@
 html.katelya-art-theme {
 	--impasto-header-top: clamp(0.55rem, 1.2vw, 0.9rem);
 	--impasto-header-height: 4.15rem;
-	--impasto-home-space: max(65vh, 38rem);
-	--impasto-article-space: clamp(20rem, 39vh, 28rem);
+	--impasto-header-visual-gap: clamp(0.8rem, 2svh, 1.45rem);
+	--katelya-banner-hero-height: clamp(32rem, 63svh, 38rem);
+	--katelya-paint-edge-height: clamp(4rem, 9svh, 6.5rem);
+	--katelya-content-handoff-space: clamp(0.8rem, 1.6vw, 1.35rem);
+	/* Bottom edge of the fixed navbar, including the iOS safe-area inset. */
+	--impasto-header-safe-bottom: calc(
+		max(var(--impasto-header-top), env(safe-area-inset-top)) +
+		var(--impasto-header-height)
+	);
+	--hero-content-safe-top: calc(
+		var(--impasto-header-safe-bottom) + var(--impasto-header-visual-gap)
+	);
+	--hero-content-safe-bottom: calc(
+		var(--katelya-paint-edge-height) + clamp(0.75rem, 1.5svh, 1.25rem)
+	);
+	--impasto-home-space: var(--katelya-banner-hero-height);
+	--impasto-article-space: clamp(22rem, 45svh, 30rem);
 	--impasto-page-gutter: clamp(0.5rem, 1.4vw, 1.25rem);
 	--katelya-active-hero-height: var(--impasto-article-space);
-	--katelya-fullscreen-content-overlap: clamp(6rem, 14svh, 10rem);
 	isolation: isolate;
 }
 
@@ -59,14 +73,17 @@ html.katelya-art-theme #navbar.katelya-navbar-shell {
 	padding: 0.38rem 0.58rem !important;
 	overflow: visible !important;
 	box-sizing: border-box !important;
-	border: 1px solid color-mix(in srgb, var(--katelya-border-bright) 82%, transparent) !important;
+	border: 1px solid color-mix(in srgb, var(--katelya-border-bright) 58%, transparent) !important;
 	border-radius: 1.28rem 1.05rem 1.36rem 1.08rem !important;
-	background: color-mix(in srgb, var(--katelya-surface-strong) 84%, transparent) !important;
+	background-color: color-mix(in srgb, var(--katelya-surface-strong) 90%, transparent) !important;
+	background-image:
+		repeating-linear-gradient(12deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 13px),
+		linear-gradient(105deg, rgba(255, 255, 255, 0.1), transparent 38%) !important;
 	box-shadow:
 		inset 0 1px 0 rgba(255, 255, 255, 0.54),
-		0 14px 38px rgba(24, 68, 65, 0.14) !important;
-	backdrop-filter: blur(14px) saturate(1.04) !important;
-	-webkit-backdrop-filter: blur(14px) saturate(1.04) !important;
+		0 12px 34px rgba(24, 68, 65, 0.12) !important;
+	backdrop-filter: blur(7px) saturate(1.02) !important;
+	-webkit-backdrop-filter: blur(7px) saturate(1.02) !important;
 }
 
 html.katelya-art-theme.dark #navbar.katelya-navbar-shell {
@@ -76,7 +93,7 @@ html.katelya-art-theme.dark #navbar.katelya-navbar-shell {
 }
 
 html.katelya-art-theme #navbar.katelya-navbar-shell.scrolled {
-	background: color-mix(in srgb, var(--katelya-surface-strong) 94%, transparent) !important;
+	background-color: color-mix(in srgb, var(--katelya-surface-strong) 95%, transparent) !important;
 }
 
 html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand,
@@ -223,6 +240,12 @@ html.katelya-art-theme body.no-banner-mode .katelya-hero-stage {
 	);
 }
 
+/* No hero artwork in this mode — nothing for the edge or overlay to frame. */
+html.katelya-art-theme body.no-banner-mode .katelya-paint-edge,
+html.katelya-art-theme body.no-banner-mode #banner-page-overlay {
+	display: none;
+}
+
 html.katelya-art-theme .katelya-main-shell {
 	position: relative;
 	z-index: 30;
@@ -234,29 +257,31 @@ html.katelya-art-theme #main-grid {
 	z-index: 30;
 }
 
-/* Fullscreen wallpaper: content slides up over the hero's closing edge. */
-html.katelya-art-theme body.fullscreen-banner .katelya-main-shell {
-	margin-top: calc(-1 * var(--katelya-fullscreen-content-overlap));
+/*
+ * Fullscreen wallpaper: the content shell follows the 100svh hero directly
+ * (a single handoff padding, no negative margins and no blurred fog band —
+ * the painterly edge inside the hero stage bridges the two visually).
+ */
+html.katelya-art-theme body.enable-banner #main-grid {
+	padding-top: var(--katelya-content-handoff-space);
 }
 
-html.katelya-art-theme body.fullscreen-banner #main-grid {
-	padding-top: clamp(0.35rem, 1.4vw, 1rem);
+/*
+ * Article hero overlay: the page title is centred inside the hero stage but
+ * pushed below the fixed navbar's safe area, on every viewport and mode.
+ */
+html.katelya-art-theme #banner-page-overlay {
+	box-sizing: border-box;
+	padding:
+		var(--hero-content-safe-top)
+		max(var(--impasto-page-gutter), env(safe-area-inset-right))
+		var(--hero-content-safe-bottom)
+		max(var(--impasto-page-gutter), env(safe-area-inset-left));
 }
 
-html.katelya-art-theme body.fullscreen-banner #main-grid::before {
-	position: absolute;
-	inset: -1.5rem 0 auto;
-	z-index: -1;
-	height: clamp(4rem, 10svh, 7rem);
-	pointer-events: none;
-	content: "";
-	background: linear-gradient(
-		to bottom,
-		transparent,
-		color-mix(in srgb, var(--page-bg) 34%, transparent) 54%,
-		color-mix(in srgb, var(--page-bg) 72%, transparent)
-	);
-	filter: blur(12px);
+html.katelya-art-theme #banner-page-overlay .banner-page-overlay__content {
+	width: min(100%, 68rem);
+	margin-inline: auto;
 }
 
 /* Mobile non-home pages hide the banner, so the stage collapses to the header offset. */
@@ -266,30 +291,11 @@ html.katelya-art-theme body.fullscreen-banner #main-grid::before {
 			var(--impasto-header-height) + var(--impasto-header-top) * 2 + 1rem
 		);
 	}
-}
 
-/* Mobile home hero heights (migrated from banner.css). */
-@media (max-width: 479px) {
-	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
-		--katelya-active-hero-height: max(70vh, 450px);
-	}
-}
-
-@media (min-width: 480px) and (max-width: 767px) {
-	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
-		--katelya-active-hero-height: max(75vh, 500px);
-	}
-}
-
-@media (min-width: 768px) and (max-width: 1279px) {
-	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
-		--katelya-active-hero-height: max(70vh, 500px);
-	}
-}
-
-@media (max-width: 1279px) and (orientation: landscape) {
-	html.katelya-art-theme body.enable-banner:not(.fullscreen-banner) .katelya-hero-stage.is-home-hero {
-		--katelya-active-hero-height: 60vh;
+	/* A collapsed stage has no room for the overlay title or the paint edge. */
+	html.katelya-art-theme body.enable-banner .katelya-hero-stage:not(.is-home-hero) #banner-page-overlay,
+	html.katelya-art-theme body.enable-banner .katelya-hero-stage:not(.is-home-hero) .katelya-paint-edge {
+		display: none;
 	}
 }
 
@@ -392,9 +398,8 @@ html.katelya-art-theme .post-card:hover {
 @media (max-width: 767px) {
 	html.katelya-art-theme {
 		--impasto-header-height: 3.7rem;
-		--impasto-home-space: max(34rem, 72svh);
+		--impasto-header-visual-gap: clamp(0.65rem, 1.8svh, 1rem);
 		--impasto-article-space: 18rem;
-		--katelya-fullscreen-content-overlap: clamp(4.5rem, 12svh, 6.5rem);
 	}
 
 	html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-brand span {

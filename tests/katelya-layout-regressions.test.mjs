@@ -117,6 +117,29 @@ test("hero stage reserves banner height exactly once", async () => {
 	);
 });
 
+test("Swup and wallpaper runtime consume semantic geometry without inline offsets", async () => {
+	const grid = await read("src/layouts/MainGridLayout.astro");
+	const gridScripts = await read("src/layouts/partials/GridScripts.astro");
+	const swupHooks = await read("src/scripts/core/swup-hooks.ts");
+	const geometry = await read("src/styles/impasto-geometry.css");
+
+	assert.match(grid, /data-katelya-hero-stage/);
+	assert.match(grid, /data-katelya-main-shell/);
+	assert.match(gridScripts, /\[data-katelya-main-shell\]/);
+	assert.match(swupHooks, /SWUP_SELECTORS\.mainShell/);
+	for (const source of [gridScripts, swupHooks]) {
+		assert.doesNotMatch(source, /\.absolute\.w-full\.z-30/);
+		assert.doesNotMatch(source, /style\.setProperty\("top"/);
+		assert.doesNotMatch(source, /style\.setProperty\("margin-top"/);
+	}
+	assert.match(geometry, /--impasto-header-safe-bottom:/);
+	assert.match(geometry, /--hero-content-safe-top:/);
+	assert.match(
+		geometry,
+		/#banner-page-overlay[\s\S]*var\(--hero-content-safe-top\)/,
+	);
+});
+
 test("navbar panel and content use one DOM grid", async () => {
 	const layout = await read("src/layouts/Layout.astro");
 	const navbar = await read("src/components/organisms/navigation/Navbar.astro");
@@ -147,6 +170,18 @@ test("navbar panel and content use one DOM grid", async () => {
 	assert.match(
 		geometry,
 		/#navbar\.katelya-navbar-shell\s*>\s*\.katelya-navbar-tools/,
+	);
+});
+
+test("persistent overlay hooks register before async panel initialization", async () => {
+	const manager = await read("src/scripts/swup-manager.ts");
+	const hookRegistration = manager.indexOf("this.initSwupHooks();");
+	const firstAwait = manager.indexOf("await panelHandlerInitialization;");
+
+	assert.ok(hookRegistration >= 0, "Swup hooks should be registered during init");
+	assert.ok(
+		hookRegistration < firstAwait,
+		"overlay hooks must not miss swup:enable while panel hydration is pending",
 	);
 });
 

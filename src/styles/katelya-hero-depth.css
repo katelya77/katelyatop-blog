@@ -133,22 +133,22 @@ html.katelya-art-theme .katelya-orbit-card::after {
 
 html.katelya-art-theme .katelya-orbit-card--1 {
 	transform: translate3d(var(--hero-deep-x), var(--hero-deep-y), var(--depth-card-near))
-		rotate(-4deg);
+		rotate(-2.4deg);
 }
 
 html.katelya-art-theme .katelya-orbit-card--2 {
 	transform: translate3d(var(--hero-mid-x), var(--hero-deep-y), var(--depth-card-near))
-		rotate(3deg);
+		rotate(2deg);
 }
 
 html.katelya-art-theme .katelya-orbit-card--3 {
 	transform: translate3d(var(--hero-shallow-x), var(--hero-mid-y), var(--depth-card-far))
-		rotate(2deg);
+		rotate(1.4deg);
 }
 
 html.katelya-art-theme .katelya-orbit-card--4 {
 	transform: translate3d(var(--hero-mid-x), var(--hero-shallow-y), var(--depth-card-far))
-		rotate(-3deg);
+		rotate(-2deg);
 }
 
 html.katelya-art-theme .katelya-orbit-card:hover {

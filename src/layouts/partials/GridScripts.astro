@@ -60,70 +60,29 @@ const {
 		return Number.isFinite(parsed) ? parsed : fallback;
 	}
 
-	function syncMainContentPosition(mode) {
-		const mainContent = document.querySelector(
-			".absolute.w-full.z-30.pointer-events-none",
-		);
+	function getCurrentPageHomeState() {
+		const routeData = document.getElementById("page-overlay-data");
+		if (routeData?.dataset.isHome) {
+			return routeData.dataset.isHome === "true";
+		}
+		return window.location.pathname === "/" || window.location.pathname === "";
+	}
+
+	/*
+	 * Runtime owns route/mode state only. All dimensions and offsets belong to
+	 * impasto-geometry.css so direct loads, Swup visits and mode switches use
+	 * the same normal-flow geometry contract.
+	 */
+	function syncKatelyaGeometryState() {
+		const heroStage = document.querySelector("[data-katelya-hero-stage]");
+		const mainShell = document.querySelector("[data-katelya-main-shell]");
 		const bannerWrapper = document.getElementById("banner-wrapper");
-		if (!mainContent) {
-			return;
-		}
+		const isHomePage = getCurrentPageHomeState();
 
-		const isMobile = window.innerWidth < 1280;
-		const isHomePage =
-			window.location.pathname === "/" || window.location.pathname === "";
-
-		mainContent.classList.remove("mobile-main-no-banner", "no-banner-layout");
-		mainContent.style.removeProperty("min-height");
-		mainContent.style.removeProperty("transition");
-
-		if (mode === "fullscreen") {
-			if (isMobile && !isHomePage) {
-				mainContent.classList.add("mobile-main-no-banner", "no-banner-layout");
-				mainContent.style.position = "";
-				mainContent.style.zIndex = "";
-				mainContent.style.setProperty("top", "5.5rem", "important");
-				mainContent.style.setProperty("margin-top", "0", "important");
-				bannerWrapper?.classList.add("mobile-hide-banner");
-				return;
-			}
-
-			bannerWrapper?.classList.remove("mobile-hide-banner");
-			mainContent.classList.add("no-banner-layout");
-			mainContent.style.position = "relative";
-			mainContent.style.zIndex = "30";
-			mainContent.style.setProperty("top", "0", "important");
-			mainContent.style.setProperty("margin-top", "1rem", "important");
-			return;
-		}
-
-		mainContent.style.position = "";
-		mainContent.style.zIndex = "";
-		mainContent.style.setProperty("margin-top", "0", "important");
-
-		if (mode === "banner") {
-			if (isMobile && !isHomePage) {
-				mainContent.classList.add("mobile-main-no-banner");
-				mainContent.style.setProperty("top", "5.5rem", "important");
-				bannerWrapper?.classList.add("mobile-hide-banner");
-				return;
-			}
-
-			if (isMobile) {
-				bannerWrapper?.classList.remove("mobile-hide-banner");
-				mainContent.style.removeProperty("top");
-				mainContent.style.removeProperty("min-height");
-				return;
-			}
-
-			bannerWrapper?.classList.remove("mobile-hide-banner");
-			mainContent.style.setProperty("top", `${BANNER_HEIGHT}vh`, "important");
-			return;
-		}
-
-		bannerWrapper?.classList.remove("mobile-hide-banner");
-		mainContent.classList.add("no-banner-layout");
-		mainContent.style.setProperty("top", "5.5rem", "important");
+		heroStage?.classList.toggle("is-home-hero", isHomePage);
+		mainShell?.classList.toggle("is-home-layout", isHomePage);
+		bannerWrapper?.classList.toggle("mobile-hide-banner", !isHomePage);
+		document.body.classList.toggle("katelya-home-page", isHomePage);
 	}
 
 	function applyWallpaperVisualSettings(mode) {
@@ -206,12 +165,7 @@ const {
 		// 立即调整主内容区域位置和布局模式（避免闪烁和位置错误）
 		// 使用 requestAnimationFrame 确保 DOM 准备好
 		requestAnimationFrame(function () {
-			const mainContent = document.querySelector(
-				".absolute.w-full.z-30.pointer-events-none",
-			);
-			if (mainContent) {
-				syncMainContentPosition(wallpaperMode);
-			}
+			syncKatelyaGeometryState();
 
 			// 立即应用布局模式，避免闪烁
 			const mainGrid = document.getElementById("main-grid");
@@ -300,18 +254,10 @@ const {
 		);
 		const navbar = document.getElementById("navbar");
 		const body = document.body;
-		const mainContent = document.querySelector(
-			".absolute.w-full.z-30.pointer-events-none",
-		);
 		const tocWrapper = document.getElementById("toc-wrapper");
 
-		// 强制重排以确保样式正确应用
-		const forceReflow = function () {
-			void document.body.offsetHeight;
-		};
-
 		applyWallpaperVisualSettings(wallpaperMode);
-		syncMainContentPosition(wallpaperMode);
+		syncKatelyaGeometryState();
 
 		switch (wallpaperMode) {
 			case "banner":
@@ -331,17 +277,9 @@ const {
 						tocWrapper.classList.add("toc-hide");
 					}
 				}
-				// 先移除body类，避免CSS冲突
 				body.classList.remove("wallpaper-transparent");
 				body.classList.remove("fullscreen-banner");
 				body.classList.remove("no-banner-mode");
-				// 强制重排
-				forceReflow();
-				// 移除内联样式，让CSS完全接管
-				if (mainContent) {
-					mainContent.style.removeProperty("top");
-				}
-				// 再添加enable-banner类
 				body.classList.add("enable-banner");
 				// navbar 恢复原始透明模式（从 config 读取）
 				if (navbar) {
@@ -359,8 +297,6 @@ const {
 						window.initSemifullScrollDetection();
 					}
 				}
-				// 强制重排以确保CSS变量正确更新
-				forceReflow();
 				break;
 
 			case "fullscreen":
@@ -380,7 +316,6 @@ const {
 				}
 				body.classList.remove("wallpaper-transparent");
 				body.classList.remove("no-banner-mode");
-				forceReflow();
 				body.classList.add("enable-banner");
 				body.classList.add("fullscreen-banner");
 				if (navbar) {
@@ -396,7 +331,6 @@ const {
 						window.initSemifullScrollDetection();
 					}
 				}
-				forceReflow();
 				break;
 
 			case "overlay":
@@ -411,17 +345,12 @@ const {
 				}
 				body.classList.remove("enable-banner");
 				body.classList.remove("fullscreen-banner");
-				forceReflow();
-				if (mainContent) {
-					mainContent.style.removeProperty("top");
-				}
 				body.classList.add("wallpaper-transparent");
 				body.classList.add("no-banner-mode");
 				if (navbar) {
 					navbar.setAttribute("data-dynamic-transparent", "semi");
 					navbar.removeAttribute("data-transparent-mode");
 				}
-				forceReflow();
 				break;
 
 			case "none":
@@ -436,17 +365,9 @@ const {
 				if (tocWrapper) {
 					tocWrapper.classList.remove("toc-hide");
 				}
-				// 先移除body类，避免CSS冲突
 				body.classList.remove("enable-banner");
 				body.classList.remove("wallpaper-transparent");
 				body.classList.remove("fullscreen-banner");
-				// 强制重排
-				forceReflow();
-				// 移除内联样式，让CSS完全接管
-				if (mainContent) {
-					mainContent.style.removeProperty("top");
-				}
-				// 再添加no-banner-mode类
 				body.classList.add("no-banner-mode");
 				// navbar 强制设置为不透明（忽略 config 配置）
 				if (navbar) {
@@ -454,8 +375,6 @@ const {
 					// 强制移除 config 中的 data-transparent-mode 影响
 					navbar.removeAttribute("data-transparent-mode");
 				}
-				// 强制重排以确保CSS变量正确更新
-				forceReflow();
 				break;
 		}
 	}

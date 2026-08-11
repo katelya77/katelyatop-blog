@@ -27,6 +27,8 @@ export const SWUP_SELECTORS = {
 
 	// Banner 相关
 	bannerWrapper: "#banner-wrapper",
+	heroStage: "[data-katelya-hero-stage]",
+	mainShell: "[data-katelya-main-shell]",
 	banner: "#banner",
 	bannerTextOverlay: ".banner-text-overlay",
 
