@@ -1,383 +1,267 @@
-# 🌸 Mizuki
+# Katelya · 思囿随笔
 
-<img align='right' src='logo.png' width='200px' alt="Mizuki logo">
+> 一座持续生长的个人数字花园。记录技术折腾、项目实践、大学生活，以及那些值得被长期保存的思考与经验。
 
-A modern, feature-rich static blog template built with [Astro](https://astro.build), featuring advanced functionality and beautiful design.
+<p align="center">
+  <a href="https://blog.katelya.top/"><strong>访问博客</strong></a>
+  ·
+  <a href="https://github.com/katelya77/katelyatop-blog/actions"><strong>构建状态</strong></a>
+  ·
+  <a href="https://github.com/katelya77/katelyatop-blog/issues"><strong>Issue</strong></a>
+</p>
 
-[![Node.js >= 22](https://img.shields.io/badge/node.js-%3E%3D22-brightgreen)](https://nodejs.org/)
-[![pnpm >= 9](https://img.shields.io/badge/pnpm-%3E%3D9-blue)](https://pnpm.io/)
-[![Astro](https://img.shields.io/badge/Astro-7.0.4-orange)](https://astro.build/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-blue)](https://www.typescriptlang.org/)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?logo=apache)](https://opensource.org/licenses/Apache-2.0)
+<p align="center">
+  <img alt="Astro" src="https://img.shields.io/badge/Astro-7.x-BC52EE?logo=astro&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white">
+  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-11.x-F69220?logo=pnpm&logoColor=white">
+  <img alt="Cloudflare Pages" src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?logo=cloudflare&logoColor=white">
+  <a href="https://github.com/katelya77/katelyatop-blog/actions/workflows/lint.yml"><img alt="CI" src="https://github.com/katelya77/katelyatop-blog/actions/workflows/lint.yml/badge.svg"></a>
+</p>
 
-[**🖥️ Live Demo**](https://mizuki.mysqil.com/) | [**📝 Documentation**](https://docs.mizuki.mysqil.com/)
+![Katelya Blog Preview](./README.webp)
 
-🌏 **README Languages:**
-[**English**](./README.md) / [**中文**](./README.zh.md) / [**日本語**](./README.ja.md) / [**繁體中文**](./README.tw.md) /
+## 关于这个仓库
 
-Get started quickly with our comprehensive documentation. Whether you're customizing your theme, configuring features, or deploying to production, the documentation covers everything you need to launch your blog successfully.
+`katelyatop-blog` 是我长期维护的个人博客源码，而不是单纯的主题镜像。
 
-[📚 Read Full Documentation](https://docs.mizuki.mysqil.com/) →
+它以 Astro 为核心，在 Mizuki / Fuwari 的开源基础上持续重构，并逐步加入属于自己的视觉语言、响应式布局、文章体验、内容组织方式和部署链路。现在的目标不是“堆功能”，而是把它做成一个稳定、耐看、可以陪我很多年的个人主页与数字档案。
 
-![Mizuki Preview](./README.webp)
+站点目前使用：
 
-<table>
-  <tr>
-    <td><img alt="" src="docs/image/1.webp"></td>
-    <td><img alt="" src="docs/image/2.webp"></td>
-    <td><img alt="" src="docs/image/3.webp"></td>
-  <tr>
-  <tr>
-    <td><img alt="" src="docs/image/4.webp"></td>
-    <td><img alt="" src="docs/image/5.webp"></td>
-    <td><img alt="" src="docs/image/6.webp"></td>
-  <tr>
-</table>
+- **站点名称：** Katelya · 思囿随笔
+- **线上地址：** https://blog.katelya.top/
+- **内容定位：** 技术笔记、项目记录、经验复盘、生活随笔
+- **默认语言：** 简体中文
+- **生产部署：** Cloudflare Pages Git Integration
 
-## 🚀 NEW: Automatic Resolution Adaptation
+## 设计方向
 
-> **🎯 Automatic Resolution Algorithm** - Intelligently adapts content layout based on device screen resolution, providing the best viewing experience for all devices
+我希望这个博客保留技术站点应有的清晰与效率，但不做成千篇一律的“开发者模板”。
 
-🌏 README Language
-[**English**](./README.md) /
-[**中文**](./README.zh.md) /
-[**日本語**](./README.ja.md) /
-[**繁體中文**](./README.tw.md) /
+当前视觉体系围绕 **梵高式昼夜画境 + 数字花园** 展开：白天与夜间拥有对应的绘画氛围，Hero、横幅、背景、波浪、导航和正文区域尽量形成连续的空间关系，而不是简单地在网页背后铺一张壁纸。
 
-### 🔧 Component Configuration System Restructuring
+已经长期维护的方向包括：
 
-- **Unified Configuration Architecture:** Brand new modular component configuration system, supporting dynamic component management and order configuration
-- **Configuration-Driven Component Loading:** Restructured SideBar component, implementing fully configuration-based component loading mechanism
-- **Unified Control Switches:** Removed independent enable switches for music player and announcement components, unified control through sidebarLayoutConfig
-- **Responsive Layout Adaptation:** Components support responsive layouts, automatically adjusting display based on device type
+- 自定义 Katelya 品牌标识与站点视觉
+- 昼 / 夜两套梵高风格画境
+- Banner / Fullscreen 两种壁纸浏览模式
+- Hero、波浪、文章标题与导航栏的几何关系优化
+- Desktop / iPad / Mobile 响应式适配
+- 文章目录、阅读进度、代码块、数学公式与图片浏览体验
+- 项目页、时间线等个人内容页面
+- Pagefind 本地搜索、RSS 与 Sitemap
+- Twikoo / Giscus 等评论能力的可配置接入
+- 面向真实浏览器的 Playwright UI 回归测试
 
-### 📐 Layout System Optimization
+## 技术栈
 
-- **Dynamic Sidebar Position Adjustment:** Support for left/right sidebar switching, with automatic layout adaptation
-- **Intelligent Article Directory Positioning:** When sidebar is on the right, article navigation automatically moves to the left, providing a better reading experience
-- **Grid Layout Improvements:** Optimized CSS Grid layout, resolving container width anomaly issues
+| 层级 | 主要技术 |
+| --- | --- |
+| Framework | Astro 7 |
+| Language | TypeScript 6 |
+| UI | Astro Components + Svelte 5 |
+| Styling | Tailwind CSS 4 + Stylus |
+| Navigation | Swup |
+| Search | Pagefind |
+| Markdown | Astro Markdown / MDX + Expressive Code |
+| Math | KaTeX |
+| Image | Sharp + PhotoSwipe / Fancyapps UI |
+| Test | Node Test Runner + Playwright |
+| Format / Lint | Biome |
+| Deployment | Cloudflare Pages |
 
-### 🎛️ Configuration File Format Standardization
+完整依赖与版本以 [`package.json`](./package.json) 为准。
 
-- **Standardized Configuration Format:** Created unified component configuration file format specifications
-- **Type Safety:** Comprehensive TypeScript type definitions ensuring configuration type safety
-- **Extensibility:** Support for custom component types and configuration options
+## 本地运行
 
-### 🧹 Code Optimization
+### 1. 克隆仓库
 
-- **Test File Cleanup:** Removed unused test configurations and dependencies, reducing project size
-- **Code Structure Optimization:** Improved component architecture, enhancing code maintainability
-- **Performance Improvement:** Optimized component loading logic, improving page rendering performance
+```bash
+git clone https://github.com/katelya77/katelyatop-blog.git
+cd katelyatop-blog
+```
 
----
+### 2. 安装依赖
 
-## ✨ Features
+项目使用 pnpm：
 
-### 🎨 Design & Interface
+```bash
+pnpm install
+```
 
-- [x] Built with [Astro](https://astro.build) and [Tailwind CSS](https://tailwindcss.com)
-- [x] Smooth animations and page transitions using [Swup](https://swup.js.org/)
-- [x] Light/dark theme switching with system preference detection
-- [x] Customizable theme colors and dynamic banner carousel
-- [x] Fullscreen background images with carousel, opacity, and blur effects
-- [x] Fully responsive design for all devices
-- [x] Beautiful typography with JetBrains Mono font
+### 3. 启动开发环境
 
-### 🔍 Content & Search
+```bash
+pnpm dev
+```
 
-- [x] Advanced search functionality based on [Pagefind](https://pagefind.app/)
-- [x] [Enhanced Markdown features](#-markdown-extensions) with syntax highlighting
-- [x] Interactive table of contents with auto-scrolling
-- [x] RSS feed generation
-- [x] Reading time estimation
-- [x] Article categorization and tagging system
+默认开发地址：
 
-### 📱 Special Pages
+```text
+http://localhost:4321
+```
 
-- [x] **Anime Tracking Page** - Track anime watching progress and ratings
-- [x] **Friends Page** - Beautiful cards showcasing friend websites
-- [x] **Diary Page** - Share life moments, similar to social media
-- [x] **Archive Page** - Organized timeline view of articles
-- [x] **About Page** - Customizable personal introduction
+## 常用命令
 
-### 🛠 Technical Features
+```bash
+# 开发
+pnpm dev
 
-- [x] **Enhanced code blocks** based on [Expressive Code](https://expressive-code.com/)
-- [x] **Math formula support** with KaTeX rendering
-- [x] **Image optimization** with PhotoSwipe gallery integration
-- [x] **SEO optimization** including sitemaps and meta tags
-- [x] **Performance optimization** with lazy loading and caching
-- [x] **Comment system** with Twikoo integration
+# 创建新文章
+pnpm new-post <filename>
 
-## 🚀 Quick Start
+# Astro 类型与项目检查
+pnpm astro check
 
-### 📦 Installation
+# 单元 / 回归测试
+pnpm test
 
-1. **Clone the repository:**
+# 浏览器端 E2E 测试
+pnpm test:e2e
 
-   ```bash
-   git clone https://github.com/LyraVoid/Mizuki.git
-   cd Mizuki
-   ```
+# Biome 检查
+pnpm lint
 
-2. **Install dependencies:**
+# 生产构建
+pnpm build
 
-   ```bash
-   # Install pnpm if not already installed
-   npm install -g pnpm
+# 本地预览构建结果
+pnpm preview
+```
 
-   # Install project dependencies
-   pnpm install
-   ```
+## 内容结构
 
-3. **Configure your blog:**
-   - Edit `src/config.ts` to customize blog settings
-   - Update site information, theme colors, banner images, and social links
-   - Configure feature page functionality
+主要文章位于：
 
-4. **Start the development server:**
-   ```bash
-   pnpm dev
-   ```
-   Your blog will be available at `http://localhost:4321`
+```text
+src/content/posts/
+```
 
-### 📝 Content Management
+站点配置已经拆分到：
 
-- **Create new posts:** `pnpm new-post <filename>`
-- **Edit posts:** Modify files in `src/content/posts/`
-- **Customize special pages:** Edit files in `src/content/spec/`
-- **Add images:** Place images in `src/assets/` or `public/`
+```text
+src/config/
+```
 
-### 🚀 Deployment
+其中包括站点信息、导航栏、个人资料、壁纸、评论、侧边栏、音乐、文章协议等配置。相比把所有内容堆在单个配置文件中，这种方式更适合长期维护和功能扩展。
 
-Deploy your blog to any static hosting platform:
+项目中比较常用的目录：
 
-- **Vercel:** Connect your GitHub repository to Vercel
-- **Netlify:** Deploy directly from GitHub
-- **GitHub Pages:** Use the included GitHub Actions workflow
-- **Cloudflare Pages:** Connect your repository
+```text
+.
+├── .github/workflows/   # CI、部署回退、CDN 相关工作流
+├── public/              # 静态资源
+├── scripts/             # 构建、文章创建、同步等脚本
+├── src/
+│   ├── assets/          # 站点资源
+│   ├── components/      # UI 组件
+│   ├── config/          # 模块化配置
+│   ├── content/         # 文章与内容
+│   ├── layouts/         # 页面布局
+│   ├── pages/           # Astro 页面
+│   └── styles/          # 样式系统
+└── tests/               # 单元与 UI 回归测试
+```
 
-- **Environment Variable Configuration (Optional):** Refer to `.env.example` for configuration
+## 文章 Frontmatter
 
-Before deployment, update the `siteURL` in `src/config.ts`.
-**Not recommended** to commit the `.env` file to Git. The `.env` file should only be used for local debugging or building. For cloud platform deployment, it's recommended to configure via the platform's `environment variables` settings.
-
-## 📝 Post Frontmatter Format
+常用格式如下：
 
 ```yaml
 ---
-title: My First Blog Post
-published: 2023-09-09
-description: This is the first post of my new blog.
-image: ./cover.jpg
-tags: [tag1, tag2]
-category: Frontend
+title: 文章标题
+published: 2026-08-15
+description: 文章摘要
+image: ./cover.webp
+tags: [Astro, Blog]
+category: 技术
 draft: false
 pinned: false
 comment: true
-lang: en # Only set when article language differs from site language in config.ts
 ---
 ```
 
-### Frontmatter Field Descriptions
+字段会随着站点功能继续演进，实际定义请参考 `src/content.config.ts`。
 
-- **title**: Article title (required)
-- **published**: Publication date (required)
-- **description**: Article description for SEO and previews
-- **image**: Cover image path (relative to article file)
-- **tags**: Array of tags for categorization
-- **category**: Article category
-- **draft**: Set to `true` to hide article in production
-- **pinned**: Set to `true` to pin article to top
-- **comment**: Set to `true` to enable article comment area (requires global comment function enabled)
-- **lang**: Article language (only set when different from site default)
+## CI 与部署
 
-### Pinned Articles Feature
+仓库对 `master` 和面向 `master` 的 Pull Request 执行 GitHub Actions 检查，包括：
 
-The `pinned` field allows you to pin important articles to the top of your blog list. Pinned articles will always appear before regular articles regardless of their publication date.
+- Biome Check
+- Tests
+- Astro Type Check
+- Production Build
+- Playwright E2E
 
-**Usage:**
+生产站点由 **Cloudflare Pages Git Integration** 监听仓库并部署。
 
-```yaml
-pinned: true  # Pin this article to the top
-pinned: false # Regular article (default)
+仓库中的 `.github/workflows/deploy.yml` 仅保留为手动的旧版 GitHub Pages / `pages` 分支回退方案，不作为当前生产发布链路。
+
+因此日常发布流程是：
+
+```text
+feature / content branch
+        ↓
+Pull Request
+        ↓
+GitHub Actions
+        ↓
+merge → master
+        ↓
+Cloudflare Pages 自动构建与发布
 ```
 
-**Sorting Rules:**
+## 内容原则
 
-1. Pinned articles appear first, sorted by publication date (newest first)
-2. Regular articles follow, sorted by publication date (newest first)
+这个博客更关注“自己真正理解并实践过的内容”，而不是追求高频转载。
 
-### Article-Level Comment Control
+对于来自官方文档、开源项目、论文、技术博客或其他公开资料的信息，我会尽量遵循以下原则：
 
-The `comment` field allows you to individually control the enabling and disabling of the comment area for each article.
+1. 优先阅读原始 / 官方来源；
+2. 用自己的结构、案例、测试与结论重新组织文章；
+3. 不把机械同义改写当作原创；
+4. 对关键参考资料保留来源链接与必要署名；
+5. 尊重原作者的许可证、版权声明、robots.txt 与站点使用条款；
+6. 代码片段优先使用允许引用的官方示例、开源代码或自己的实现。
 
-**Usage:**
+如果未来加入自动化内容工作流，也会以“**采集公开事实与参考资料 → 研究归纳 → 原创撰写 → 自动检查 → PR 审核 → 发布**”为边界，而不是自动搬运完整文章。
 
-```yaml
-comment: true  # Enable comments (default)
-comment: false # Disable comments
-```
+## Public Repository 安全说明
 
-**Note:**
-This feature requires the comment system to be enabled in `src/config.ts` first.
+本仓库已公开。所有密钥、Token、API Key 和生产环境凭据都不应直接提交到 Git。
 
-## 🧩 Markdown Extensions
+本地开发可以参考 `.env.example`，生产环境敏感变量应通过 GitHub / Cloudflare 等平台的 Secret 或 Environment Variables 管理。
 
-Mizuki supports enhanced features beyond standard GitHub Flavored Markdown:
+如果发现仓库中出现意外暴露的凭据，请立即通过 Issue 或其他联系方式提醒我；真正的密钥泄露还应同时执行吊销与轮换，而不是只删除 Git 历史中的文件。
 
-### 📝 Enhanced Writing
+## 开源来源与致谢
 
-- **Callouts:** Create beautiful annotation boxes using `> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`, etc.
-- **Math Formulas:** Write LaTeX math formulas using `$inline$` and `$$block$$` syntax
-- **Code Highlighting:** Advanced syntax highlighting with line numbers and copy buttons
-- **GitHub Cards:** Embed repository cards using `::github{repo="user/repo"}`
+这个项目并非从零开始。
 
-### 🎨 Visual Elements
+当前代码长期演进自以下优秀的开源项目与社区创意：
 
-- **Image Gallery:** Automatic PhotoSwipe integration for image viewing
-- **Collapsible Sections:** Create expandable content blocks
-- **Custom Components:** Enhance content with special directives
+- [Mizuki](https://github.com/LyraVoid/Mizuki) — 本项目重要的上游基础
+- [Fuwari](https://github.com/saicaca/fuwari) — 更早期的主题基础
+- [Yukina](https://github.com/WhitePaper233/yukina) — 视觉与交互设计参考
+- [Firefly](https://github.com/CuteLeaf/Firefly) — 部分布局设计思路参考
+- [Twilight](https://github.com/spr-aachen/Twilight) — 动态壁纸与交互设计参考
+- [Astro](https://astro.build/) 及整个开源生态
 
-### 📊 Content Organization
+感谢所有原作者和贡献者。仓库的个性化改造、品牌视觉、配置、布局与内容会继续独立演进，但不会抹去上游项目应有的署名与许可信息。
 
-- **Table of Contents:** Automatically generated from headings with smooth scrolling
-- **Reading Time:** Automatically calculated and displayed
-- **Article Metadata:** Rich frontmatter support with categories and tags
+## License
 
-## ⚡ Commands
+代码许可请以仓库中的 [`LICENSE`](./LICENSE) 与 [`LICENSE.MIT`](./LICENSE.MIT) 为准。
 
-All commands are run from the project root:
+如果你想复用这个仓库中的内容，请注意区分：
 
-| Command                    | Action                                     |
-| :------------------------- | :----------------------------------------- |
-| `pnpm install`             | Install dependencies                       |
-| `pnpm dev`                 | Start local dev server at `localhost:4321` |
-| `pnpm build`               | Build production site to `./dist/`         |
-| `pnpm preview`             | Preview build locally before deployment    |
-| `pnpm check`               | Run Astro error checking                   |
-| `pnpm format`              | Format code with Prettier                  |
-| `pnpm lint`                | Check and fix code issues                  |
-| `pnpm new-post <filename>` | Create a new blog post                     |
-| `pnpm astro ...`           | Run Astro CLI commands                     |
+- **开源代码**：遵循对应源码许可证；
+- **第三方素材 / 依赖**：遵循各自原始许可证；
+- **个人文章、原创图片与品牌素材**：除非文件中另有说明，不因为源码仓库公开就自动等同于可任意转载或重新授权。
 
-## 🎯 Configuration Guide
+---
 
-### 🔧 Basic Configuration
-
-Edit `src/config.ts` to customize your blog:
-
-```typescript
-export const siteConfig: SiteConfig = {
-  title: "Your Blog Name",
-  subtitle: "Your Blog Description",
-  lang: "en", // or "zh-CN", "ja", etc.
-  themeColor: {
-    hue: 210, // 0-360, theme hue
-    fixed: false, // Hide theme color picker
-  },
-  banner: {
-    enable: true,
-    src: ["assets/banner/1.webp"], // Banner images
-    carousel: {
-      enable: true,
-      interval: 0.8, // seconds
-    },
-  },
-};
-```
-
-### 📱 Feature Page Configuration
-
-- **Anime Page:** Edit anime list in `src/pages/anime.astro`
-- **Friends Page:** Edit friend data in `src/content/spec/friends.md`
-- **Diary Page:** Edit moments in `src/pages/diary.astro`
-- **About Page:** Edit content in `src/content/spec/about.md`
-
-### 📦 Code-Content Separation (Optional)
-
-Mizuki supports separating code and content into two independent repositories, suitable for team collaboration and large projects.
-
-**Quick Selection**:
-
-| Use Case                    | Configuration                  | For Whom                            |
-| --------------------------- | ------------------------------ | ----------------------------------- |
-| 🆕 **Local Mode** (default) | No configuration, use directly | Beginners, personal blogs           |
-| 🔧 **Separation Mode**      | Set `ENABLE_CONTENT_SYNC=true` | Team collaboration, private content |
-
-**One-Click Enable/Disable**:
-
-```bash
-# Method 1: Local Mode (recommended for beginners)
-# No need to create .env file, run directly
-pnpm dev
-
-# Method 2: Content Separation Mode
-# 1. Copy configuration file
-cp .env.example .env
-
-# 2. Edit .env to enable content separation
-ENABLE_CONTENT_SYNC=true
-CONTENT_REPO_URL=https://github.com/your-username/Mizuki-Content.git
-
-# 3. Sync content
-pnpm run sync-content
-```
-
-**Features**:
-
-- ✅ Supports public and private repositories 🔐
-- ✅ One-click enable/disable without code modification
-- ✅ Auto-sync, pulls latest content automatically before development
-
-📖 **Detailed Configuration**: [Content Separation Guide](docs/CONTENT_SEPARATION.md)
-🔄 **Migration Tutorial**: [Migrate from Single Repo to Separation Mode](docs/MIGRATION_GUIDE.md)
-📚 **More Documentation**: [Documentation Index](docs/README.md)
-
-## ✏️ Contributing
-
-Contributions are welcome! Feel free to submit issues and pull requests.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-### Original Project License
-
-This project is based on [Fuwari](https://github.com/saicaca/fuwari), which is licensed under the MIT License. The original copyright notice and permission notice are included in the LICENSE.MIT file in accordance with the MIT License requirements.
-
-## 🙏 Acknowledgements
-
-- Based on the original [Fuwari](https://github.com/saicaca/fuwari) template
-- Inspired by [Yukina](https://github.com/WhitePaper233/yukina) - a beautiful and elegant blog template
-- Some designs are inspired by [Firefly](https://github.com/CuteLeaf/Firefly) & [Twilight](https://github.com/spr-aachen/Twilight) templates
-- Uses [Pio](https://github.com/Dreamer-Paul/Pio) to implement the adorable Live2D mascot plugin
-- Built with [Astro](https://astro.build) and [Tailwind CSS](https://tailwindcss.com)
-- Icons from [Iconify](https://iconify.design/)
-
-### 🌸 Special Thanks
-
-- **[Fuwari](https://github.com/saicaca/fuwari)** by saicaca - The original template that this project is based on. Thank you for creating such a beautiful and functional template.
-- **[Yukina](https://github.com/WhitePaper233/yukina)** - Thanks for providing design inspiration and creativity that helped shape this project. Yukina is an elegant blog template that demonstrates excellent design principles and user experience.
-- **[Firefly](https://github.com/CuteLeaf/Firefly)** - Thanks for providing excellent layout design ideas. The dual sidebar layout, article dual-column grid layout, and some widget designs and implementations have enriched Mizuki's interface.
-- **[Twilight](https://github.com/spr-aachen/Twilight)** - Thanks for providing inspiration and technical support. Twilight's dynamic wallpaper modes switching system, responsive design and transition effects have greatly enhanced the user experience of Mizuki.
-
-## 🍀 Contributors
-
-Thanks to all contributors for their contributions to this project. If you have any questions or suggestions, please submit an [Issue](https://github.com/LyraVoid/Mizuki/issues) or [Pull Request](https://github.com/LyraVoid/Mizuki/pulls).
-
-<a href="https://github.com/LyraVoid/Mizuki/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=LyraVoid/Mizuki" />
-</a>
-
-## ⭐ Star History
-
-## [![Star History Chart](https://api.star-history.com/svg?repos=LyraVoid/Mizuki&type=Date)](https://star-history.com/#LyraVoid/Mizuki&Date)
-
-⭐ If you find this project helpful, please consider giving it a star!
+<p align="center">
+  <strong>Katelya · 思囿随笔</strong><br>
+  把折腾写成经验，把经历留作答案。
+</p>
