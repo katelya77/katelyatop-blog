@@ -11,6 +11,7 @@ const FORBIDDEN_CLAIMS = [
   /作为(?:一个|一名)\s*AI/i,
   /根据我的真实测试/,
 ];
+const DANGEROUS_MARKUP = /<\s*(?:script|iframe|object|embed)\b|javascript\s*:|data\s*:\s*text\/html|\bon(?:error|load|click)\s*=/i;
 
 export function chinaDate(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -116,6 +117,7 @@ export function validateArticle(article, { researchEntries = [], existingPosts =
   if (body.length < 2200) errors.push("body must contain at least 2200 characters");
   if (countHeadings(body) < 4) errors.push("body must contain at least four level-2 sections");
   if (countBlockquotes(body) > 6) errors.push("body contains too many blockquotes; summarize instead of quoting");
+  if (DANGEROUS_MARKUP.test(body)) errors.push("body contains active HTML or script-like markup");
 
   const engineeringSignals = [
     /原理|机制|架构|工作流|数据流|调用链/,
