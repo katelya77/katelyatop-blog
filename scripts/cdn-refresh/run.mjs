@@ -59,7 +59,7 @@ function addForcedHomeRefresh(plan, siteUrl, enabled) {
 
 export async function main(env = process.env) {
 	const baseSha = requireEnv(env, "BASE_SHA");
-	const headSha = requireEnv(env, "GITHUB_SHA");
+	const headSha = env.HEAD_SHA || requireEnv(env, "GITHUB_SHA");
 	const siteUrl = env.SITE_URL || "https://blog.katelya.top";
 
 	const diff = runGit([
@@ -127,7 +127,7 @@ export async function main(env = process.env) {
 		const result = await submitDogeRefresh({
 			rtype: "path",
 			urls: plan.paths,
-			siteUrl,
+				siteUrl,
 			accessKey: dogeAccessKey,
 			secretKey: dogeSecretKey,
 		});

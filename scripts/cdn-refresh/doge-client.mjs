@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 const API_ORIGIN = "https://api.dogecloud.com";
 const REFRESH_PATH = "/cdn/refresh/add.json";
+const DEFAULT_MAX_ATTEMPTS = 4;
 
 export function createAuthorization({ apiPath, body, accessKey, secretKey }) {
 	if (!apiPath || !accessKey || !secretKey) {
@@ -26,6 +27,17 @@ function assertSiteScope(urls, siteUrl) {
 	}
 }
 
+function isRetryable(response, payload) {
+	if (!response) return true;
+	if (response.status === 429 || response.status >= 500) return true;
+	const code = Number(payload?.code || 0);
+	return code === 429 || code >= 500;
+}
+
+function delayForAttempt(attempt) {
+	return Math.min(8_000, 750 * 2 ** Math.max(0, attempt - 1));
+}
+
 export async function submitDogeRefresh({
 	rtype,
 	urls,
@@ -33,6 +45,8 @@ export async function submitDogeRefresh({
 	accessKey,
 	secretKey,
 	fetchImpl = fetch,
+	sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+	maxAttempts = DEFAULT_MAX_ATTEMPTS,
 }) {
 	if (!["url", "path"].includes(rtype)) {
 		throw new Error(`Unsupported DogeCloud refresh type: ${rtype}`);
@@ -55,28 +69,41 @@ export async function submitDogeRefresh({
 		secretKey,
 	});
 
-	const response = await fetchImpl(`${API_ORIGIN}${REFRESH_PATH}`, {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded",
-			Authorization: authorization,
-		},
-		body,
-	});
+	let lastDetail = "unknown error";
+	for (let attempt = 1; attempt <= Math.max(1, maxAttempts); attempt += 1) {
+		let response = null;
+		let payload = null;
+		try {
+			response = await fetchImpl(`${API_ORIGIN}${REFRESH_PATH}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded",
+					Authorization: authorization,
+				},
+				body,
+			});
 
-	let payload;
-	try {
-		payload = await response.json();
-	} catch {
-		payload = null;
+			try {
+				payload = await response.json();
+			} catch {
+				payload = null;
+			}
+
+			if (response.ok && payload?.code === 200) {
+				const taskId = payload?.data?.task_id;
+				if (!taskId) throw new Error("DogeCloud API request failed: missing task_id");
+				return { taskId, attempts: attempt };
+			}
+
+			lastDetail = payload?.msg || `HTTP ${response.status}`;
+			if (!isRetryable(response, payload) || attempt === maxAttempts) break;
+		} catch (error) {
+			lastDetail = error?.message || String(error);
+			if (attempt === maxAttempts) break;
+		}
+
+		await sleep(delayForAttempt(attempt));
 	}
 
-	if (!response.ok || payload?.code !== 200) {
-		const detail = payload?.msg || `HTTP ${response.status}`;
-		throw new Error(`DogeCloud API request failed: ${detail}`);
-	}
-
-	const taskId = payload?.data?.task_id;
-	if (!taskId) throw new Error("DogeCloud API request failed: missing task_id");
-	return { taskId };
+	throw new Error(`DogeCloud API request failed after retries: ${lastDetail}`);
 }

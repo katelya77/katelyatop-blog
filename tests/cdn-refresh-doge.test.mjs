@@ -77,6 +77,30 @@ describe("DogeCloud refresh client", () => {
 		assert.equal(result.taskId, "TASK.PATH.1");
 	});
 
+	it("retries transient rate-limit and server failures before succeeding", async () => {
+		let calls = 0;
+		const waits = [];
+		const result = await submitDogeRefresh({
+			rtype: "url",
+			urls: ["https://blog.katelya.top/"],
+			siteUrl: "https://blog.katelya.top",
+			accessKey: "AK",
+			secretKey: "SK",
+			maxAttempts: 4,
+			sleep: async (ms) => waits.push(ms),
+			fetchImpl: async () => {
+				calls += 1;
+				if (calls === 1) return response({ code: 429, msg: "rate limited" }, false, 429);
+				if (calls === 2) return response({ code: 503, msg: "temporary" }, false, 503);
+				return response({ code: 200, data: { task_id: "TASK.RETRY.1" } });
+			},
+		});
+		assert.equal(result.taskId, "TASK.RETRY.1");
+		assert.equal(result.attempts, 3);
+		assert.equal(calls, 3);
+		assert.equal(waits.length, 2);
+	});
+
 	it("fails without leaking secrets when the API rejects the request", async () => {
 		const secret = "very-secret-value";
 		await assert.rejects(
