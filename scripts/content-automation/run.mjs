@@ -1,5 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { buildResearchBundle, discoverCandidates } from "./sources.mjs";
 import {
@@ -11,15 +12,9 @@ import {
   validateArticle,
 } from "./quality.mjs";
 
-const MODELS_ORIGIN = "https://models.github.ai";
 const POSTS_DIR = "src/content/posts";
 const MAX_MODEL_ATTEMPTS = 3;
-
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
+const DEFAULT_CF_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 function intEnv(name, fallback) {
   const value = Number.parseInt(process.env[name] || "", 10);
@@ -43,7 +38,7 @@ async function fetchJson(url, init = {}, retries = 3) {
       }
       if (response.ok) return payload;
       const retryable = response.status === 429 || response.status >= 500;
-      const detail = payload?.message || payload?.error?.message || `HTTP ${response.status}`;
+      const detail = payload?.errors?.[0]?.message || payload?.message || payload?.error?.message || `HTTP ${response.status}`;
       if (!retryable) throw new Error(detail);
       lastError = new Error(detail);
     } catch (error) {
@@ -54,55 +49,110 @@ async function fetchJson(url, init = {}, retries = 3) {
   throw lastError || new Error(`Request failed: ${url}`);
 }
 
-async function resolveModel(token) {
-  const configured = String(process.env.CONTENT_MODEL || "").trim();
-  const preferred = [configured, "openai/gpt-4.1", "openai/gpt-4o"].filter(Boolean);
-  try {
-    const catalog = await fetchJson(`${MODELS_ORIGIN}/catalog/models`, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": "2026-03-10",
-      },
-    }, 2);
-    const ids = (Array.isArray(catalog) ? catalog : catalog?.models || [])
-      .map((model) => model?.id || model?.name)
-      .filter(Boolean);
-    for (const candidate of preferred) if (ids.includes(candidate)) return candidate;
-    const openAi = ids.find((id) => /^openai\//.test(id) && /(gpt-5|gpt-4\.1|gpt-4o)/i.test(id));
-    if (openAi) return openAi;
-    if (ids[0]) return ids[0];
-  } catch (error) {
-    console.warn(`GitHub Models catalog unavailable: ${error?.message || error}`);
-  }
-  return preferred[0] || "openai/gpt-4.1";
-}
-
 function stripJsonFence(value = "") {
   const text = String(value).trim();
   const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   return fenced ? fenced[1].trim() : text;
 }
 
-async function callModel({ token, model, messages }) {
-  const payload = await fetchJson(`${MODELS_ORIGIN}/inference/chat/completions`, {
+function parseGeneratedJson(rawOutput, provider) {
+  const cleaned = stripJsonFence(rawOutput);
+  try {
+    return JSON.parse(cleaned);
+  } catch (error) {
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      try {
+        return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+      } catch {
+        // Fall through to a provider-specific parse error.
+      }
+    }
+    throw new Error(`${provider} returned invalid JSON: ${error?.message || error}`);
+  }
+}
+
+function copilotArgs(prompt) {
+  const args = ["-p", prompt, "-s", "--no-ask-user"];
+  const model = String(process.env.CONTENT_MODEL || "").trim();
+  if (model) args.push("--model", model);
+  return args;
+}
+
+function callCopilot(prompt) {
+  if (!process.env.GITHUB_TOKEN && !process.env.COPILOT_GITHUB_TOKEN) {
+    throw new Error("Copilot provider unavailable: missing GITHUB_TOKEN/COPILOT_GITHUB_TOKEN");
+  }
+  const output = execFileSync("copilot", copilotArgs(prompt), {
+    encoding: "utf8",
+    env: process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 12 * 1024 * 1024,
+    timeout: 8 * 60 * 1000,
+  });
+  if (!String(output).trim()) throw new Error("Copilot CLI returned empty output");
+  return parseGeneratedJson(output, "GitHub Copilot CLI");
+}
+
+function validateCloudflareModel(model) {
+  if (!/^@cf\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/.test(model)) {
+    throw new Error(`Invalid Cloudflare Workers AI model identifier: ${model}`);
+  }
+  return model;
+}
+
+async function callCloudflare(prompt) {
+  const accountId = String(process.env.CF_ACCOUNT_ID || "").trim();
+  const apiToken = String(process.env.CF_API_TOKEN || "").trim();
+  if (!accountId || !apiToken) {
+    throw new Error("Workers AI fallback unavailable: missing CF_ACCOUNT_ID/CF_API_TOKEN");
+  }
+  const model = validateCloudflareModel(String(process.env.CF_CONTENT_MODEL || DEFAULT_CF_MODEL).trim());
+  const endpoint = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${model}`;
+  const payload = await fetchJson(endpoint, {
     method: "POST",
     headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${apiToken}`,
       "Content-Type": "application/json",
-      "X-GitHub-Api-Version": "2026-03-10",
     },
     body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.35,
+      messages: [
+        {
+          role: "system",
+          content: "You are a rigorous Chinese technical editor. Use only supplied research evidence for factual claims. Return valid JSON only.",
+        },
+        { role: "user", content: prompt },
+      ],
       max_tokens: 7_500,
+      temperature: 0.35,
     }),
   });
-  const content = payload?.choices?.[0]?.message?.content;
-  if (!content) throw new Error(`GitHub Models returned no content for ${model}`);
-  return JSON.parse(stripJsonFence(content));
+  const content = payload?.result?.response
+    || payload?.result?.choices?.[0]?.message?.content
+    || payload?.result?.output_text;
+  if (!content) throw new Error(`Cloudflare Workers AI returned no text for ${model}`);
+  return { article: parseGeneratedJson(content, `Cloudflare Workers AI ${model}`), model };
+}
+
+async function callGenerator(prompt) {
+  const errors = [];
+  try {
+    const article = callCopilot(prompt);
+    return { article, provider: "github-copilot", model: String(process.env.CONTENT_MODEL || "default").trim() || "default" };
+  } catch (error) {
+    errors.push(`Copilot: ${error?.message || error}`);
+    console.warn(`Copilot generation failed; trying Workers AI fallback: ${error?.message || error}`);
+  }
+
+  try {
+    const fallback = await callCloudflare(prompt);
+    return { article: fallback.article, provider: "cloudflare-workers-ai", model: fallback.model };
+  } catch (error) {
+    errors.push(`Workers AI: ${error?.message || error}`);
+  }
+
+  throw new Error(`No AI generation provider succeeded. ${errors.join(" | ")}`);
 }
 
 function researchText(entries) {
@@ -170,28 +220,26 @@ ${researchText(entries)}
 }`;
 }
 
-async function generateOne({ token, model, date, entries, existingPosts }) {
+async function generateOne({ date, entries, existingPosts }) {
   let previousErrors = [];
+  let providerMeta = null;
   for (let attempt = 1; attempt <= MAX_MODEL_ATTEMPTS; attempt += 1) {
-    const article = await callModel({
-      token,
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "You are a rigorous Chinese technical editor. Use only supplied research evidence for factual claims. Return valid JSON only.",
-        },
-        {
-          role: "user",
-          content: editorialPrompt({ date, entries, existingPosts, previousErrors }),
-        },
-      ],
-    });
+    let article;
+    try {
+      const generated = await callGenerator(editorialPrompt({ date, entries, existingPosts, previousErrors }));
+      article = generated.article;
+      providerMeta = { provider: generated.provider, model: generated.model };
+    } catch (error) {
+      previousErrors = [`generation provider failure: ${error?.message || error}`];
+      console.warn(`Generation attempt ${attempt} failed: ${previousErrors[0]}`);
+      continue;
+    }
+
     const validation = validateArticle(article, { researchEntries: entries, existingPosts });
-    const filePath = join(POSTS_DIR, `${article.slug}.md`);
-    if (existsSync(filePath)) validation.errors.push(`slug already exists: ${article.slug}`);
+    const filePath = join(POSTS_DIR, `${article.slug || "invalid-slug"}.md`);
+    if (article.slug && existsSync(filePath)) validation.errors.push(`slug already exists: ${article.slug}`);
     if (validation.errors.length === 0) {
-      return { article, validation };
+      return { article, validation, providerMeta };
     }
     previousErrors = validation.errors;
     console.warn(`Generated article failed quality gate (attempt ${attempt}): ${previousErrors.join("; ")}`);
@@ -201,12 +249,11 @@ async function generateOne({ token, model, date, entries, existingPosts }) {
 
 function writeResult(resultPath, payload) {
   if (!resultPath) return;
-  mkdirSync(new URL(".", `file://${resultPath}`).pathname, { recursive: true });
+  mkdirSync(dirname(resultPath), { recursive: true });
   writeFileSync(resultPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 export async function main() {
-  const token = requireEnv("GITHUB_TOKEN");
   const targetDailyCount = Math.max(1, Math.min(4, intEnv("TARGET_DAILY_COUNT", 1)));
   const resultPath = process.env.CONTENT_RESULT_PATH || "";
   const date = chinaDate();
@@ -230,13 +277,11 @@ export async function main() {
     throw new Error(`Research bundle is too weak for publication: ${entries.length} entries`);
   }
 
-  const model = await resolveModel(token);
-  console.log(`Using GitHub Models model: ${model}`);
   const created = [];
   const mutablePosts = [...existingPosts];
 
   for (let index = 0; index < missingCount; index += 1) {
-    const { article, validation } = await generateOne({ token, model, date, entries, existingPosts: mutablePosts });
+    const { article, validation, providerMeta } = await generateOne({ date, entries, existingPosts: mutablePosts });
     const imageUrl = chooseOfficialImage(validation.evidence);
     const content = renderPost(article, { date, evidence: validation.evidence, imageUrl });
     const filePath = join(POSTS_DIR, `${article.slug}.md`).replaceAll("\\", "/");
@@ -247,6 +292,8 @@ export async function main() {
       slug: article.slug,
       category: article.category,
       imageUrl,
+      provider: providerMeta?.provider || "unknown",
+      model: providerMeta?.model || "unknown",
       evidence: validation.evidence.map((entry) => ({ id: entry.id, title: entry.title, url: entry.url, kind: entry.kind })),
     });
     mutablePosts.push({ path: filePath, title: article.title, published: date, draft: false });
@@ -260,7 +307,6 @@ export async function main() {
     files: created.map((item) => item.file),
     titles: created.map((item) => item.title),
     articles: created,
-    model,
     skipped: false,
   };
   writeResult(resultPath, result);
