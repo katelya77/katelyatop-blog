@@ -1,0 +1,240 @@
+name: Automated Content Publisher
+
+on:
+  schedule:
+    # GitHub cron uses UTC. These map to 09:00, 18:00 and a 23:00 recovery window in Asia/Shanghai.
+    - cron: "0 1 * * *"
+    - cron: "0 10 * * *"
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+    inputs:
+      target_daily_count:
+        description: "Minimum number of posts that should exist for today (Asia/Shanghai)"
+        required: false
+        default: "2"
+        type: choice
+        options: ["1", "2", "3", "4"]
+  push:
+    branches: [ master ]
+    paths:
+      - ".github/workflows/content-publisher.yml"
+      - "scripts/content-automation/**"
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  models: read
+
+concurrency:
+  group: automated-content-publisher
+  cancel-in-progress: false
+
+env:
+  SITE_URL: https://blog.katelya.top
+  CF_PAGES_PROJECT: katelyatop-blog
+  ENABLE_CONTENT_SYNC: false
+
+jobs:
+  publish:
+    name: Research, validate, publish and verify production
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve daily target
+        id: target
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_TARGET: ${{ inputs.target_daily_count }}
+        run: |
+          set -euo pipefail
+          target="2"
+          if [[ "$EVENT_NAME" == "schedule" && "$EVENT_SCHEDULE" == "0 1 * * *" ]]; then
+            target="1"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" && -n "${MANUAL_TARGET:-}" ]]; then
+            target="$MANUAL_TARGET"
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "Daily publishing target for this run: $target"
+
+      - name: Discover sources and generate missing articles
+        id: generate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CONTENT_MODEL: ${{ vars.BLOG_CONTENT_MODEL }}
+          TARGET_DAILY_COUNT: ${{ steps.target.outputs.target }}
+          CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
+        run: |
+          set -euo pipefail
+          node scripts/content-automation/run.mjs
+          created="$(jq -r '.createdCount' "$CONTENT_RESULT_PATH")"
+          titles="$(jq -r '.titles | join(" / ")' "$CONTENT_RESULT_PATH")"
+          echo "created_count=$created" >> "$GITHUB_OUTPUT"
+          echo "titles=$titles" >> "$GITHUB_OUTPUT"
+          echo "Generated article count: $created"
+
+      - name: Commit generated article set locally
+        if: steps.generate.outputs.created_count != '0'
+        id: local_commit
+        shell: bash
+        env:
+          CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
+        run: |
+          set -euo pipefail
+          base_sha="$(git rev-parse HEAD)"
+          branch="automation/content-$(date -u +%Y%m%d)-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "Katelya Content Bot"
+          git config user.email "123220557+katelya77@users.noreply.github.com"
+          git switch -c "$branch"
+          while IFS= read -r file; do
+            git add -- "$file"
+          done < <(jq -r '.files[]' "$CONTENT_RESULT_PATH")
+          git commit -m "content: automated technical editorial update"
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Biome quality check
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm exec biome check scripts/content-automation tests/content-automation.test.mjs scripts/cdn-refresh src
+
+      - name: Repository tests
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm test
+
+      - name: Astro type and content schema check
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm astro check
+
+      - name: Production build check
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm build
+
+      - name: Install Chrome for deterministic browser regressions
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm exec playwright install --with-deps chrome
+
+      - name: Playwright UI regression gate
+        if: steps.generate.outputs.created_count != '0'
+        run: pnpm exec playwright test --grep-invert "swup round trip closes panels and syncs is-home-hero"
+        env:
+          CI: true
+
+      - name: Ensure validation did not mutate tracked files
+        if: steps.generate.outputs.created_count != '0'
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          git status --porcelain
+
+      - name: Push branch and create pull request
+        if: steps.generate.outputs.created_count != '0'
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.local_commit.outputs.branch }}
+          TITLES: ${{ steps.generate.outputs.titles }}
+          CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
+        run: |
+          set -euo pipefail
+          git push origin "$BRANCH"
+          body_file="${RUNNER_TEMP}/content-pr-body.md"
+          {
+            echo "## Automated editorial release"
+            echo
+            echo "Generated from live LINUX DO / NodeLoc discovery plus primary-source verification."
+            echo
+            echo "### Articles"
+            jq -r '.articles[] | "- **\(.title)** — `\(.file)`"' "$CONTENT_RESULT_PATH"
+            echo
+            echo "### Gates executed before PR"
+            echo "- Biome"
+            echo "- repository tests"
+            echo "- Astro check"
+            echo "- production build"
+            echo "- deterministic Playwright regressions"
+            echo
+            echo "After merge this workflow waits for the matching Cloudflare Pages production deployment, submits the DogeCloud refresh plan, then verifies the public article URLs."
+          } > "$body_file"
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "content: automated daily technical update" --body-file "$body_file")"
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+
+      - name: Squash merge validated content PR
+        if: steps.generate.outputs.created_count != '0'
+        id: merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          set -euo pipefail
+          gh pr merge "$PR_URL" --repo "$GITHUB_REPOSITORY" --squash --delete-branch --subject "content: automated daily technical update"
+          git fetch origin master
+          head_sha="$(git rev-parse origin/master)"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "Merged production SHA: $head_sha"
+
+      - name: Checkout merged master state
+        if: steps.generate.outputs.created_count != '0'
+        run: |
+          set -euo pipefail
+          git switch master
+          git reset --hard origin/master
+
+      - name: Wait for Cloudflare Pages and refresh DogeCloud CDN
+        if: steps.generate.outputs.created_count != '0'
+        env:
+          BASE_SHA: ${{ steps.local_commit.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.merge.outputs.head_sha }}
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          DOGE_ACCESS_KEY: ${{ secrets.DOGE_ACCESS_KEY }}
+          DOGE_SECRET_KEY: ${{ secrets.DOGE_SECRET_KEY }}
+          FORCE_HOME_REFRESH: "true"
+        run: node scripts/cdn-refresh/run.mjs
+
+      - name: Verify generated articles are publicly visible
+        if: steps.generate.outputs.created_count != '0'
+        env:
+          CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
+        run: node scripts/content-automation/verify-public.mjs
+
+      - name: Verify existing production when no article was needed
+        if: steps.generate.outputs.created_count == '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --retry-all-errors --max-time 20 \
+            --header 'Cache-Control: no-cache' \
+            "$SITE_URL/" >/dev/null
+          echo "Daily content target is already satisfied and the public homepage is healthy."
+
+      - name: Open failure issue with run evidence
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title="[automation] Content publisher failed $(date -u +%Y-%m-%d)"
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The automated content/deployment pipeline failed. Run: ${run_url}\n\nCheck source discovery, GitHub Models, validation, Cloudflare Pages deployment, and DogeCloud refresh in that order."
