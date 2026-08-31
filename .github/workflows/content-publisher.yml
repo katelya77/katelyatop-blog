@@ -29,7 +29,7 @@ permissions:
 
 concurrency:
   group: automated-content-publisher
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   SITE_URL: https://blog.katelya.top
