@@ -19,6 +19,24 @@ function response({ json, text = "", status = 200, contentType = "application/js
   };
 }
 
+function validArticle() {
+  const longSection = "这部分解释架构原理、调用链和工程边界，并给出验证方式与取舍。".repeat(35);
+  return {
+    title: "从 Agent Harness 到恢复机制：长任务自动化为什么需要状态边界",
+    slug: "agent-harness-recovery-state-boundaries",
+    category: "AI前沿",
+    tags: ["Agent", "Harness", "自动化", "状态管理", "工程实践"],
+    description: "从任务拆分、状态管理、失败恢复与验证机制四个层面，分析长时间运行的 Agent 自动化为什么不能只依赖一次模型调用。",
+    evidenceIds: ["S1", "S2"],
+    body: `## 为什么长任务会失败\n\n${longSection}\n\n## 架构与状态流\n\n${longSection}\n\n\`\`\`text\nplan -> execute -> verify -> recover\n\`\`\`\n\n## 如何验证\n\n${longSection}\n\n## 失败边界与取舍\n\n${longSection}\n\n## 结论\n\n${longSection}`,
+  };
+}
+
+const researchEntries = [
+  { id: "S1", kind: "community", title: "讨论", url: "https://linux.do/t/1" },
+  { id: "S2", kind: "primary", title: "Official docs", url: "https://docs.example.com/agent" },
+];
+
 describe("content automation source discovery", () => {
   it("deduplicates repeated community topics while keeping the strongest candidate", () => {
     const result = dedupeCandidates([
@@ -82,20 +100,7 @@ describe("content automation quality gates", () => {
   });
 
   it("accepts a structured evidence-backed article and renders valid frontmatter", () => {
-    const longSection = "这部分解释架构原理、调用链和工程边界，并给出验证方式与取舍。".repeat(35);
-    const article = {
-      title: "从 Agent Harness 到恢复机制：长任务自动化为什么需要状态边界",
-      slug: "agent-harness-recovery-state-boundaries",
-      category: "AI前沿",
-      tags: ["Agent", "Harness", "自动化", "状态管理", "工程实践"],
-      description: "从任务拆分、状态管理、失败恢复与验证机制四个层面，分析长时间运行的 Agent 自动化为什么不能只依赖一次模型调用。",
-      evidenceIds: ["S1", "S2"],
-      body: `## 为什么长任务会失败\n\n${longSection}\n\n## 架构与状态流\n\n${longSection}\n\n\`\`\`text\nplan -> execute -> verify -> recover\n\`\`\`\n\n## 如何验证\n\n${longSection}\n\n## 失败边界与取舍\n\n${longSection}\n\n## 结论\n\n${longSection}`,
-    };
-    const researchEntries = [
-      { id: "S1", kind: "community", title: "讨论", url: "https://linux.do/t/1" },
-      { id: "S2", kind: "primary", title: "Official docs", url: "https://docs.example.com/agent" },
-    ];
+    const article = validArticle();
     const validation = validateArticle(article, { researchEntries, existingPosts: [] });
     assert.deepEqual(validation.errors, []);
     const rendered = renderPost(article, {
@@ -107,5 +112,12 @@ describe("content automation quality gates", () => {
     assert.match(rendered, /draft: false/);
     assert.match(rendered, /## 参考资料/);
     assert.match(rendered, /https:\/\/docs\.example\.com\/agent/);
+  });
+
+  it("rejects active HTML emitted through untrusted research prompt injection", () => {
+    const article = validArticle();
+    article.body += "\n\n<script>fetch('https://evil.example')</script>";
+    const validation = validateArticle(article, { researchEntries, existingPosts: [] });
+    assert.ok(validation.errors.some((error) => error.includes("active HTML")));
   });
 });
