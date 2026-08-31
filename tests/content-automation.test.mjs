@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
 import { dedupeCandidates, discoverCandidates } from "../scripts/content-automation/sources.mjs";
@@ -34,7 +35,7 @@ function validArticle() {
 
 const researchEntries = [
   { id: "S1", kind: "community", title: "讨论", url: "https://linux.do/t/1" },
-  { id: "S2", kind: "primary", title: "Official docs", url: "https://docs.example.com/agent" },
+  { id: "S2", kind: "primary", title: "Official docs", url: "https://docs.example.com/agent", parentId: "S1" },
 ];
 
 describe("content automation source discovery", () => {
@@ -82,6 +83,27 @@ describe("content automation source discovery", () => {
     assert.ok(candidates.some((candidate) => candidate.title === "Agent 新实践"));
     assert.ok(candidates.some((candidate) => candidate.title === "Official release"));
   });
+
+  it("falls back to LINUX DO RSS when Discourse JSON is blocked", async () => {
+    const now = Date.parse("2026-08-31T12:00:00Z");
+    const fetchImpl = async (url) => {
+      const value = String(url);
+      if (value.includes("linux.do") && value.endsWith(".json")) {
+        return response({ json: {}, status: 403 });
+      }
+      if (value.includes("linux.do") && value.includes(".rss")) {
+        return response({
+          text: "<rss><channel><item><title>LINUX DO Coding Agent 精华</title><link>https://linux.do/t/topic/123</link><pubDate>Mon, 31 Aug 2026 10:00:00 GMT</pubDate></item></channel></rss>",
+          contentType: "application/rss+xml",
+        });
+      }
+      return response({ json: {}, status: 503 });
+    };
+    const candidates = await discoverCandidates({ fetchImpl, now, limit: 10 });
+    const linux = candidates.find((candidate) => candidate.title === "LINUX DO Coding Agent 精华");
+    assert.ok(linux, "LINUX DO RSS should keep the source alive when JSON gets 403");
+    assert.equal(linux.sourceKind, "community");
+  });
 });
 
 describe("content automation quality gates", () => {
@@ -119,5 +141,33 @@ describe("content automation quality gates", () => {
     article.body += "\n\n<script>fetch('https://evil.example')</script>";
     const validation = validateArticle(article, { researchEntries, existingPosts: [] });
     assert.ok(validation.errors.some((error) => error.includes("active HTML")));
+  });
+
+  it("rejects another article from the same evidence root in one publishing batch", () => {
+    const article = validArticle();
+    const validation = validateArticle(article, {
+      researchEntries,
+      existingPosts: [],
+      forbiddenEvidenceRootIds: new Set(["S1"]),
+    });
+    assert.ok(
+      validation.errors.some((error) => error.includes("evidence topic already used")),
+      "the second article must select a different root topic",
+    );
+  });
+});
+
+describe("content publisher workflow contract", () => {
+  it("publishes validated content without requiring Actions to create its own PR", async () => {
+    const workflow = await readFile(
+      new URL("../.github/workflows/content-publisher.yml", import.meta.url),
+      "utf8",
+    );
+    assert.doesNotMatch(workflow, /gh pr create/);
+    assert.doesNotMatch(workflow, /gh pr merge/);
+    assert.match(workflow, /git rev-parse origin\/master/);
+    assert.match(workflow, /git push origin HEAD:master/);
+    assert.match(workflow, /Wait for Cloudflare Pages and refresh DogeCloud CDN/);
+    assert.match(workflow, /Verify generated articles are publicly visible/);
   });
 });
