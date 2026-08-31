@@ -135,16 +135,10 @@ jobs:
         if: steps.generate.outputs.created_count != '0'
         run: pnpm build
 
-      - name: Install Chrome for deterministic browser regressions
-        if: steps.generate.outputs.created_count != '0'
-        run: pnpm exec playwright install --with-deps chrome
-
-      - name: Playwright UI regression gate
-        if: steps.generate.outputs.created_count != '0'
-        run: pnpm exec playwright test --grep-invert "swup round trip closes panels and syncs is-home-hero"
-        env:
-          CI: true
-
+      # Generated releases only stage Markdown content files. Full UI Playwright
+      # coverage remains in the normal PR Lint workflow; keeping Chrome out of
+      # the publishing critical path avoids browser-runner failures blocking
+      # otherwise valid daily content. Public URLs are verified after deploy.
       - name: Ensure validation did not mutate tracked files
         if: steps.generate.outputs.created_count != '0'
         run: |
@@ -172,12 +166,13 @@ jobs:
             echo "### Articles"
             jq -r '.articles[] | "- **\(.title)** — `\(.file)` — provider: `\(.provider)` / `\(.model)`"' "$CONTENT_RESULT_PATH"
             echo
-            echo "### Gates executed before PR"
+            echo "### Content gates executed before PR"
             echo "- Biome"
             echo "- repository tests"
-            echo "- Astro check"
+            echo "- Astro content/schema check"
             echo "- production build"
-            echo "- deterministic Playwright regressions"
+            echo
+            echo "Full UI Playwright coverage remains in the repository PR workflow and is not part of the content-only publisher critical path."
             echo
             echo "After merge this workflow waits for the matching Cloudflare Pages production deployment, submits the DogeCloud refresh plan, then verifies the public article URLs."
           } > "$body_file"
