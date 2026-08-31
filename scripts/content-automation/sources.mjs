@@ -4,8 +4,12 @@ const MAX_EXCERPT_CHARS = 5_000;
 const SOURCE_ENDPOINTS = [
   { name: "LINUX DO latest", kind: "discourse", origin: "https://linux.do", url: "https://linux.do/latest.json", weight: 1.2 },
   { name: "LINUX DO top", kind: "discourse", origin: "https://linux.do", url: "https://linux.do/top.json?period=daily", weight: 1.35 },
+  { name: "LINUX DO latest RSS", kind: "feed", sourceKind: "community", url: "https://linux.do/latest.rss", weight: 1.15 },
+  { name: "LINUX DO top RSS", kind: "feed", sourceKind: "community", url: "https://linux.do/top.rss?period=daily", weight: 1.3 },
   { name: "NodeLoc latest", kind: "discourse", origin: "https://www.nodeloc.com", url: "https://www.nodeloc.com/latest.json", weight: 1.05 },
   { name: "NodeLoc top", kind: "discourse", origin: "https://www.nodeloc.com", url: "https://www.nodeloc.com/top.json?period=daily", weight: 1.2 },
+  { name: "NodeLoc latest RSS", kind: "feed", sourceKind: "community", url: "https://www.nodeloc.com/latest.rss", weight: 1 },
+  { name: "NodeLoc top RSS", kind: "feed", sourceKind: "community", url: "https://www.nodeloc.com/top.rss?period=daily", weight: 1.15 },
   { name: "Cloudflare Blog", kind: "feed", url: "https://blog.cloudflare.com/rss/", weight: 1.3 },
   { name: "vLLM Releases", kind: "feed", url: "https://github.com/vllm-project/vllm/releases.atom", weight: 1.3 },
   { name: "SGLang Releases", kind: "feed", url: "https://github.com/sgl-project/sglang/releases.atom", weight: 1.3 },
@@ -96,6 +100,7 @@ function parseDiscourse(payload, source, nowMs, maxAgeHours) {
         title: stripHtml(topic.title || topic.fancy_title || ""),
         url: topicUrl(source.origin, topic),
         detailUrl: discourseDetailUrl(source.origin, topic),
+        detailMode: "discourse-json",
         source: source.name,
         sourceKind: "community",
         publishedAt,
@@ -133,8 +138,9 @@ function parseFeed(xml, source, nowMs, maxAgeHours) {
         title,
         url,
         detailUrl: url,
+        detailMode: "page",
         source: source.name,
-        sourceKind: "primary",
+        sourceKind: source.sourceKind || "primary",
         publishedAt,
         score: source.weight * (recent * 3 + Math.max(0, 1 - index * 0.03)),
         tags: [],
@@ -249,7 +255,7 @@ export async function buildResearchBundle(candidates, { fetchImpl = fetch, maxCa
     let image = "";
 
     try {
-      if (candidate.sourceKind === "community" && candidate.detailUrl) {
+      if (candidate.detailMode === "discourse-json" && candidate.detailUrl) {
         const response = await fetchWithTimeout(candidate.detailUrl, { fetchImpl });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const payload = await response.json();

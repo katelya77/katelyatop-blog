@@ -6,6 +6,10 @@ const source = await readFile(
 	new URL("../src/components/widgets/music-player/constants.ts", import.meta.url),
 	"utf8",
 );
+const storeSource = await readFile(
+	new URL("../src/stores/musicPlayerStore.ts", import.meta.url),
+	"utf8",
+);
 
 const tracks = [
 	["我知道", "By2", "https://pan.katelya.eu.org/file/CQACAgUAAyEGAATamr0MAAIBmWnkdRKm9F0wcm2xAk_unmpV_2NrAAI0IAACpSIgV8ByeA0mOfmjOwQ.mp3"],
@@ -61,4 +65,13 @@ test("local playlist contains the exact supplied 21 tracks in order", () => {
 		(source.match(/cover:\s*SHARED_PLAYLIST_COVER/g) || []).length,
 		21,
 	);
+});
+
+test("music metadata can initialize without starting a K-Vault audio request", () => {
+	assert.match(storeSource, /this\.audio\.preload\s*=\s*"none"/);
+	assert.match(storeSource, /private selectSong\(/);
+	assert.match(storeSource, /private ensureCurrentSongLoaded\(/);
+	assert.doesNotMatch(storeSource, /this\.loadSong\(this\.state\.playlist\[0\],\s*false\)/);
+	assert.match(storeSource, /toggle\(\): void[\s\S]*ensureCurrentSongLoaded\(true\)/);
+	assert.match(storeSource, /play\(\): void[\s\S]*ensureCurrentSongLoaded\(true\)/);
 });

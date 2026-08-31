@@ -7,6 +7,7 @@ import {
   chinaDate,
   chooseOfficialImage,
   countPublishedForDate,
+  evidenceRootId,
   listExistingPosts,
   renderPost,
   validateArticle,
@@ -202,7 +203,7 @@ function editorialPrompt({ date, entries, existingPosts, previousErrors = [] }) 
 9. category 从 AI前沿、技术实践、DevOps、网络、开源、工程札记 中选择最贴切的一项。
 10. tags 4-10 个，避免堆砌。
 
-最近已经发布的文章标题，禁止重复选题：
+最近已经发布或在本批次生成的文章标题，禁止重复选题：
 ${recentTitleList(existingPosts) || "（暂无）"}
 ${errorText}
 研究材料：
@@ -220,13 +221,22 @@ ${researchText(entries)}
 }`;
 }
 
-async function generateOne({ date, entries, existingPosts }) {
+async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRootIds = new Set() }) {
   let previousErrors = [];
   let providerMeta = null;
+  const availableEntries = entries.filter(
+    (entry) => !forbiddenEvidenceRootIds.has(evidenceRootId(entry)),
+  );
+  if (availableEntries.length < 2 || !availableEntries.some((entry) => entry.kind === "primary")) {
+    throw new Error("Not enough distinct research evidence remains for another article in this batch");
+  }
+
   for (let attempt = 1; attempt <= MAX_MODEL_ATTEMPTS; attempt += 1) {
     let article;
     try {
-      const generated = await callGenerator(editorialPrompt({ date, entries, existingPosts, previousErrors }));
+      const generated = await callGenerator(
+        editorialPrompt({ date, entries: availableEntries, existingPosts, previousErrors }),
+      );
       article = generated.article;
       providerMeta = { provider: generated.provider, model: generated.model };
     } catch (error) {
@@ -235,7 +245,11 @@ async function generateOne({ date, entries, existingPosts }) {
       continue;
     }
 
-    const validation = validateArticle(article, { researchEntries: entries, existingPosts });
+    const validation = validateArticle(article, {
+      researchEntries: entries,
+      existingPosts,
+      forbiddenEvidenceRootIds,
+    });
     const filePath = join(POSTS_DIR, `${article.slug || "invalid-slug"}.md`);
     if (article.slug && existsSync(filePath)) validation.errors.push(`slug already exists: ${article.slug}`);
     if (validation.errors.length === 0) {
@@ -279,13 +293,23 @@ export async function main() {
 
   const created = [];
   const mutablePosts = [...existingPosts];
+  const usedEvidenceRootIds = new Set();
 
   for (let index = 0; index < missingCount; index += 1) {
-    const { article, validation, providerMeta } = await generateOne({ date, entries, existingPosts: mutablePosts });
+    const { article, validation, providerMeta } = await generateOne({
+      date,
+      entries,
+      existingPosts: mutablePosts,
+      forbiddenEvidenceRootIds: usedEvidenceRootIds,
+    });
     const imageUrl = chooseOfficialImage(validation.evidence);
     const content = renderPost(article, { date, evidence: validation.evidence, imageUrl });
     const filePath = join(POSTS_DIR, `${article.slug}.md`).replaceAll("\\", "/");
     writeFileSync(filePath, content, "utf8");
+    for (const evidence of validation.evidence) {
+      const rootId = evidenceRootId(evidence);
+      if (rootId) usedEvidenceRootIds.add(rootId);
+    }
     created.push({
       file: filePath,
       title: article.title,

@@ -22,7 +22,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
   issues: write
   actions: read
   copilot-requests: write
@@ -144,68 +143,34 @@ jobs:
         run: |
           set -euo pipefail
           git reset --hard HEAD
-          git status --porcelain
+          test -z "$(git status --porcelain)"
 
-      - name: Push branch and create pull request
+      - name: Publish validated commit to master
         if: steps.generate.outputs.created_count != '0'
-        id: pr
+        id: publish
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ steps.local_commit.outputs.branch }}
-          CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
+          BASE_SHA: ${{ steps.local_commit.outputs.base_sha }}
         run: |
           set -euo pipefail
-          git push origin "$BRANCH"
-          body_file="${RUNNER_TEMP}/content-pr-body.md"
-          {
-            echo "## Automated editorial release"
-            echo
-            echo "Generated from live LINUX DO / NodeLoc discovery plus primary-source verification."
-            echo
-            echo "### Articles"
-            jq -r '.articles[] | "- **\(.title)** — `\(.file)` — provider: `\(.provider)` / `\(.model)`"' "$CONTENT_RESULT_PATH"
-            echo
-            echo "### Content gates executed before PR"
-            echo "- Biome"
-            echo "- repository tests"
-            echo "- Astro content/schema check"
-            echo "- production build"
-            echo
-            echo "Full UI Playwright coverage remains in the repository PR workflow and is not part of the content-only publisher critical path."
-            echo
-            echo "After merge this workflow waits for the matching Cloudflare Pages production deployment, submits the DogeCloud refresh plan, then verifies the public article URLs."
-          } > "$body_file"
-          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base master --head "$BRANCH" --title "content: automated daily technical update" --body-file "$body_file")"
-          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
-
-      - name: Squash merge validated content PR
-        if: steps.generate.outputs.created_count != '0'
-        id: merge
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ steps.pr.outputs.url }}
-        run: |
-          set -euo pipefail
-          gh pr merge "$PR_URL" --repo "$GITHUB_REPOSITORY" --squash --delete-branch --subject "content: automated daily technical update"
           git fetch origin master
-          head_sha="$(git rev-parse origin/master)"
+          remote_sha="$(git rev-parse origin/master)"
+          echo "Remote master before publish: $remote_sha"
+          echo "Validated base SHA: $BASE_SHA"
+          if [[ "$remote_sha" != "$BASE_SHA" ]]; then
+            echo "master advanced while content was being generated; refusing a stale publish so the next recovery run can regenerate safely." >&2
+            exit 1
+          fi
+          head_sha="$(git rev-parse HEAD)"
+          git push origin HEAD:master
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
-          echo "Merged production SHA: $head_sha"
-
-      - name: Checkout merged master state
-        if: steps.generate.outputs.created_count != '0'
-        run: |
-          set -euo pipefail
-          git switch master
-          git reset --hard origin/master
+          echo "Published validated production SHA: $head_sha"
 
       - name: Wait for Cloudflare Pages and refresh DogeCloud CDN
         if: steps.generate.outputs.created_count != '0'
         env:
           BASE_SHA: ${{ steps.local_commit.outputs.base_sha }}
-          HEAD_SHA: ${{ steps.merge.outputs.head_sha }}
+          HEAD_SHA: ${{ steps.publish.outputs.head_sha }}
           CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           DOGE_ACCESS_KEY: ${{ secrets.DOGE_ACCESS_KEY }}
@@ -237,4 +202,4 @@ jobs:
           set -euo pipefail
           title="[automation] Content publisher failed $(date -u +%Y-%m-%d)"
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The automated content/deployment pipeline failed. Run: ${run_url}\n\nCheck source discovery, Copilot/Workers AI generation, validation, Cloudflare Pages deployment, and DogeCloud refresh in that order."
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The automated content/deployment pipeline failed. Run: ${run_url}\n\nCheck source discovery, Copilot/Workers AI generation, validation, direct master publish, Cloudflare Pages deployment, and DogeCloud refresh in that order."
