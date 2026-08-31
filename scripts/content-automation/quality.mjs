@@ -97,7 +97,14 @@ function normalizeEvidenceIds(ids = []) {
   return [...new Set((Array.isArray(ids) ? ids : []).map(String).filter(Boolean))];
 }
 
-export function validateArticle(article, { researchEntries = [], existingPosts = [] } = {}) {
+export function evidenceRootId(entry) {
+  return String(entry?.parentId || entry?.id || "");
+}
+
+export function validateArticle(
+  article,
+  { researchEntries = [], existingPosts = [], forbiddenEvidenceRootIds = new Set() } = {},
+) {
   const errors = [];
   const title = String(article?.title || "").trim();
   const slug = String(article?.slug || "").trim();
@@ -150,6 +157,15 @@ export function validateArticle(article, { researchEntries = [], existingPosts =
   if (validEvidence.length < 2) errors.push("article must cite at least two retrieved research entries");
   if (!validEvidence.some((entry) => entry.kind === "primary" || !isCommunityUrl(entry.url))) {
     errors.push("article needs at least one non-community primary/reference source");
+  }
+
+  const reusedRoots = new Set(
+    validEvidence
+      .map(evidenceRootId)
+      .filter((rootId) => rootId && forbiddenEvidenceRootIds.has(rootId)),
+  );
+  if (reusedRoots.size > 0) {
+    errors.push(`evidence topic already used in this publishing batch: ${[...reusedRoots].join(", ")}`);
   }
 
   const primaryFacts = validEvidence.filter((entry) => entry.kind === "primary").length;
