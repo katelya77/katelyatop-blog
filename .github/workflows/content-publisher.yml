@@ -25,7 +25,7 @@ permissions:
   pull-requests: write
   issues: write
   actions: read
-  models: read
+  copilot-requests: write
 
 concurrency:
   group: automated-content-publisher
@@ -59,6 +59,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install GitHub Copilot CLI
+        run: npm install --global @github/copilot@latest
+
       - name: Resolve daily target
         id: target
         shell: bash
@@ -82,6 +85,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CONTENT_MODEL: ${{ vars.BLOG_CONTENT_MODEL }}
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_CONTENT_MODEL: ${{ vars.BLOG_CF_CONTENT_MODEL }}
           TARGET_DAILY_COUNT: ${{ steps.target.outputs.target }}
           CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
         run: |
@@ -153,7 +159,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.local_commit.outputs.branch }}
-          TITLES: ${{ steps.generate.outputs.titles }}
           CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
         run: |
           set -euo pipefail
@@ -165,7 +170,7 @@ jobs:
             echo "Generated from live LINUX DO / NodeLoc discovery plus primary-source verification."
             echo
             echo "### Articles"
-            jq -r '.articles[] | "- **\(.title)** — `\(.file)`"' "$CONTENT_RESULT_PATH"
+            jq -r '.articles[] | "- **\(.title)** — `\(.file)` — provider: `\(.provider)` / `\(.model)`"' "$CONTENT_RESULT_PATH"
             echo
             echo "### Gates executed before PR"
             echo "- Biome"
@@ -237,4 +242,4 @@ jobs:
           set -euo pipefail
           title="[automation] Content publisher failed $(date -u +%Y-%m-%d)"
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The automated content/deployment pipeline failed. Run: ${run_url}\n\nCheck source discovery, GitHub Models, validation, Cloudflare Pages deployment, and DogeCloud refresh in that order."
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The automated content/deployment pipeline failed. Run: ${run_url}\n\nCheck source discovery, Copilot/Workers AI generation, validation, Cloudflare Pages deployment, and DogeCloud refresh in that order."
