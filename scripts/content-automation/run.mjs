@@ -26,6 +26,14 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function sanitizeText(value = "") {
+  // argv cannot contain NUL bytes. Other non-whitespace C0 controls are also
+  // useless in research excerpts and can destabilize model/provider payloads.
+  return String(value)
+    .replaceAll("\u0000", "")
+    .replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+}
+
 async function fetchJson(url, init = {}, retries = 3) {
   let lastError;
   for (let attempt = 0; attempt < retries; attempt += 1) {
@@ -51,7 +59,7 @@ async function fetchJson(url, init = {}, retries = 3) {
 }
 
 function stripJsonFence(value = "") {
-  const text = String(value).trim();
+  const text = sanitizeText(value).trim();
   const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   return fenced ? fenced[1].trim() : text;
 }
@@ -67,7 +75,7 @@ function parseGeneratedJson(rawOutput, provider) {
       try {
         return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
       } catch {
-        // Fall through to a provider-specific parse error.
+        // Fall through to provider-specific error.
       }
     }
     throw new Error(`${provider} returned invalid JSON: ${error?.message || error}`);
@@ -75,7 +83,7 @@ function parseGeneratedJson(rawOutput, provider) {
 }
 
 function copilotArgs(prompt) {
-  const args = ["-p", prompt, "-s", "--no-ask-user"];
+  const args = ["-p", sanitizeText(prompt), "-s", "--no-ask-user"];
   const model = String(process.env.CONTENT_MODEL || "").trim();
   if (model) args.push("--model", model);
   return args;
@@ -106,32 +114,23 @@ function validateCloudflareModel(model) {
 async function callCloudflare(prompt) {
   const accountId = String(process.env.CF_ACCOUNT_ID || "").trim();
   const apiToken = String(process.env.CF_API_TOKEN || "").trim();
-  if (!accountId || !apiToken) {
-    throw new Error("Workers AI fallback unavailable: missing CF_ACCOUNT_ID/CF_API_TOKEN");
-  }
+  if (!accountId || !apiToken) throw new Error("Workers AI fallback unavailable: missing CF_ACCOUNT_ID/CF_API_TOKEN");
+
   const model = validateCloudflareModel(String(process.env.CF_CONTENT_MODEL || DEFAULT_CF_MODEL).trim());
   const endpoint = `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${model}`;
   const payload = await fetchJson(endpoint, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: [
-        {
-          role: "system",
-          content: "You are a rigorous Chinese technical editor. Use only supplied research evidence for factual claims. Return valid JSON only.",
-        },
-        { role: "user", content: prompt },
+        { role: "system", content: "You are a rigorous Chinese technical editor. Use only supplied research evidence for factual claims. Return valid JSON only." },
+        { role: "user", content: sanitizeText(prompt) },
       ],
       max_tokens: 7_500,
       temperature: 0.35,
     }),
   });
-  const content = payload?.result?.response
-    || payload?.result?.choices?.[0]?.message?.content
-    || payload?.result?.output_text;
+  const content = payload?.result?.response || payload?.result?.choices?.[0]?.message?.content || payload?.result?.output_text;
   if (!content) throw new Error(`Cloudflare Workers AI returned no text for ${model}`);
   return { article: parseGeneratedJson(content, `Cloudflare Workers AI ${model}`), model };
 }
@@ -145,14 +144,12 @@ async function callGenerator(prompt) {
     errors.push(`Copilot: ${error?.message || error}`);
     console.warn(`Copilot generation failed; trying Workers AI fallback: ${error?.message || error}`);
   }
-
   try {
     const fallback = await callCloudflare(prompt);
     return { article: fallback.article, provider: "cloudflare-workers-ai", model: fallback.model };
   } catch (error) {
     errors.push(`Workers AI: ${error?.message || error}`);
   }
-
   throw new Error(`No AI generation provider succeeded. ${errors.join(" | ")}`);
 }
 
@@ -160,11 +157,11 @@ function researchText(entries) {
   let total = 0;
   const chunks = [];
   for (const entry of entries.slice(0, 18)) {
-    const text = String(entry.text || "").slice(0, 3_200);
+    const text = sanitizeText(entry.text || "").slice(0, 3_200);
     const chunk = [
-      `[${entry.id}] kind=${entry.kind} source=${entry.source}`,
-      `title=${entry.title}`,
-      `url=${entry.url}`,
+      `[${sanitizeText(entry.id)}] kind=${sanitizeText(entry.kind)} source=${sanitizeText(entry.source)}`,
+      `title=${sanitizeText(entry.title)}`,
+      `url=${sanitizeText(entry.url)}`,
       `content=${text}`,
     ].join("\n");
     if (total + chunk.length > 30_000) break;
@@ -175,19 +172,15 @@ function researchText(entries) {
 }
 
 function recentTitleList(posts) {
-  return posts
-    .slice()
-    .sort((a, b) => String(b.published).localeCompare(String(a.published)))
-    .slice(0, 40)
-    .map((post) => `- ${post.title}`)
-    .join("\n");
+  return posts.slice().sort((a, b) => String(b.published).localeCompare(String(a.published))).slice(0, 40)
+    .map((post) => `- ${sanitizeText(post.title)}`).join("\n");
 }
 
 function editorialPrompt({ date, entries, existingPosts, previousErrors = [] }) {
   const errorText = previousErrors.length > 0
-    ? `\n上一版未通过质量门槛，请修正：\n${previousErrors.map((error) => `- ${error}`).join("\n")}\n`
+    ? `\n上一版未通过质量门槛，请修正：\n${previousErrors.map((error) => `- ${sanitizeText(error)}`).join("\n")}\n`
     : "";
-  return `你是 Katelya · 思囿随笔的技术编辑。今天是 ${date}（Asia/Shanghai）。
+  return sanitizeText(`你是 Katelya · 思囿随笔的技术编辑。今天是 ${date}（Asia/Shanghai）。
 
 你的任务：从下面的真实检索材料中选择一个信息密度最高、与近期博客不重复的主题，写成一篇中文原创技术博客。LINUX DO / NodeLoc 只能作为选题雷达与真实问题样本；涉及版本、发布、架构、API、性能、安全等事实时，必须以材料中的官方文档、项目仓库、Release、厂商博客等一手来源为依据。材料不足的事实不要写。
 
@@ -218,15 +211,13 @@ ${researchText(entries)}
   "description": "40-220 字摘要",
   "evidenceIds": ["S1", "S2"],
   "body": "完整 Markdown 正文"
-}`;
+}`);
 }
 
 async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRootIds = new Set() }) {
   let previousErrors = [];
   let providerMeta = null;
-  const availableEntries = entries.filter(
-    (entry) => !forbiddenEvidenceRootIds.has(evidenceRootId(entry)),
-  );
+  const availableEntries = entries.filter((entry) => !forbiddenEvidenceRootIds.has(evidenceRootId(entry)));
   if (availableEntries.length < 2 || !availableEntries.some((entry) => entry.kind === "primary")) {
     throw new Error("Not enough distinct research evidence remains for another article in this batch");
   }
@@ -234,9 +225,7 @@ async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRoot
   for (let attempt = 1; attempt <= MAX_MODEL_ATTEMPTS; attempt += 1) {
     let article;
     try {
-      const generated = await callGenerator(
-        editorialPrompt({ date, entries: availableEntries, existingPosts, previousErrors }),
-      );
+      const generated = await callGenerator(editorialPrompt({ date, entries: availableEntries, existingPosts, previousErrors }));
       article = generated.article;
       providerMeta = { provider: generated.provider, model: generated.model };
     } catch (error) {
@@ -245,16 +234,10 @@ async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRoot
       continue;
     }
 
-    const validation = validateArticle(article, {
-      researchEntries: entries,
-      existingPosts,
-      forbiddenEvidenceRootIds,
-    });
+    const validation = validateArticle(article, { researchEntries: entries, existingPosts, forbiddenEvidenceRootIds });
     const filePath = join(POSTS_DIR, `${article.slug || "invalid-slug"}.md`);
     if (article.slug && existsSync(filePath)) validation.errors.push(`slug already exists: ${article.slug}`);
-    if (validation.errors.length === 0) {
-      return { article, validation, providerMeta };
-    }
+    if (validation.errors.length === 0) return { article, validation, providerMeta };
     previousErrors = validation.errors;
     console.warn(`Generated article failed quality gate (attempt ${attempt}): ${previousErrors.join("; ")}`);
   }
@@ -283,9 +266,7 @@ export async function main() {
   }
 
   const candidates = await discoverCandidates({ maxAgeHours: 96, limit: 28 });
-  if (candidates.length < 3) {
-    throw new Error(`Not enough live research candidates: ${candidates.length}`);
-  }
+  if (candidates.length < 3) throw new Error(`Not enough live research candidates: ${candidates.length}`);
   const entries = await buildResearchBundle(candidates, { maxCandidates: 10, maxPrimaryLinks: 3 });
   if (entries.length < 4 || !entries.some((entry) => entry.kind === "primary")) {
     throw new Error(`Research bundle is too weak for publication: ${entries.length} entries`);
@@ -294,7 +275,6 @@ export async function main() {
   const created = [];
   const mutablePosts = [...existingPosts];
   const usedEvidenceRootIds = new Set();
-
   for (let index = 0; index < missingCount; index += 1) {
     const { article, validation, providerMeta } = await generateOne({
       date,
