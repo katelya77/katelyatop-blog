@@ -28,22 +28,29 @@ async function fetchPage(url) {
   return { response, body: await response.text() };
 }
 
-async function waitForArticle({ url, title, attempts = 15, delayMs = 12_000 }) {
+async function waitForPage({ url, title, attempts = 15, delayMs = 12_000 }) {
   let lastStatus = 0;
+  let lastError = "";
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       const { response, body } = await fetchPage(url);
       lastStatus = response.status;
-      if (response.ok && htmlText(body).includes(title)) {
-        console.log(`Public article verified: ${url}`);
+      if (response.ok && (!title || htmlText(body).includes(title))) {
+        console.log(`Public page verified: ${url}`);
         return;
       }
     } catch (error) {
-      console.warn(`Public verification attempt ${attempt} failed for ${url}: ${error?.message || error}`);
+      lastError = error?.message || String(error);
+      console.warn(`Public verification attempt ${attempt} failed for ${url}: ${lastError}`);
     }
     if (attempt < attempts) await sleep(delayMs);
   }
-  throw new Error(`Public article did not become visible: ${url} (last HTTP ${lastStatus || "network error"})`);
+  const detail = lastStatus ? `last HTTP ${lastStatus}` : `network error${lastError ? `: ${lastError}` : ""}`;
+  throw new Error(`Public page did not become visible: ${url} (${detail})`);
+}
+
+async function waitForArticle({ url, title, attempts = 15, delayMs = 12_000 }) {
+  return waitForPage({ url, title, attempts, delayMs });
 }
 
 export async function main() {
@@ -52,10 +59,7 @@ export async function main() {
   if (!resultPath) throw new Error("CONTENT_RESULT_PATH is required");
   const result = JSON.parse(readFileSync(resultPath, "utf8"));
 
-  const homepage = await fetchPage(`${siteUrl}/`);
-  if (!homepage.response.ok) {
-    throw new Error(`Homepage verification failed: HTTP ${homepage.response.status}`);
-  }
+  await waitForPage({ url: `${siteUrl}/`, attempts: 5, delayMs: 5_000 });
 
   for (const article of result.articles || []) {
     const url = `${siteUrl}/posts/${article.slug}/`;
