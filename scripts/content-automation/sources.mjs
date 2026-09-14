@@ -10,10 +10,12 @@ const SOURCE_ENDPOINTS = [
   { name: "NodeLoc top", kind: "discourse", origin: "https://www.nodeloc.com", url: "https://www.nodeloc.com/top.json?period=daily", weight: 1.2 },
   { name: "NodeLoc latest RSS", kind: "feed", sourceKind: "community", url: "https://www.nodeloc.com/latest.rss", weight: 1 },
   { name: "NodeLoc top RSS", kind: "feed", sourceKind: "community", url: "https://www.nodeloc.com/top.rss?period=daily", weight: 1.15 },
-  { name: "Cloudflare Blog", kind: "feed", url: "https://blog.cloudflare.com/rss/", weight: 1.3 },
-  { name: "vLLM Releases", kind: "feed", url: "https://github.com/vllm-project/vllm/releases.atom", weight: 1.3 },
-  { name: "SGLang Releases", kind: "feed", url: "https://github.com/sgl-project/sglang/releases.atom", weight: 1.3 },
-  { name: "Qwen3 Releases", kind: "feed", url: "https://github.com/QwenLM/Qwen3/releases.atom", weight: 1.25 },
+  { name: "GitHub Changelog", kind: "feed", sourceKind: "primary", url: "https://github.blog/changelog/feed/", weight: 1.4 },
+  { name: "Cloudflare Changelog", kind: "feed", sourceKind: "primary", url: "https://developers.cloudflare.com/changelog/rss/index.xml", weight: 1.4 },
+  { name: "Cloudflare Blog", kind: "feed", sourceKind: "primary", url: "https://blog.cloudflare.com/rss/", weight: 1.3 },
+  { name: "vLLM Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/vllm-project/vllm/releases.atom", weight: 1.3 },
+  { name: "SGLang Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/sgl-project/sglang/releases.atom", weight: 1.3 },
+  { name: "Qwen3 Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/QwenLM/Qwen3/releases.atom", weight: 1.25 },
 ];
 
 const COMMUNITY_HOSTS = new Set(["linux.do", "www.nodeloc.com", "nodeloc.com"]);
