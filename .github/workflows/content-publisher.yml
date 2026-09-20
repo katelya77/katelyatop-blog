@@ -87,9 +87,9 @@ jobs:
           CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           # Copilot quota can be exhausted independently of Actions. Keep the
-          # fallback on the newer long-form Workers AI model instead of the
-          # older GLM-4.7 Flash path that returned empty responses in recovery.
-          CF_CONTENT_MODEL: "@cf/zai-org/glm-5.3-flash"
+          # recovery model on a Workers Free-compatible model so fallback does
+          # not itself require a paid Workers subscription or prepaid credits.
+          CF_CONTENT_MODEL: "@cf/zai-org/glm-4.7-flash"
           TARGET_DAILY_COUNT: ${{ steps.target.outputs.target }}
           CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
         run: |
