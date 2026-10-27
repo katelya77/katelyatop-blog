@@ -2,10 +2,13 @@ name: Automated Content Publisher
 
 on:
   schedule:
-    # GitHub cron uses UTC. These map to 09:00, 18:00 and a 23:00 recovery window in Asia/Shanghai.
-    - cron: "0 1 * * *"
-    - cron: "0 10 * * *"
-    - cron: "0 15 * * *"
+    # UTC: 09:17, 14:33, 18:27, 23:37 Asia/Shanghai.
+    # Avoid :00 cron congestion; afternoon and late-night windows recover
+    # missed publication runs without creating empty contribution commits.
+    - cron: "17 1 * * *"
+    - cron: "33 6 * * *"
+    - cron: "27 10 * * *"
+    - cron: "37 15 * * *"
   workflow_dispatch:
     inputs:
       target_daily_count:
@@ -71,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           target="2"
-          if [[ "$EVENT_NAME" == "schedule" && "$EVENT_SCHEDULE" == "0 1 * * *" ]]; then
+          if [[ "$EVENT_NAME" == "schedule" && ( "$EVENT_SCHEDULE" == "17 1 * * *" || "$EVENT_SCHEDULE" == "33 6 * * *" ) ]]; then
             target="1"
           elif [[ "$EVENT_NAME" == "workflow_dispatch" && -n "${MANUAL_TARGET:-}" ]]; then
             target="$MANUAL_TARGET"
