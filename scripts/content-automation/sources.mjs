@@ -16,9 +16,41 @@ const SOURCE_ENDPOINTS = [
   { name: "vLLM Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/vllm-project/vllm/releases.atom", weight: 1.3 },
   { name: "SGLang Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/sgl-project/sglang/releases.atom", weight: 1.3 },
   { name: "Qwen3 Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/QwenLM/Qwen3/releases.atom", weight: 1.25 },
+  { name: "OpenAI Codex Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/openai/codex/releases.atom", weight: 1.35 },
+  { name: "Claude Code Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/anthropics/claude-code/releases.atom", weight: 1.35 },
+  { name: "Qwen Code Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/QwenLM/qwen-code/releases.atom", weight: 1.25 },
+  { name: "Ollama Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/ollama/ollama/releases.atom", weight: 1.2 },
+  { name: "llama.cpp Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/ggml-org/llama.cpp/releases.atom", weight: 1.2 },
+  { name: "Astro Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/withastro/astro/releases.atom", weight: 1.1 },
+  { name: "Bun Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/oven-sh/bun/releases.atom", weight: 1.1 },
+  { name: "Cloudflare Workers SDK Releases", kind: "feed", sourceKind: "primary", url: "https://github.com/cloudflare/workers-sdk/releases.atom", weight: 1.1 },
 ];
 
 const COMMUNITY_HOSTS = new Set(["linux.do", "www.nodeloc.com", "nodeloc.com"]);
+
+// An external link in a community post is not automatically an official source.
+// Only explicitly known first-party publishers or an upstream GitHub project
+// qualify as primary evidence; other links remain useful secondary references.
+const FIRST_PARTY_HOSTS = new Set([
+  "github.com", "docs.github.com", "github.blog", "developers.cloudflare.com",
+  "blog.cloudflare.com", "openai.com", "platform.openai.com", "developers.openai.com",
+  "anthropic.com", "docs.anthropic.com", "docs.claude.com", "ai.google.dev",
+  "blog.google", "huggingface.co", "modelcontextprotocol.io", "vllm.ai",
+  "docs.vllm.ai", "qwen.ai", "docs.qwen.ai", "deepseek.com",
+  "api-docs.deepseek.com", "x.ai", "vercel.com", "nextjs.org",
+  "docs.docker.com", "nodejs.org", "astro.build", "docs.astro.build",
+  "developer.mozilla.org", "docs.python.org", "pytorch.org",
+  "docs.pytorch.org", "docs.nvidia.com", "developer.nvidia.com",
+]);
+
+export function isPrimaryPublisherUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && FIRST_PARTY_HOSTS.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 export function stripHtml(value = "") {
   return String(value)
@@ -166,6 +198,28 @@ export function dedupeCandidates(candidates = []) {
   return output;
 }
 
+// Round-robin selection makes the first research bundle cover multiple projects
+// rather than taking only a single community's daily top posts.
+export function diversifyCandidates(candidates = [], limit = 24) {
+  const queues = new Map();
+  const ordered = [...candidates].sort((a, b) => b.score - a.score);
+  for (const candidate of ordered) {
+    const name = String(candidate.source || "");
+    const group = name.startsWith("LINUX DO") ? "linux.do"
+      : name.startsWith("NodeLoc") ? "nodeloc.com" : name;
+    if (!queues.has(group)) queues.set(group, []);
+    queues.get(group).push(candidate);
+  }
+  const output = [];
+  while (output.length < limit && [...queues.values()].some((items) => items.length > 0)) {
+    for (const items of queues.values()) {
+      if (output.length >= limit) break;
+      if (items.length) output.push(items.shift());
+    }
+  }
+  return output;
+}
+
 export async function discoverCandidates({
   fetchImpl = fetch,
   now = Date.now(),
@@ -188,7 +242,7 @@ export async function discoverCandidates({
       console.warn(`Source unavailable: ${source.name}: ${error?.message || error}`);
     }
   }
-  return dedupeCandidates(discovered).slice(0, limit);
+  return diversifyCandidates(dedupeCandidates(discovered), limit);
 }
 
 function extractLinks(html = "", baseUrl = "") {
@@ -295,7 +349,7 @@ export async function buildResearchBundle(candidates, { fetchImpl = fetch, maxCa
         const page = await loadPage(url, fetchImpl);
         entries.push({
           id: `S${sequence++}`,
-          kind: "primary",
+          kind: isPrimaryPublisherUrl(url) ? "primary" : "reference",
           title: new URL(url).hostname,
           url,
           source: new URL(url).hostname,
