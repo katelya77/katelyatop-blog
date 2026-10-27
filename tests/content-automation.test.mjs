@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 
-import { dedupeCandidates, discoverCandidates } from "../scripts/content-automation/sources.mjs";
+import {
+  dedupeCandidates, discoverCandidates, diversifyCandidates, isPrimaryPublisherUrl,
+} from "../scripts/content-automation/sources.mjs";
+import {
+  hasAttributedContentCommitOnUtcDate, requiredArticleTarget,
+} from "../scripts/content-automation/contributions.mjs";
 import {
   countPublishedForDate,
   renderPost,
@@ -39,6 +44,30 @@ const researchEntries = [
 ];
 
 describe("content automation source discovery", () => {
+  it("recognizes known official publishers without trusting arbitrary community links", () => {
+    assert.equal(isPrimaryPublisherUrl("https://github.com/openai/codex/releases"), true);
+    assert.equal(isPrimaryPublisherUrl("https://developers.cloudflare.com/changelog/"), true);
+    assert.equal(isPrimaryPublisherUrl("https://random-coupon.example/blog/ai"), false);
+    assert.equal(isPrimaryPublisherUrl("http://github.com/openai/codex"), false);
+    assert.equal(isPrimaryPublisherUrl("https://github.com.evil.example/repo"), false);
+  });
+
+  it("diversifies community and official release sources in the first research bundle", () => {
+    const candidates = [
+      { source: "LINUX DO latest", score: 100 },
+      { source: "LINUX DO top", score: 99 },
+      { source: "LINUX DO latest RSS", score: 98 },
+      { source: "LINUX DO top RSS", score: 97 },
+      { source: "Codex Releases", score: 60 },
+      { source: "NodeLoc latest", score: 55 },
+      { source: "Cloudflare Changelog", score: 50 },
+    ];
+    const top = diversifyCandidates(candidates, 4);
+    assert.equal(top.length, 4);
+    assert.deepEqual(top.map((item) => item.source), [
+      "LINUX DO latest", "Codex Releases", "NodeLoc latest", "Cloudflare Changelog",
+    ]);
+  });
   it("deduplicates repeated community topics while keeping the strongest candidate", () => {
     const result = dedupeCandidates([
       { title: "Agent Harness 实践", url: "https://linux.do/t/1", score: 1 },
@@ -143,6 +172,28 @@ describe("content automation quality gates", () => {
     assert.ok(validation.errors.some((error) => error.includes("active HTML")));
   });
 
+  it("rejects a secondary advertisement as the only non-community evidence", () => {
+    const article = validArticle();
+    const evidence = [
+      { id: "S1", kind: "community", title: "community", url: "https://linux.do/t/1" },
+      { id: "S2", kind: "reference", title: "marketing", url: "https://coupon.example/promo" },
+    ];
+    const check = validateArticle(article, { researchEntries: evidence, existingPosts: [] });
+    assert.ok(check.errors.some((item) => item.includes("first-party primary")));
+  });
+
+  it("rejects new titles built entirely from the same existing evidence pair", () => {
+    const article = validArticle();
+    const check = validateArticle(article, {
+      researchEntries,
+      existingPosts: [{
+        title: "Another unrelated headline",
+        referenceUrls: ["https://linux.do/t/1", "https://docs.example.com/agent"],
+      }],
+    });
+    assert.ok(check.errors.some((item) => item.includes("same evidence")));
+  });
+
   it("rejects another article from the same evidence root in one publishing batch", () => {
     const article = validArticle();
     const validation = validateArticle(article, {
@@ -154,6 +205,24 @@ describe("content automation quality gates", () => {
       validation.errors.some((error) => error.includes("evidence topic already used")),
       "the second article must select a different root topic",
     );
+  });
+});
+
+describe("UTC contribution accounting", () => {
+  it("credits only the owner's linked noreply identity and actual UTC author date", () => {
+    const log = [
+      "123220557+katelya77@users.noreply.github.com\t2026-10-26T23:59:59+00:00",
+      "41898282+github-actions[bot]@users.noreply.github.com\t2026-10-27T06:00:00+00:00",
+    ].join("\n");
+    assert.equal(hasAttributedContentCommitOnUtcDate(log, "2026-10-27"), false);
+    assert.equal(hasAttributedContentCommitOnUtcDate(log, "2026-10-26"), true);
+    assert.equal(hasAttributedContentCommitOnUtcDate("123220557+katelya77@users.noreply.github.com\t2026-10-27T01:30:00+00:00", "2026-10-27"), true);
+  });
+
+  it("requests a real extra article when China-time quota is met but UTC contribution is absent", () => {
+    assert.equal(requiredArticleTarget({ targetDailyCount: 2, currentCount: 2, hasUtcContribution: false }), 3);
+    assert.equal(requiredArticleTarget({ targetDailyCount: 2, currentCount: 2, hasUtcContribution: true }), 2);
+    assert.equal(requiredArticleTarget({ targetDailyCount: 2, currentCount: 4, hasUtcContribution: false }), 4);
   });
 });
 
@@ -169,5 +238,7 @@ describe("content publisher workflow contract", () => {
     assert.match(workflow, /git push origin HEAD:master/);
     assert.match(workflow, /Wait for Cloudflare Pages and refresh DogeCloud CDN/);
     assert.match(workflow, /Verify generated articles are publicly visible/);
+    assert.match(workflow, /cron: "17 1 \* \* \*"/);
+    assert.match(workflow, /cron: "37 15 \* \* \*"/);
   });
 });

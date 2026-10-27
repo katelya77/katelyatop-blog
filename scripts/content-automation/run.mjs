@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { buildResearchBundle, discoverCandidates } from "./sources.mjs";
+import { hasUtcContentContribution, requiredArticleTarget } from "./contributions.mjs";
 import {
   chinaDate,
   chooseOfficialImage,
@@ -251,12 +252,21 @@ function writeResult(resultPath, payload) {
 }
 
 export async function main() {
-  const targetDailyCount = Math.max(1, Math.min(4, intEnv("TARGET_DAILY_COUNT", 1)));
+  const scheduledTarget = Math.max(1, Math.min(4, intEnv("TARGET_DAILY_COUNT", 1)));
   const resultPath = process.env.CONTENT_RESULT_PATH || "";
   const date = chinaDate();
   const existingPosts = listExistingPosts();
   const currentCount = countPublishedForDate(existingPosts, date);
+  const hasUtcContribution = hasUtcContentContribution();
+  const targetDailyCount = requiredArticleTarget({
+    targetDailyCount: scheduledTarget,
+    currentCount,
+    hasUtcContribution,
+  });
   const missingCount = Math.max(0, targetDailyCount - currentCount);
+  if (!hasUtcContribution) {
+    console.log("No attributed content commit yet on the current UTC calendar day; will publish substantive research if evidence passes quality checks.");
+  }
 
   if (missingCount === 0) {
     const result = { date, targetDailyCount, currentCount, createdCount: 0, files: [], titles: [], skipped: true };

@@ -51,6 +51,8 @@ export function listExistingPosts(postsDir = POSTS_DIR) {
         title: frontmatter.title || basename(entry.name, extname(entry.name)),
         published: frontmatter.published || "",
         draft: frontmatter.draft === "true",
+        referenceUrls: [...(content.split(/^## 参考资料\s*$/m)[1] || "").matchAll(/\]\((https:\/\/[^)]+)\)/g)]
+          .map((match) => match[1].replace(/\/$/, "")),
       });
     }
   };
@@ -155,8 +157,21 @@ export function validateArticle(
   const evidenceById = new Map(researchEntries.map((entry) => [String(entry.id), entry]));
   const validEvidence = evidenceIds.map((id) => evidenceById.get(id)).filter(Boolean);
   if (validEvidence.length < 2) errors.push("article must cite at least two retrieved research entries");
-  if (!validEvidence.some((entry) => entry.kind === "primary" || !isCommunityUrl(entry.url))) {
-    errors.push("article needs at least one non-community primary/reference source");
+  if (!validEvidence.some((entry) => entry.kind === "primary")) {
+    errors.push("article needs at least one verified first-party primary source");
+  }
+
+  // Reusing an entire evidence pair on consecutive days is not new research,
+  // even if an LLM invents a different title for the same source material.
+  const currentUrls = new Set(validEvidence.map((entry) => String(entry.url || "").replace(/\/$/, "")).filter(Boolean));
+  for (const post of existingPosts) {
+    const previousUrls = new Set(post.referenceUrls || []);
+    if (currentUrls.size < 2 || previousUrls.size < 2) continue;
+    const overlap = [...currentUrls].filter((url) => previousUrls.has(url)).length;
+    if (overlap >= 2 && overlap / Math.min(currentUrls.size, previousUrls.size) >= 0.8) {
+      errors.push(`article reuses essentially the same evidence as existing post: ${post.title}`);
+      break;
+    }
   }
 
   const reusedRoots = new Set(
@@ -193,7 +208,7 @@ export function renderPost(article, { date, evidence = [], imageUrl = "" } = {})
 
 export function chooseOfficialImage(evidence = []) {
   for (const entry of evidence) {
-    if (!entry.image || isCommunityUrl(entry.url)) continue;
+    if (!entry.image || entry.kind !== "primary" || isCommunityUrl(entry.url)) continue;
     try {
       const image = new URL(entry.image);
       if (image.protocol === "https:") return image.toString();
