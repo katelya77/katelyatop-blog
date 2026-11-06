@@ -133,13 +133,15 @@ const stats = [
 	},
 ];
 
-const filterTabs = githubProjectCategories.map((category) => ({
-	...category,
-	count:
-		category.value === "all"
-			? featuredRepositories.length
-			: featuredRepositories.filter((repo) => repo.category === category.value).length,
-}));
+const filterTabs = githubProjectCategories
+	.map((category) => ({
+		...category,
+		count:
+			category.value === "all"
+				? featuredRepositories.length
+				: featuredRepositories.filter((repo) => repo.category === category.value).length,
+	}))
+	.filter((category) => category.value === "all" || category.count > 0);
 
 const eventLabels: Record<string, string> = {
 	PushEvent: "推送了代码",
