@@ -48,7 +48,8 @@
 - Hero、波浪、文章标题与导航栏的几何关系优化
 - Desktop / iPad / Mobile 响应式适配
 - 文章目录、阅读进度、代码块、数学公式与图片浏览体验
-- 项目页、时间线等个人内容页面
+- 项目页、时间线与独立 GitHub 开发者展示页（`/github/`）
+- GitHub 公开仓库、Stars、公开事件的构建期静态同步与降级展示
 - Pagefind 本地搜索、RSS 与 Sitemap
 - Twikoo / Giscus 等评论能力的可配置接入
 - 面向真实浏览器的 Playwright UI 回归测试
@@ -225,6 +226,8 @@ Cloudflare Pages 自动构建与发布
 6. 代码片段优先使用允许引用的官方示例、开源代码或自己的实现。
 
 如果未来加入自动化内容工作流，也会以“**采集公开事实与参考资料 → 研究归纳 → 原创撰写 → 自动检查 → PR 审核 → 发布**”为边界，而不是自动搬运完整文章。
+
+历史 ChatGPT 对话和 Memory 不会被 GitHub Actions 直接读取。经过抽象、去标识化并允许公开的主题摘要统一放在 `editorial/public-context.json`，自动化系统只把已批准摘要用于选题灵感，事实仍必须由公开资料支持。原始聊天记录、个人资料、凭据、内部地址和私有项目细节不得进入该文件。具体规则见 [`docs/editorial-privacy.md`](./docs/editorial-privacy.md)。
 
 ## Public Repository 安全说明
 
