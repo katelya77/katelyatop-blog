@@ -58,7 +58,17 @@ describe("CDN refresh workflow contract", () => {
 		assert.match(source, /buildRefreshPlan/);
 		assert.match(source, /waitForPagesDeployment/);
 		assert.match(source, /submitDogeRefresh/);
+		assert.match(source, /waitForDogeRefresh/);
 		assert.match(source, /core\.quotePath=false/);
 		assert.doesNotMatch(source, /submitDogeRefresh\([^)]*_astro/s);
 	});
+	it("verifies the GitHub showcase through the production domain after CDN refresh", () => {
+		const workflow = read(".github/workflows/doge-cdn-refresh.yml");
+		assert.match(workflow, /Verify GitHub showcase through the production CDN/);
+		assert.ok(workflow.includes("$SITE_URL/github/"));
+		assert.match(workflow, /github-showcase-shell/);
+		assert.match(workflow, /ONE DATASET/);
+		assert.match(workflow, /切换你的视觉世界/);
+	});
+
 });

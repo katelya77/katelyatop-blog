@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 import { waitForPagesDeployment } from "./cloudflare-pages.mjs";
-import { submitDogeRefresh } from "./doge-client.mjs";
+import { submitDogeRefresh, waitForDogeRefresh } from "./doge-client.mjs";
 import { buildRefreshPlan } from "./refresh-plan.mjs";
 
 export function parseGitDiff(output) {
@@ -122,6 +122,7 @@ export async function main(env = process.env) {
 			secretKey: dogeSecretKey,
 		});
 		tasks.push({ type: "url", taskId: result.taskId });
+		console.log("DogeCloud url refresh task created: " + result.taskId);
 	}
 	if (plan.paths.length > 0) {
 		const result = await submitDogeRefresh({
@@ -132,12 +133,23 @@ export async function main(env = process.env) {
 			secretKey: dogeSecretKey,
 		});
 		tasks.push({ type: "path", taskId: result.taskId });
+		console.log("DogeCloud path refresh task created: " + result.taskId);
 	}
 
-	for (const task of tasks) {
-		console.log(`DogeCloud ${task.type} refresh task created: ${task.taskId}`);
-	}
-	return { skipped: false, plan, tasks, deployment };
+	const completedTasks = await Promise.all(
+		tasks.map(async (task) => {
+			const completion = await waitForDogeRefresh({
+				taskId: task.taskId,
+				accessKey: dogeAccessKey,
+				secretKey: dogeSecretKey,
+			});
+			console.log(
+				`DogeCloud ${task.type} refresh completed: ${task.taskId} (${completion.count} target(s), ${completion.attempts} check(s)).`,
+			);
+			return { ...task, status: "done", count: completion.count, attempts: completion.attempts };
+		}),
+	);
+	return { skipped: false, plan, tasks: completedTasks, deployment };
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
