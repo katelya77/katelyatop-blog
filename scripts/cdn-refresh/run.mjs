@@ -122,6 +122,7 @@ export async function main(env = process.env) {
 			secretKey: dogeSecretKey,
 		});
 		tasks.push({ type: "url", taskId: result.taskId });
+		console.log("DogeCloud url refresh task created: " + result.taskId);
 	}
 	if (plan.paths.length > 0) {
 		const result = await submitDogeRefresh({
@@ -132,6 +133,7 @@ export async function main(env = process.env) {
 			secretKey: dogeSecretKey,
 		});
 		tasks.push({ type: "path", taskId: result.taskId });
+		console.log("DogeCloud path refresh task created: " + result.taskId);
 	}
 
 	const completedTasks = await Promise.all(
