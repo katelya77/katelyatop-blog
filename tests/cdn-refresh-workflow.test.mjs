@@ -63,7 +63,7 @@ describe("CDN refresh workflow contract", () => {
 		assert.doesNotMatch(source, /submitDogeRefresh\([^)]*_astro/s);
 	});
 	it("verifies the GitHub showcase through the production domain after CDN refresh", () => {
-		const workflow = read(" .github/workflows/doge-cdn-refresh.yml".trim());
+		const workflow = read(".github/workflows/doge-cdn-refresh.yml");
 		assert.match(workflow, /Verify GitHub showcase through the production CDN/);
 		assert.match(workflow, /blog\\.katelya\\.top\\/github\\//);
 		assert.match(workflow, /github-showcase-shell/);
