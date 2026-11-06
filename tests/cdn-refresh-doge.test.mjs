@@ -3,7 +3,9 @@ import { describe, it } from "node:test";
 
 import {
 	createAuthorization,
+	queryDogeRefresh,
 	submitDogeRefresh,
+	waitForDogeRefresh,
 } from "../scripts/cdn-refresh/doge-client.mjs";
 
 function response(body, ok = true, status = 200) {
@@ -134,5 +136,85 @@ describe("DogeCloud refresh client", () => {
 			/outside SITE_URL scope/,
 		);
 		assert.equal(called, false);
+	});
+
+	it("queries refresh task status with a signed GET request", async () => {
+		const calls = [];
+		const tasks = [{ rtype: "url", url: "https://blog.katelya.top/", status: "done", percent: 100 }];
+		const result = await queryDogeRefresh({
+			taskId: "URL.TX.123",
+			accessKey: "AK",
+			secretKey: "SK",
+			fetchImpl: async (url, init) => {
+				calls.push({ url: String(url), init });
+				return response({ code: 200, data: { tasks } });
+			},
+		});
+
+		const apiPath = "/cdn/refresh/query.json?id=URL.TX.123";
+		assert.equal(result, tasks);
+		assert.equal(calls.length, 1);
+		assert.equal(calls[0].url, "https://api.dogecloud.com" + apiPath);
+		assert.equal(calls[0].init.method, "GET");
+		assert.equal(
+			calls[0].init.headers.Authorization,
+			createAuthorization({ apiPath, body: "", accessKey: "AK", secretKey: "SK" }),
+		);
+	});
+
+	it("waits until every refresh target is done", async () => {
+		const payloads = [
+			{ code: 200, data: { tasks: [{ status: "process", percent: 45 }] } },
+			{ code: 200, data: { tasks: [{ status: "done", percent: 100 }] } },
+		];
+		let calls = 0;
+		const result = await waitForDogeRefresh({
+			taskId: "URL.TX.123",
+			accessKey: "AK",
+			secretKey: "SK",
+			fetchImpl: async () => response(payloads[calls++]),
+			sleep: async () => {},
+			maxAttempts: 3,
+		});
+		assert.equal(result.taskId, "URL.TX.123");
+		assert.equal(result.count, 1);
+		assert.equal(result.attempts, 2);
+		assert.equal(calls, 2);
+	});
+
+	it("fails closed when a refresh target fails", async () => {
+		await assert.rejects(
+			waitForDogeRefresh({
+				taskId: "PATH.TX.123",
+				accessKey: "AK",
+				secretKey: "SK",
+				fetchImpl: async () =>
+					response({
+						code: 200,
+						data: { tasks: [{ status: "fail", percent: 0 }] },
+					}),
+				sleep: async () => {},
+				maxAttempts: 3,
+			}),
+			/failed for 1 target/,
+		);
+	});
+
+	it("times out when the refresh task remains in progress", async () => {
+		await assert.rejects(
+			waitForDogeRefresh({
+				taskId: "PATH.TX.123",
+				accessKey: "AK",
+				secretKey: "SK",
+				fetchImpl: async () =>
+					response({
+						code: 200,
+						data: { tasks: [{ status: "process", percent: 20 }] },
+					}),
+				sleep: async () => {},
+				maxAttempts: 2,
+			}),
+			/Timed out waiting for DogeCloud refresh task/,
+		);
 	});
 });
