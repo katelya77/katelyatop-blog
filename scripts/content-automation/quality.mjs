@@ -148,7 +148,7 @@ export function validateArticle(
     if (pattern.test(body)) errors.push(`forbidden unsupported first-person claim: ${pattern}`);
   }
 
-  const privacy = scanPublicContent([title, description, ...tags, body].join("\\n"));
+  const privacy = scanPublicContent([title, description, ...tags, body].join("\n"));
   for (const finding of privacy.blocking) {
     errors.push(`privacy gate blocked article: ${finding.message}`);
   }
