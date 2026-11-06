@@ -262,6 +262,32 @@ describe("public content privacy gates", () => {
   });
 });
 
+describe("GitHub showcase page", () => {
+  it("uses build-time public GitHub data and avoids client-side hydration", async () => {
+    const page = await readFile(
+      new URL("../src/pages/github.astro", import.meta.url),
+      "utf8",
+    );
+    assert.match(page, /fetchGitHubJson/);
+    assert.match(page, /repo\.private === false/);
+    assert.match(page, /!repo\.fork && !repo\.archived/);
+    assert.match(page, /AbortSignal\.timeout/);
+    assert.doesNotMatch(page, /client:(?:load|idle|visible|only)/);
+    assert.match(page, /loading="eager"/);
+  });
+
+  it("keeps the featured repository list curated and public-facing", async () => {
+    const data = await readFile(
+      new URL("../src/data/github-showcase.ts", import.meta.url),
+      "utf8",
+    );
+    for (const name of ["katelyatop-blog", "K-Vault", "KatelyaTV", "DecoTV"]) {
+      assert.ok(data.includes(name), `missing featured public repository: ${name}`);
+    }
+    assert.match(data, /github\.com\/katelya77/);
+  });
+});
+
 describe("UTC contribution accounting", () => {
   it("credits only the owner's linked noreply identity and actual UTC author date", () => {
     const log = [
