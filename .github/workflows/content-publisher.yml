@@ -22,6 +22,7 @@ on:
     paths:
       - ".github/workflows/content-publisher.yml"
       - "scripts/content-automation/**"
+      - "editorial/public-context.json"
 
 permissions:
   contents: write
