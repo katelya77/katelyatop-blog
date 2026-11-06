@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from "svelte";
+
 	type WorldId = "minimal" | "craft" | "retro" | "toy";
 
 	type Profile = {
@@ -67,6 +69,7 @@
 		{ id: "toy", label: "玩具", english: "TOY", description: "立体塑料 · 弹性反馈" },
 	];
 
+	let hydrated = $state(false);
 	let world = $state<WorldId>("minimal");
 	let category = $state("all");
 	let activeDay = $state<ActivityDay | null>(null);
@@ -74,6 +77,10 @@
 
 	let worldIndex = $derived(Math.max(0, worlds.findIndex((item) => item.id === world)));
 	let currentWorld = $derived(worlds[worldIndex]);
+	onMount(() => {
+		hydrated = true;
+	});
+
 	let filteredRepositories = $derived(
 		category === "all"
 			? featuredRepositories
@@ -129,7 +136,7 @@
 	}
 </script>
 
-<div class="github-showcase-shell" data-world={world}>
+<div class="github-showcase-shell" data-world={world} data-hydrated={hydrated ? "true" : "false"}>
 	<section class="gh-hero">
 		<div class="gh-hero-copy">
 			<div class="gh-eyebrow"><span class="gh-live-dot"></span> OPEN SOURCE · BUILD IN PUBLIC</div>
