@@ -9,7 +9,7 @@ test("GitHub showcase renders featured projects and category filters", async ({ 
 
 	await page.locator('.filter-tabs-item[data-filter-value="tools"]').click();
 	await expect(page.locator('.github-repo-card[data-category="tools"]')).toBeVisible();
-	await expect(page.locator('.github-repo-card[data-category="web"]')).toHaveClass(/filtered-out/);
+	await expect(page.locator('.github-repo-card[data-category="web"]').first()).toHaveClass(/filtered-out/);
 
 	await page.locator('.filter-tabs-item[data-filter-value="all"]').click();
 	await expect(page.locator('.github-repo-card[data-category="web"]').first()).toBeVisible();
