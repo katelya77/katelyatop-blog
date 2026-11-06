@@ -14,6 +14,11 @@ import {
   titleSimilarity,
   validateArticle,
 } from "../scripts/content-automation/quality.mjs";
+import { scanPublicContent } from "../scripts/content-automation/privacy.mjs";
+import {
+  formatApprovedEditorialContext,
+  loadApprovedEditorialContext,
+} from "../scripts/content-automation/public-context.mjs";
 
 function response({ json, text = "", status = 200, contentType = "application/json" }) {
   return {
@@ -208,6 +213,90 @@ describe("content automation quality gates", () => {
   });
 });
 
+describe("public content privacy gates", () => {
+  it("blocks token-like credentials, private network addresses, local paths, and personal identifiers", () => {
+    const result = scanPublicContent([
+      "GITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+      "Internal host: 192.168.1.20",
+      "Local path: C:\\Users\\Example\\Desktop\\project",
+      "Phone: 13800138000",
+    ].join("\n"));
+    const codes = result.blocking.map((finding) => finding.code);
+    assert.ok(codes.includes("secret-token"));
+    assert.ok(codes.includes("private-network-address"));
+    assert.ok(codes.includes("local-filesystem-path"));
+    assert.ok(codes.includes("phone-number"));
+    assert.equal(result.ok, false);
+  });
+
+  it("requires review for email addresses and blocks raw conversation role lines", () => {
+    const email = scanPublicContent("Contact: writer@private.example");
+    assert.ok(email.review.some((finding) => finding.code === "email-address"));
+
+    const transcript = scanPublicContent("User: Here is a private conversation\nAssistant: ...");
+    assert.ok(transcript.blocking.some((finding) => finding.code === "raw-chat-transcript"));
+  });
+
+  it("allows clearly redacted credential placeholders", () => {
+    const result = scanPublicContent("API_KEY=YOUR_API_KEY\nPASSWORD=REDACTED");
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.blocking, []);
+    assert.deepEqual(result.review, []);
+  });
+
+  it("loads only approved public topic-inspiration summaries", () => {
+    const entries = loadApprovedEditorialContext();
+    assert.ok(entries.length >= 5);
+    assert.ok(entries.every((entry) => entry.id && entry.title && entry.summary));
+    const promptContext = formatApprovedEditorialContext(entries);
+    assert.match(promptContext, /engineering-evidence-chain/);
+    assert.match(promptContext, /agent-grounded-data/);
+    assert.doesNotMatch(promptContext, /private|credential|password/i);
+  });
+
+  it("rejects generated articles containing credentials before they can be published", () => {
+    const article = validArticle();
+    article.body += "\n\nGITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    const validation = validateArticle(article, { researchEntries, existingPosts: [] });
+    assert.ok(validation.errors.some((error) => error.includes("privacy gate")));
+  });
+});
+
+describe("GitHub showcase page", () => {
+  it("fetches public GitHub data at build time and defers only the lightweight Svelte island", async () => {
+    const page = await readFile(
+      new URL("../src/pages/github.astro", import.meta.url),
+      "utf8",
+    );
+    const component = await readFile(
+      new URL("../src/components/features/github-showcase/GitHubWorldShowcase.svelte", import.meta.url),
+      "utf8",
+    );
+    assert.match(page, /fetchGitHubJson/);
+    assert.match(page, /repo\.private === false/);
+    assert.match(page, /!repo\.fork && !repo\.archived/);
+    assert.match(page, /AbortSignal\.timeout/);
+    assert.match(page, /client:visible/);
+    assert.doesNotMatch(page, /client:(?:load|idle|only)/);
+    assert.match(component, /loading="eager"/);
+    assert.match(component, /prefers-reduced-motion/);
+    for (const world of ["minimal", "craft", "retro", "toy"]) {
+      assert.ok(component.includes(world), `missing Ovio-inspired world: ${world}`);
+    }
+  });
+
+  it("keeps the featured repository list curated and public-facing", async () => {
+    const data = await readFile(
+      new URL("../src/data/github-showcase.ts", import.meta.url),
+      "utf8",
+    );
+    for (const name of ["katelyatop-blog", "K-Vault", "KatelyaTV", "DecoTV"]) {
+      assert.ok(data.includes(name), `missing featured public repository: ${name}`);
+    }
+    assert.match(data, /github\.com\/katelya77/);
+  });
+});
+
 describe("UTC contribution accounting", () => {
   it("credits only the owner's linked noreply identity and actual UTC author date", () => {
     const log = [
@@ -238,6 +327,7 @@ describe("content publisher workflow contract", () => {
     assert.match(workflow, /git push origin HEAD:master/);
     assert.match(workflow, /Wait for Cloudflare Pages and refresh DogeCloud CDN/);
     assert.match(workflow, /Verify generated articles are publicly visible/);
+    assert.ok(workflow.includes("editorial/public-context.json"));
     assert.match(workflow, /cron: "17 1 \* \* \*"/);
     assert.match(workflow, /cron: "37 15 \* \* \*"/);
   });

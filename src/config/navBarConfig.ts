@@ -11,6 +11,11 @@ export const navBarConfig: NavBarConfig = {
 			icon: "material-symbols:deployed-code-outline",
 		},
 		{
+			name: "GitHub",
+			url: "/github/",
+			icon: "fa7-brands:github",
+		},
+		{
 			name: "时间线",
 			url: "/timeline/",
 			icon: "material-symbols:timeline-rounded",
@@ -43,7 +48,7 @@ export const navBarConfig: NavBarConfig = {
 					icon: "material-symbols:map-outline-rounded",
 				},
 				{
-					name: "GitHub",
+					name: "GitHub 主页",
 					url: "https://github.com/katelya77",
 					external: true,
 					icon: "fa7-brands:github",

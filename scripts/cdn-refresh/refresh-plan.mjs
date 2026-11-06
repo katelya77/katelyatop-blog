@@ -53,6 +53,20 @@ function isPublicFile(path) {
 	return path?.startsWith("public/") && !path.startsWith("public/_astro/");
 }
 
+function staticPagePathFromSource(path) {
+	if (!path?.startsWith("src/pages/")) return null;
+	const relative = path.slice("src/pages/".length);
+	const match = relative.match(/\.(?:astro|md|mdx)$/i);
+	if (!match) return null;
+
+	const withoutExtension = relative.slice(0, -match[0].length);
+	const segments = withoutExtension.split("/").filter(Boolean);
+	if (segments.some((segment) => /^\[.*\]$/.test(segment))) return null;
+	if (segments.length === 1 && segments[0] === "404") return "/404.html";
+	if (segments.at(-1) === "index") segments.pop();
+	return segments.length > 0 ? `/${segments.join("/")}/` : "/";
+}
+
 function affectsPublicSite(path) {
 	return Boolean(
 		path &&
@@ -112,7 +126,14 @@ export async function buildRefreshPlan({ changes, siteUrl, readFileAtRef }) {
 				continue;
 			}
 
-			if (affectsPublicSite(candidate.path)) changeAffectsSite = true;
+			if (affectsPublicSite(candidate.path)) {
+				const pagePath = staticPagePathFromSource(candidate.path);
+				if (pagePath) {
+					urlPaths.add(pagePath);
+					reasons.add(`page:${candidate.path}`);
+				}
+				changeAffectsSite = true;
+			}
 		}
 
 		if (changeAffectsSite) {
