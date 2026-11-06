@@ -263,17 +263,26 @@ describe("public content privacy gates", () => {
 });
 
 describe("GitHub showcase page", () => {
-  it("uses build-time public GitHub data and avoids client-side hydration", async () => {
+  it("fetches public GitHub data at build time and defers only the lightweight Svelte island", async () => {
     const page = await readFile(
       new URL("../src/pages/github.astro", import.meta.url),
+      "utf8",
+    );
+    const component = await readFile(
+      new URL("../src/components/features/github-showcase/GitHubWorldShowcase.svelte", import.meta.url),
       "utf8",
     );
     assert.match(page, /fetchGitHubJson/);
     assert.match(page, /repo\.private === false/);
     assert.match(page, /!repo\.fork && !repo\.archived/);
     assert.match(page, /AbortSignal\.timeout/);
-    assert.doesNotMatch(page, /client:(?:load|idle|visible|only)/);
-    assert.match(page, /loading="eager"/);
+    assert.match(page, /client:visible/);
+    assert.doesNotMatch(page, /client:(?:load|idle|only)/);
+    assert.match(component, /loading="eager"/);
+    assert.match(component, /prefers-reduced-motion/);
+    for (const world of ["minimal", "craft", "retro", "toy"]) {
+      assert.ok(component.includes(world), `missing Ovio-inspired world: ${world}`);
+    }
   });
 
   it("keeps the featured repository list curated and public-facing", async () => {
