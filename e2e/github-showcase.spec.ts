@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("GitHub showcase renders public projects and switches between four Ovio-inspired worlds", async ({ page }) => {
 	await page.goto("/github/", { waitUntil: "domcontentloaded" });
+	await expect(page.locator(".github-showcase-shell")).toHaveAttribute("data-hydrated", "true");
 
 	await expect(page.locator(".gh-id-name h2")).toContainText("Katelya");
 	await expect(page.locator(".gh-repo-card").first()).toBeVisible();
@@ -40,6 +41,7 @@ test("GitHub showcase stays within phone and tablet viewports", async ({ page })
 	for (const viewport of viewports) {
 		await page.setViewportSize(viewport);
 		await page.goto("/github/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(".github-showcase-shell")).toHaveAttribute("data-hydrated", "true");
 
 		const dimensions = await page.evaluate(() => {
 			const root = document.querySelector<HTMLElement>(".github-showcase-shell");
