@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 
 import { buildResearchBundle, discoverCandidates } from "./sources.mjs";
 import { hasUtcContentContribution, requiredArticleTarget } from "./contributions.mjs";
+import { formatApprovedEditorialContext, loadApprovedEditorialContext } from "./public-context.mjs";
 import {
   chinaDate,
   chooseOfficialImage,
@@ -177,7 +178,8 @@ function recentTitleList(posts) {
     .map((post) => `- ${sanitizeText(post.title)}`).join("\n");
 }
 
-function editorialPrompt({ date, entries, existingPosts, previousErrors = [] }) {
+function editorialPrompt({ date, entries, existingPosts, approvedContext = [], previousErrors = [] }) {
+  const contextText = formatApprovedEditorialContext(approvedContext);
   const errorText = previousErrors.length > 0
     ? `\n上一版未通过质量门槛，请修正：\n${previousErrors.map((error) => `- ${sanitizeText(error)}`).join("\n")}\n`
     : "";
@@ -196,6 +198,11 @@ function editorialPrompt({ date, entries, existingPosts, previousErrors = [] }) 
 8. evidenceIds 至少选择 2 个材料 ID，并且至少一个应为 primary 或非社区来源；只能填写下面真实存在的 ID。
 9. category 从 AI前沿、技术实践、DevOps、网络、开源、工程札记 中选择最贴切的一项。
 10. tags 4-10 个，避免堆砌。
+11. 历史对话摘要只作为选题灵感，不是事实证据；不得复述私人聊天、身份资料、账号凭据、内网信息、私有仓库或未经证实的项目状态。
+12. 对话摘要如果涉及个人项目，只能抽象成通用工程问题；不能声称用户已部署、上线或实测，除非公开证据明确支持。
+
+经过公开审查的历史主题摘要（仅用于选题灵感，不可当作事实证据）：
+${contextText}
 
 最近已经发布或在本批次生成的文章标题，禁止重复选题：
 ${recentTitleList(existingPosts) || "（暂无）"}
@@ -215,7 +222,7 @@ ${researchText(entries)}
 }`);
 }
 
-async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRootIds = new Set() }) {
+async function generateOne({ date, entries, existingPosts, approvedContext = [], forbiddenEvidenceRootIds = new Set() }) {
   let previousErrors = [];
   let providerMeta = null;
   const availableEntries = entries.filter((entry) => !forbiddenEvidenceRootIds.has(evidenceRootId(entry)));
@@ -226,7 +233,7 @@ async function generateOne({ date, entries, existingPosts, forbiddenEvidenceRoot
   for (let attempt = 1; attempt <= MAX_MODEL_ATTEMPTS; attempt += 1) {
     let article;
     try {
-      const generated = await callGenerator(editorialPrompt({ date, entries: availableEntries, existingPosts, previousErrors }));
+      const generated = await callGenerator(editorialPrompt({ date, entries: availableEntries, existingPosts, approvedContext, previousErrors }));
       article = generated.article;
       providerMeta = { provider: generated.provider, model: generated.model };
     } catch (error) {
@@ -255,6 +262,8 @@ export async function main() {
   const scheduledTarget = Math.max(1, Math.min(4, intEnv("TARGET_DAILY_COUNT", 1)));
   const resultPath = process.env.CONTENT_RESULT_PATH || "";
   const date = chinaDate();
+  const approvedContext = loadApprovedEditorialContext();
+  console.log(`Loaded ${approvedContext.length} public-approved editorial topic summaries.`);
   const existingPosts = listExistingPosts();
   const currentCount = countPublishedForDate(existingPosts, date);
   const hasUtcContribution = hasUtcContentContribution();
@@ -290,6 +299,7 @@ export async function main() {
       date,
       entries,
       existingPosts: mutablePosts,
+      approvedContext,
       forbiddenEvidenceRootIds: usedEvidenceRootIds,
     });
     const imageUrl = chooseOfficialImage(validation.evidence);
