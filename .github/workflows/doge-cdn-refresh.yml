@@ -58,7 +58,7 @@ jobs:
           DOGE_ACCESS_KEY: ${{ secrets.DOGE_ACCESS_KEY }}
           DOGE_SECRET_KEY: ${{ secrets.DOGE_SECRET_KEY }}
           SITE_URL: https://blog.katelya.top
-          FORCE_HOME_REFRESH: \${{ github.event_name == 'workflow_dispatch' && inputs.force_home_refresh && 'true' || 'false' }}
+          FORCE_HOME_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.force_home_refresh && 'true' || 'false' }}
 
       - name: Verify GitHub showcase through the production CDN
         shell: bash
