@@ -9,8 +9,6 @@ import {
 
 interface GitHubProfileApi {
 	login: string;
-	name?: string | null;
-	bio?: string | null;
 	avatar_url: string;
 	html_url: string;
 	public_repos: number;
@@ -213,10 +211,8 @@ const activityWeeks = Array.from(
 
 const profile = {
 	...githubProfile,
-	displayName: profileData?.name?.trim() || githubProfile.displayName,
 	avatar: profileData?.avatar_url || githubProfile.avatar,
 	url: profileData?.html_url || githubProfile.url,
-	bio: profileData?.bio?.trim() || githubProfile.bio,
 };
 const pageDescription =
 	"GitHub 项目、公开仓库、开发活动与 Ovio 风格交互动效。四种视觉世界，一份真实公开数据。";
