@@ -34,7 +34,7 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 		description:
 			"面向个人文件管理的 Serverless 云存储项目，探索多存储后端整合、资源管理与轻量化部署。",
 		category: "tools",
-		techStack: ["Cloudflare", "Workers", "R2", "Serverless"],
+		techStack: ["Cloudflare Pages", "Docker", "R2", "S3"],
 		homepage: "https://pan.katelya.eu.org/",
 	},
 	{
@@ -44,7 +44,7 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 			"面向个人影音体验的前端项目，持续探索内容检索、界面设计、跨端适配与播放体验。",
 		category: "web",
 		techStack: ["Next.js", "TypeScript", "Tailwind CSS"],
-		homepage: "https://tv.katelya.eu.org/",
+		homepage: "https://tv.katelya.top/",
 	},
 	{
 		name: "DecoTV",
@@ -52,8 +52,7 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 		description:
 			"跨平台影视聚合播放器，关注多资源检索、播放体验、收藏同步与自托管部署。",
 		category: "web",
-		techStack: ["Next.js", "TypeScript", "Docker"],
-		homepage: "https://decotv.katelya.eu.org/",
+		techStack: ["Node.js", "Express", "Docker"],
 	},
 	{
 		name: "NebulaTree_Desktop",
