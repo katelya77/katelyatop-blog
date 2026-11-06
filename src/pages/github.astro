@@ -82,8 +82,8 @@ const [profileData, repositoryPayload, eventsData] = await Promise.all([
 const publicRepositories = Array.isArray(repositoryPayload)
 	? repositoryPayload.filter((repo) => repo && repo.private === false && !repo.fork && !repo.archived)
 	: null;
-const repositoryByName = new Map(
-	(publicRepositories ?? []).map((repo) => [repo.name.toLowerCase(), repo]),
+const repositoryByName = new Map<string, GitHubRepositoryApi>(
+	(publicRepositories ?? []).map((repo) => [repo.name.toLowerCase(), repo] as const),
 );
 const featuredRepositories = featuredGitHubRepositories
 	.filter((item) => !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
@@ -117,9 +117,9 @@ const stats = [
 		detail: "Public repositories",
 	},
 	{
-		label: "累计 Stars",
+		label: "项目 Stars",
 		value: totalStars === null ? "—" : compactNumber(totalStars),
-		detail: "Across public repositories",
+		detail: "Active public non-fork repositories",
 	},
 	{
 		label: "关注者",
@@ -178,8 +178,7 @@ today.setUTCHours(0, 0, 0, 0);
 const activityStart = new Date(today);
 activityStart.setUTCDate(activityStart.getUTCDate() - 90);
 activityStart.setUTCDate(activityStart.getUTCDate() - activityStart.getUTCDay());
-const activityDayCount =
-	Math.ceil((today.getTime() - activityStart.getTime() + 86_400_000) / (7 * 86_400_000)) * 7;
+const activityDayCount = Math.floor((today.getTime() - activityStart.getTime()) / 86_400_000) + 1;
 const oldestEventTime =
 	eventsData && eventsData.length >= 100
 		? Math.min(...eventsData.map((event) => Date.parse(event.created_at)).filter(Number.isFinite))
