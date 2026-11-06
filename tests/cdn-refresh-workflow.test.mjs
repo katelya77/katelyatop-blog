@@ -65,7 +65,7 @@ describe("CDN refresh workflow contract", () => {
 	it("verifies the GitHub showcase through the production domain after CDN refresh", () => {
 		const workflow = read(".github/workflows/doge-cdn-refresh.yml");
 		assert.match(workflow, /Verify GitHub showcase through the production CDN/);
-		assert.match(workflow, /blog\\.katelya\\.top\\/github\\//);
+		assert.ok(workflow.includes("$SITE_URL/github/"));
 		assert.match(workflow, /github-showcase-shell/);
 		assert.match(workflow, /ONE DATASET/);
 		assert.match(workflow, /切换你的视觉世界/);
