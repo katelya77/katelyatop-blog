@@ -259,7 +259,7 @@
 										aria-label={daySummary(day)}
 										aria-pressed={activeDay?.date === day.date}
 										tabindex={focusedDayIndex === index ? 0 : -1}
-										style={"--cell-index: " + index + "; --cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
+										style={"--cell-delay: " + Math.min(index, 90) * 2 + "ms; --cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
 										onpointerenter={() => (activeDay = day)}
 										onpointerleave={() => (activeDay = null)}
 										onfocus={() => {
@@ -977,7 +977,7 @@
 		cursor: pointer;
 		transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease, box-shadow 180ms ease;
 		animation: gh-cell-in 380ms both;
-		animation-delay: calc(min(var(--cell-index, 0), 90) * 2ms);
+		animation-delay: var(--cell-delay, 0ms);
 	}
 
 	.gh-activity-cell[data-level="1"] { background: color-mix(in srgb, var(--gh-accent) 35%, transparent); }
@@ -1446,6 +1446,19 @@
 		transform: translateY(-5px) rotate(0deg);
 	}
 
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell[data-level="1"],
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell[data-level="2"],
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell[data-level="3"] {
+		border-radius: 2px;
+		transform: rotate(var(--cell-tilt, 0deg));
+		box-shadow: 0 2px 4px rgba(90, 50, 20, 0.22);
+	}
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell:hover,
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell:focus-visible,
+	.github-showcase-shell[data-world="craft"] .gh-activity-cell[aria-pressed="true"] {
+		transform: scale(1.5) rotate(0deg);
+	}
+
 	.github-showcase-shell[data-world="craft"] .gh-tech-stack span {
 		border: 0;
 		border-radius: 2px;
@@ -1656,6 +1669,7 @@
 		.github-showcase-shell *::after {
 			animation-duration: 0.01ms !important;
 			animation-iteration-count: 1 !important;
+			animation-delay: 0ms !important;
 			scroll-behavior: auto !important;
 			transition-duration: 0.01ms !important;
 		}
