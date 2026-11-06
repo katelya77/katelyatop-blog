@@ -185,9 +185,11 @@ export async function waitForDogeRefresh({
 					["fail", "invalid"].includes(String(task?.status || "").toLowerCase()),
 				);
 				if (failed.length > 0) {
-					throw new Error(
+					const failure = new Error(
 						"DogeCloud refresh task " + taskId + " failed for " + failed.length + " target(s)",
 					);
+					failure.retryable = false;
+					throw failure;
 				}
 
 				if (tasks.every((task) => String(task?.status || "").toLowerCase() === "done")) {
