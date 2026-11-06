@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "policy": "Public-safe topic summaries only. Never store raw ChatGPT conversations, private notes, credentials, personal records, internal infrastructure details, or private repository data here.",
+  "items": [
+    {
+      "id": "engineering-evidence-chain",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "工程交付中的证据链",
+      "summary": "将代码变更、自动化检查、构建、部署、公开访问和人工验收视为不同阶段。文章可以讨论每个阶段需要什么证据，以及为什么单项检查通过不能代替完整交付结论。",
+      "tags": ["engineering", "verification", "delivery"]
+    },
+    {
+      "id": "schedule-state-isolation",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "课表产品中的时间与页面状态隔离",
+      "summary": "讨论权威教学日历、用户临时浏览周次和页面局部状态如何分离，并分析异步刷新、页面切换与持久化状态之间的边界。涉及具体产品能力时必须以公开证据核实。",
+      "tags": ["frontend", "state-management", "calendar"]
+    },
+    {
+      "id": "agent-grounded-data",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "让 AI Agent 使用可信的结构化数据",
+      "summary": "从自然语言意图识别、确定性工具调用、数据版本、结果可追溯和失败处理等角度，讨论如何避免智能体凭空编造动态事实，并清晰区分已实现能力与探索中的规划。",
+      "tags": ["AI-agent", "tool-calling", "data-quality"]
+    },
+    {
+      "id": "multisite-upgrade-verification",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "多站点升级为什么不能只看 Dry-run",
+      "summary": "讨论站点清单覆盖率、活动与非活动站点、候选环境、真实运行时验证、分阶段迁移和回退条件。文章应使用通用示例，不得包含真实内部站点、主机、路径或环境标识。",
+      "tags": ["WordPress", "migration", "DevOps"]
+    },
+    {
+      "id": "static-first-blog-performance",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "静态优先的个人博客性能设计",
+      "summary": "讨论构建期数据获取、静态 HTML、客户端请求数量、图片延迟加载、渐进增强和移动端布局回归之间的取舍，重点是减少首屏关键路径上的网络依赖。",
+      "tags": ["Astro", "performance", "frontend"]
+    },
+    {
+      "id": "privacy-aware-content-automation",
+      "kind": "topic-inspiration",
+      "status": "approved",
+      "visibility": "public",
+      "title": "带隐私门禁的自动化内容生产",
+      "summary": "讨论公开来源核验、重复主题检测、事实证据、凭据扫描、隐私筛查和人工编辑边界。私人对话只能在 ChatGPT 辅助阶段抽象成经过批准的公开主题，不得把原始聊天记录接入自动发布器。",
+      "tags": ["content-automation", "privacy", "editorial"]
+    }
+  ]
+}
