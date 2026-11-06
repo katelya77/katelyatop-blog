@@ -32,7 +32,7 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 		name: "K-Vault",
 		title: "K-Vault",
 		description:
-			"面向个人文件管理的 Serverless 云存储项目，探索多存储后端整合、资源管理与轻量化部署。",
+			"图片与文件托管解决方案，支持 Cloudflare Pages 与 Docker 双模部署，并整合 R2、S3、WebDAV、GitHub 等存储后端。",
 		category: "tools",
 		techStack: ["Cloudflare Pages", "Docker", "R2", "S3"],
 		homepage: "https://pan.katelya.eu.org/",
@@ -41,18 +41,18 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 		name: "KatelyaTV",
 		title: "KatelyaTV",
 		description:
-			"面向个人影音体验的前端项目，持续探索内容检索、界面设计、跨端适配与播放体验。",
+			"基于 Next.js 14 的自托管影视聚合播放器，支持多源搜索、高清播放、播放记录、收藏同步、PWA 与多种数据存储后端。",
 		category: "web",
-		techStack: ["Next.js", "TypeScript", "Tailwind CSS"],
+		techStack: ["Next.js 14", "React", "TypeScript", "Framer Motion"],
 		homepage: "https://tv.katelya.top/",
 	},
 	{
 		name: "DecoTV",
 		title: "DecoTV",
 		description:
-			"跨平台影视聚合播放器，关注多资源检索、播放体验、收藏同步与自托管部署。",
+			"基于 LibreTV 二次创作的在线视频搜索与观看平台，在 UI、品牌和交互体验上持续增强，支持多视频源聚合与多平台部署。",
 		category: "web",
-		techStack: ["Node.js", "Express", "Docker"],
+		techStack: ["Node.js", "Express", "Docker", "LibreTV"],
 	},
 	{
 		name: "NebulaTree_Desktop",
