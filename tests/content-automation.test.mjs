@@ -14,6 +14,11 @@ import {
   titleSimilarity,
   validateArticle,
 } from "../scripts/content-automation/quality.mjs";
+import { scanPublicContent } from "../scripts/content-automation/privacy.mjs";
+import {
+  formatApprovedEditorialContext,
+  loadApprovedEditorialContext,
+} from "../scripts/content-automation/public-context.mjs";
 
 function response({ json, text = "", status = 200, contentType = "application/json" }) {
   return {
@@ -205,6 +210,55 @@ describe("content automation quality gates", () => {
       validation.errors.some((error) => error.includes("evidence topic already used")),
       "the second article must select a different root topic",
     );
+  });
+});
+
+describe("public content privacy gates", () => {
+  it("blocks token-like credentials, private network addresses, local paths, and personal identifiers", () => {
+    const result = scanPublicContent([
+      "GITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+      "Internal host: 192.168.1.20",
+      "Local path: C:\\Users\\Example\\Desktop\\project",
+      "Phone: 13800138000",
+    ].join("\n"));
+    const codes = result.blocking.map((finding) => finding.code);
+    assert.ok(codes.includes("secret-token"));
+    assert.ok(codes.includes("private-network-address"));
+    assert.ok(codes.includes("local-filesystem-path"));
+    assert.ok(codes.includes("phone-number"));
+    assert.equal(result.ok, false);
+  });
+
+  it("requires review for email addresses and blocks raw conversation role lines", () => {
+    const email = scanPublicContent("Contact: writer@private.example");
+    assert.ok(email.review.some((finding) => finding.code === "email-address"));
+
+    const transcript = scanPublicContent("User: Here is a private conversation\nAssistant: ...");
+    assert.ok(transcript.blocking.some((finding) => finding.code === "raw-chat-transcript"));
+  });
+
+  it("allows clearly redacted credential placeholders", () => {
+    const result = scanPublicContent("API_KEY=YOUR_API_KEY\nPASSWORD=REDACTED");
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.blocking, []);
+    assert.deepEqual(result.review, []);
+  });
+
+  it("loads only approved public topic-inspiration summaries", () => {
+    const entries = loadApprovedEditorialContext();
+    assert.ok(entries.length >= 5);
+    assert.ok(entries.every((entry) => entry.id && entry.title && entry.summary));
+    const promptContext = formatApprovedEditorialContext(entries);
+    assert.match(promptContext, /engineering-evidence-chain/);
+    assert.match(promptContext, /agent-grounded-data/);
+    assert.doesNotMatch(promptContext, /private|credential|password/i);
+  });
+
+  it("rejects generated articles containing credentials before they can be published", () => {
+    const article = validArticle();
+    article.body += "\n\nGITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    const validation = validateArticle(article, { researchEntries, existingPosts: [] });
+    assert.ok(validation.errors.some((error) => error.includes("privacy gate")));
   });
 });
 
