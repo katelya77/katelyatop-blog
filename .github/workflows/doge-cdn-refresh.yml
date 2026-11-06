@@ -22,6 +22,7 @@ jobs:
   refresh:
     name: Refresh precise production CDN targets
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
