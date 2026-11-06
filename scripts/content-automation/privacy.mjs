@@ -17,7 +17,7 @@ const BLOCKING_RULES = [
 	{
 		code: "credential-assignment",
 		message: "检测到疑似明文密码、Token 或 Secret 赋值",
-		pattern: /\b(?:password|passwd|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|client[_ -]?secret|secret[_ -]?key|authorization)\s*[:=]\s*["']?(?!YOUR\b|YOUR_|REDACTED\b|PLACEHOLDER\b|EXAMPLE\b)[A-Za-z0-9+/_=.-]{8,}/i,
+		pattern: /\b(?:password|passwd|token|api[_ -]?key|api[_ -]?token|github[_ -]?token|cf[_ -]?api[_ -]?token|access[_ -]?token|refresh[_ -]?token|client[_ -]?secret|secret[_ -]?key|secret[_ -]?access[_ -]?key|authorization)\s*[:=]\s*["']?(?!YOUR\b|YOUR_|REDACTED\b|PLACEHOLDER\b|EXAMPLE\b)[A-Za-z0-9+/_=.-]{8,}/i,
 	},
 	{
 		code: "bearer-credential",
