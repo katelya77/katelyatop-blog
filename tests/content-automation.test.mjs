@@ -318,6 +318,7 @@ describe("content publisher workflow contract", () => {
     assert.match(workflow, /git push origin HEAD:master/);
     assert.match(workflow, /Wait for Cloudflare Pages and refresh DogeCloud CDN/);
     assert.match(workflow, /Verify generated articles are publicly visible/);
+    assert.match(workflow, /editorial\\/public-context\\.json/);
     assert.match(workflow, /cron: "17 1 \* \* \*"/);
     assert.match(workflow, /cron: "37 15 \* \* \*"/);
   });
