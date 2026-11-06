@@ -72,6 +72,28 @@ describe("CDN refresh plan", () => {
 		assert.deepEqual(plan.paths, ["https://blog.katelya.top/pagefind/"]);
 	});
 
+	it("refreshes the exact route for a new static Astro page", async () => {
+		const plan = await buildRefreshPlan({
+			changes: [{ status: "A", path: "src/pages/github.astro" }],
+			siteUrl: "https://blog.katelya.top",
+			readFileAtRef: async () => "",
+		});
+		assert.ok(plan.urls.includes("https://blog.katelya.top/github/"));
+		assert.ok(plan.urls.includes("https://blog.katelya.top/"));
+		assert.ok(plan.paths.includes("https://blog.katelya.top/pagefind/"));
+		assert.ok(plan.reasons.includes("page:src/pages/github.astro"));
+	});
+
+	it("does not invent a concrete URL for dynamic Astro routes", async () => {
+		const plan = await buildRefreshPlan({
+			changes: [{ status: "M", path: "src/pages/posts/[slug].astro" }],
+			siteUrl: "https://blog.katelya.top",
+			readFileAtRef: async () => "",
+		});
+		assert.equal(plan.urls.includes("https://blog.katelya.top/posts/slug/"), false);
+		assert.ok(plan.urls.includes("https://blog.katelya.top/"));
+	});
+
 	it("does nothing for docs and tests only changes", async () => {
 		const plan = await buildRefreshPlan({
 			changes: [
