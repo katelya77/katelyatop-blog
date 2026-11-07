@@ -1603,9 +1603,11 @@
 	}
 	.gh-activity-cell {
 		width: 100%;
+		max-width: 26px;
 		height: auto;
 		max-height: 26px;
 		aspect-ratio: 1;
+		justify-self: center;
 		min-width: 0;
 		border-radius: clamp(2px, 0.45vw, 5px);
 		animation: none;
