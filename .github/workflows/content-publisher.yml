@@ -94,6 +94,12 @@ jobs:
           # recovery model on a Workers Free-compatible model so fallback does
           # not itself require a paid Workers subscription or prepaid credits.
           CF_CONTENT_MODEL: "@cf/zai-org/glm-4.7-flash"
+          # Uploading is opt-in; a positive license review and approved source
+          # hosts are required before copying any image to our own K-Vault.
+          BLOG_MEDIA_UPLOAD_ENABLED: ${{ vars.BLOG_MEDIA_UPLOAD_ENABLED }}
+          BLOG_MEDIA_APPROVED_HOSTS: ${{ vars.BLOG_MEDIA_APPROVED_HOSTS }}
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
           TARGET_DAILY_COUNT: ${{ steps.target.outputs.target }}
           CONTENT_RESULT_PATH: ${{ runner.temp }}/content-automation-result.json
         run: |
