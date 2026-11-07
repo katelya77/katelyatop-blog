@@ -6,7 +6,7 @@ html.katelya-art-theme body {
 html.katelya-art-theme {
 	--impasto-fiber-color: rgba(21, 82, 78, 0.11);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-day.svg");
-	--impasto-brush-glaze-opacity: 0.1;
+	--impasto-brush-glaze-opacity: 0.54;
 	--impasto-edge-far: rgba(38, 115, 101, 0.34);
 	--impasto-edge-mid: rgba(221, 196, 111, 0.3);
 	--impasto-edge-near: rgba(235, 230, 190, 0.28);
@@ -19,7 +19,7 @@ html.katelya-art-theme {
 html.katelya-art-theme.dark {
 	--impasto-fiber-color: rgba(215, 198, 134, 0.06);
 	--impasto-brush-glaze: url("/assets/impasto/impasto-night.svg");
-	--impasto-brush-glaze-opacity: 0.13;
+	--impasto-brush-glaze-opacity: 0.42;
 	--impasto-edge-far: rgba(25, 91, 113, 0.42);
 	--impasto-edge-mid: rgba(38, 122, 126, 0.36);
 	--impasto-edge-near: rgba(88, 135, 132, 0.3);
@@ -96,10 +96,17 @@ html.katelya-art-theme.dark.impasto-ready body {
 	background-position: center;
 	background-size: cover;
 	background-repeat: no-repeat;
-	opacity: 0;
+	opacity: 0.48;
 	mix-blend-mode: soft-light;
-	filter: saturate(1.12) contrast(0.9);
+	filter: saturate(1.28) contrast(1.08);
 	transition: opacity 320ms cubic-bezier(0.22, 0.7, 0.28, 1);
+	/* Subtle pigment drift belongs to one composited layer, not the WebGL loop. */
+	animation: impasto-glaze-drift 110s ease-in-out infinite alternate;
+	transform-origin: center;
+}
+@keyframes impasto-glaze-drift {
+	from { transform: scale(1.015) translate3d(-0.35%, 0.2%, 0); }
+	to { transform: scale(1.04) translate3d(0.35%, -0.25%, 0); }
 }
 
 html.dark .impasto-backdrop::before {
@@ -168,9 +175,11 @@ html.impasto-ready .impasto-static-fallback {
 	transition: none;
 }
 
-html.impasto-static [data-impasto-canvas],
-html.impasto-static .impasto-backdrop::before {
+html.impasto-static [data-impasto-canvas] {
 	display: none;
+}
+html.impasto-static .impasto-backdrop::before {
+	opacity: 0.28;
 }
 
 html.katelya-art-theme #banner-wrapper,
@@ -302,6 +311,7 @@ html.katelya-art-theme #navbar.katelya-navbar-shell > .katelya-navbar-links {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	.impasto-backdrop::before { animation: none; }
 	html.katelya-art-theme #header-waves .katelya-pigment-ribbon {
 		animation: none;
 	}
