@@ -184,15 +184,27 @@ const eventLabels: Record<string, string> = {
 	PublicEvent: "公开了一个仓库",
 };
 
-const recentActivity = (eventsData ?? [])
-	.filter((event) => event.repo?.name && eventLabels[event.type])
-	.slice(0, 8)
-	.map((event) => ({
-		label: eventLabels[event.type],
-		repository: event.repo?.name || "",
-		url: "https://github.com/" + (event.repo?.name || ""),
-		date: formatDate(event.created_at),
-	}));
+// Collapse same-day, same-repository event bursts. Eight nearly identical
+// PushEvent cards are less useful than an honest compact activity summary.
+const groupedEvents = new Map<string, { type: string; repository: string; date: string; count: number }>();
+for (const event of eventsData ?? []) {
+	if (!event.repo?.name || !eventLabels[event.type]) continue;
+	const key = event.type + "|" + event.repo.name + "|" + event.created_at.slice(0, 10);
+	const existing = groupedEvents.get(key);
+	if (existing) existing.count++;
+	else groupedEvents.set(key, {
+		type: event.type,
+		repository: event.repo.name,
+		date: event.created_at,
+		count: 1,
+	});
+}
+const recentActivity = [...groupedEvents.values()].slice(0, 8).map((event) => ({
+	label: eventLabels[event.type] + (event.count > 1 ? " · " + event.count + " 次" : ""),
+	repository: event.repository,
+	url: "https://github.com/" + event.repository,
+	date: formatDate(event.date),
+}));
 
 // GitHub's unauthenticated public Events API is a recent sample, not the
 // contribution calendar. When its first page is full, dates older than its
