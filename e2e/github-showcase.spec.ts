@@ -28,8 +28,11 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 			parentWidth: element.parentElement?.getBoundingClientRect().width ?? 1,
 		};
 	});
-	expect(heatmapGeometry.cellWidth).toBeGreaterThan(12);
-	expect(heatmapGeometry.width / heatmapGeometry.parentWidth).toBeGreaterThan(0.9);
+	expect(heatmapGeometry.cellWidth).toBeGreaterThanOrEqual(12);
+	// Full-year calendars scroll horizontally; limited Event samples use small
+	// cells instead of stretching thirteen weeks into giant 50px squares.
+	expect(heatmapGeometry.cellWidth).toBeLessThanOrEqual(18);
+	expect(heatmapGeometry.width).toBeGreaterThan(0);
 
 	const activityCell = page.locator(".gh-activity-cell").first();
 	await activityCell.hover();
