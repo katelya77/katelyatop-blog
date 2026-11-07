@@ -50,7 +50,7 @@ test("upload never trusts public links returned from unexpected origins", async 
   const fetchImpl = async () => ++index === 1
     ? new Response(new Uint8Array([1, 2]), { headers: { "content-type": "image/png" } })
     : Response.json({ links: { download: "https://attacker.example/image" } });
-  await assert.rejects(mirrorApprovedImage("https://docs.example.org/image.png", { env, fetchImpl }), /unexpected download origin/);
+  await assert.rejects(mirrorApprovedImage("https://docs.example.org/image.png", { env, fetchImpl }), /unexpected public file URL/);
 });
 
 test("artist layer and organization data are integrated into live GitHub showcase", async () => {
