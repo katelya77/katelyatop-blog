@@ -71,10 +71,11 @@ function compactNumber(value: number): string {
 	}).format(value);
 }
 
-const [profileData, repositoryPayload, eventsData] = await Promise.all([
+const [profileData, repositoryPayload, eventsData, decoTvData] = await Promise.all([
 	fetchGitHubJson<GitHubProfileApi>("/users/katelya77"),
 	fetchGitHubJson<GitHubRepositoryApi[]>("/users/katelya77/repos?per_page=100&sort=updated"),
 	fetchGitHubJson<GitHubEventApi[]>("/users/katelya77/events/public?per_page=100"),
+	fetchGitHubJson<GitHubRepositoryApi>("/repos/Decohererk/DecoTV"),
 ]);
 
 // Only public, non-fork, non-archived repositories are eligible for the showcase.
@@ -86,14 +87,21 @@ const publicRepositories = Array.isArray(repositoryPayload)
 const repositoryByName = new Map<string, GitHubRepositoryApi>(
 	(publicRepositories ?? []).map((repo) => [repo.name.toLowerCase(), repo] as const),
 );
+const verifiedOrgRepository = decoTvData?.full_name === "Decohererk/DecoTV" &&
+	decoTvData.private === false && !decoTvData.fork && !decoTvData.archived
+	? decoTvData : null;
 const featuredRepositories = featuredGitHubRepositories
-	.filter((item) => !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
+	// Keep the known public organization project present if the API rate-limits.
+	.filter((item) => item.owner === "Decohererk" || !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
 	.map((item) => {
-		const live = repositoryByName.get(item.name.toLowerCase());
+		const owner = item.owner || "katelya77";
+		const live = item.owner === "Decohererk"
+			? verifiedOrgRepository
+			: repositoryByName.get(item.name.toLowerCase());
 		return {
 			...item,
-			fullName: "katelya77/" + item.name,
-			url: live?.html_url || "https://github.com/katelya77/" + item.name,
+			fullName: owner + "/" + item.name,
+			url: live?.html_url || "https://github.com/" + owner + "/" + item.name,
 			stars: live?.stargazers_count ?? null,
 			forks: live?.forks_count ?? null,
 			language: live?.language ?? null,
@@ -102,7 +110,7 @@ const featuredRepositories = featuredGitHubRepositories
 		};
 	});
 
-const featuredNames = new Set(featuredRepositories.map((repo) => repo.name.toLowerCase()));
+const featuredNames = new Set(featuredRepositories.filter((repo) => repo.fullName.startsWith("katelya77/")).map((repo) => repo.name.toLowerCase()));
 const additionalRepositories = (publicRepositories ?? [])
 	.filter((repo) => !featuredNames.has(repo.name.toLowerCase()))
 	.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))
@@ -117,18 +125,18 @@ const additionalRepositories = (publicRepositories ?? [])
 	}));
 
 const totalStars = publicRepositories
-	? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0)
+	? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0) + (verifiedOrgRepository?.stargazers_count ?? 0)
 	: null;
 const stats = [
 	{
 		label: "公开仓库",
-		value: profileData?.public_repos ?? publicRepositories?.length ?? "—",
-		detail: "Public repositories",
+		value: profileData?.public_repos === undefined && !publicRepositories ? "—" : (profileData?.public_repos ?? publicRepositories?.length ?? 0) + 1,
+		detail: "Personal + curated public DecoTV",
 	},
 	{
 		label: "项目 Stars",
 		value: totalStars === null ? "—" : compactNumber(totalStars),
-		detail: "Active public non-fork repositories",
+		detail: verifiedOrgRepository ? "Personal + Decohererk/DecoTV" : "Personal only; DecoTV stats unavailable",
 	},
 	{
 		label: "关注者",
@@ -219,6 +227,14 @@ const profile = {
 	avatar: profileData?.avatar_url || githubProfile.avatar,
 	url: profileData?.html_url || githubProfile.url,
 };
+const associatedOrganization = {
+	name: "Decohererk",
+	url: "https://github.com/Decohererk",
+	repositoryUrl: "https://github.com/Decohererk/DecoTV",
+	repositoryName: "Decohererk/DecoTV",
+	stars: verifiedOrgRepository?.stargazers_count ?? null,
+	forks: verifiedOrgRepository?.forks_count ?? null,
+};
 const pageDescription =
 	"GitHub 个人开发者主页：公开项目、仓库 Stars、近期公开活动与 Ovio-inspired 动效展示，包含 Minimal、Craft、Retro、Toy 四种交互风格。";
 ---
@@ -237,6 +253,7 @@ const pageDescription =
 			recentActivity={recentActivity}
 			activityWeeks={activityWeeks}
 			filterTabs={filterTabs}
+			associatedOrganization={associatedOrganization}
 		/>
 	</div>
 </MainGridLayout>

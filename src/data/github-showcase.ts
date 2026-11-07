@@ -2,6 +2,7 @@ export type GitHubProjectCategory = "web" | "tools" | "desktop";
 
 export interface FeaturedGitHubRepository {
 	name: string;
+	owner?: string;
 	title: string;
 	description: string;
 	category: GitHubProjectCategory;
@@ -48,7 +49,8 @@ export const featuredGitHubRepositories: FeaturedGitHubRepository[] = [
 	},
 	{
 		name: "DecoTV",
-		title: "DecoTV",
+		owner: "Decohererk",
+		title: "DecoTV · Decohererk",
 		description:
 			"基于 LibreTV 二次创作的在线视频搜索与观看平台，在 UI、品牌和交互体验上持续增强，支持多视频源聚合与多平台部署。",
 		category: "web",
