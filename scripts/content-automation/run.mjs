@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { buildResearchBundle, discoverCandidates } from "./sources.mjs";
+import { mirrorApprovedImage } from "./media.mjs";
 import { hasUtcContentContribution, requiredArticleTarget } from "./contributions.mjs";
 import { formatApprovedEditorialContext, loadApprovedEditorialContext } from "./public-context.mjs";
 import {
@@ -302,7 +303,7 @@ export async function main() {
       approvedContext,
       forbiddenEvidenceRootIds: usedEvidenceRootIds,
     });
-    const imageUrl = chooseOfficialImage(validation.evidence);
+    const imageUrl = await mirrorApprovedImage(chooseOfficialImage(validation.evidence));
     const content = renderPost(article, { date, evidence: validation.evidence, imageUrl });
     const filePath = join(POSTS_DIR, `${article.slug}.md`).replaceAll("\\", "/");
     writeFileSync(filePath, content, "utf8");
