@@ -464,11 +464,11 @@ function getAdaptiveDpr(
 	const minDpr = touch ? TOUCH_MIN_DPR : MIN_DPR;
 	const maxDpr = touch ? TOUCH_MAX_DPR : MAX_DPR;
 	const pixelBudgetDpr = Math.sqrt(maxRenderPixels / Math.max(cssPixels, 1));
-	const boundedDpr = Math.max(
-		minDpr,
-		Math.min(window.devicePixelRatio || 1, maxDpr, pixelBudgetDpr),
-	);
-	return Math.max(minDpr, boundedDpr * qualityDprScale(qualityLevel));
+	const desiredDpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+	const qualityDpr = Math.max(minDpr, desiredDpr * qualityDprScale(qualityLevel));
+	// Large monitors must still obey the physical pixel budget: a minimum
+	// DPR floor cannot override the explicit full-screen WebGL pixel cap.
+	return Math.min(pixelBudgetDpr, qualityDpr);
 }
 
 export function initImpastoRenderer(): void {
