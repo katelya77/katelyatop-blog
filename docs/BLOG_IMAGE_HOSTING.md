@@ -11,14 +11,20 @@ K-Vault API: `POST /api/v1/upload` with multipart fields `file`, `storage=r2`, `
 1. Confirm the existing K-Vault installation has `img_url` KV and R2 bucket bound as `R2_BUCKET` with `USE_R2=true`. Verify that R2 is listed in `GET /api/v1/capabilities`; do not assume it is enabled.
 2. In K-Vault Admin → API Token 管理, create a **new token** scoped only to `upload`, ideally constrained to `r2` and a `blog` folder prefix, with expiration and rotation planned. Do **not** reuse a broad admin token or paste it in code.
 3. On the authoring machine, set `KVAULT_API_TOKEN` as an environment variable (and optionally `KVAULT_BASE_URL` for an alternative HTTPS K-Vault host). Use a secure secret store; do not commit token, `.env`, or shell history.
-4. Upload an image you own or have explicit permission to redistribute:
+4. Verify the existing online K-Vault deployment is R2-ready (no credentials or image uploads are made):
+
+   ```sh
+   pnpm images:upload -- --check
+   ```
+
+5. Upload an image you own or have explicit permission to redistribute:
 
    ```sh
    pnpm images:upload -- ./cover.png --folder blog/2026/11 --alt "文章封面"
    ```
 
-5. Paste the emitted `![alt](https://pan.katelya.eu.org/file/...)` into your Markdown article or set the returned URL as the `image:` frontmatter value.
-6. Check image HTTP 200, Content-Type, render in the built article and mobile, then publish via the existing GitHub → Cloudflare Pages → DogeCloud workflow.
+6. Paste the emitted `![alt](https://pan.katelya.eu.org/file/...)` into your Markdown article or set the returned URL as the `image:` frontmatter value.
+7. Check image HTTP 200, Content-Type, render in the built article and mobile, then publish via the existing GitHub → Cloudflare Pages → DogeCloud workflow.
 
 `pnpm images:upload -- ./cover.jpg --dry-run` checks and optimizes the file locally without secrets or API writes. Supported input: JPEG, PNG, WebP, AVIF, GIF; normal still images become ≤1600px WebP at quality 82 with EXIF stripped. Animated GIFs preserve their frames. Uploads have a 20MB input and 10MB output limit; unsupported or malformed images are rejected.
 
