@@ -5,6 +5,7 @@ const GITHUB_DAY = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_CALENDAR_DAYS = 400;
 
 function extractCount(text) {
+  if (/\bno contributions?\b/i.test(String(text || ""))) return 0;
   const match = String(text || "").replaceAll(",", "").match(/(?:^|\s)(\d+)\s+contributions?\b/i);
   return match ? Number(match[1]) : null;
 }
