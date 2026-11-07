@@ -91,9 +91,8 @@ const verifiedOrgRepository = decoTvData?.full_name === "Decohererk/DecoTV" &&
 	decoTvData.private === false && !decoTvData.fork && !decoTvData.archived
 	? decoTvData : null;
 const featuredRepositories = featuredGitHubRepositories
-	.filter((item) => item.owner === "Decohererk"
-		? true // A known public featured project remains visible when the API times out.
-		: !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
+	// Keep the known public organization project present if the API rate-limits.
+	.filter((item) => item.owner === "Decohererk" || !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
 	.map((item) => {
 		const owner = item.owner || "katelya77";
 		const live = item.owner === "Decohererk"
