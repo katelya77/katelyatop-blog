@@ -92,7 +92,7 @@ const verifiedOrgRepository = decoTvData?.full_name === "Decohererk/DecoTV" &&
 	? decoTvData : null;
 const featuredRepositories = featuredGitHubRepositories
 	.filter((item) => item.owner === "Decohererk"
-		? Boolean(verifiedOrgRepository)
+		? true // A known public featured project remains visible when the API times out.
 		: !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
 	.map((item) => {
 		const owner = item.owner || "katelya77";
@@ -131,13 +131,13 @@ const totalStars = publicRepositories
 const stats = [
 	{
 		label: "公开仓库",
-		value: profileData?.public_repos === undefined && !publicRepositories ? "—" : (profileData?.public_repos ?? publicRepositories?.length ?? 0) + (verifiedOrgRepository ? 1 : 0),
-		detail: "Personal + verified DecoTV",
+		value: profileData?.public_repos === undefined && !publicRepositories ? "—" : (profileData?.public_repos ?? publicRepositories?.length ?? 0) + 1,
+		detail: "Personal + curated public DecoTV",
 	},
 	{
 		label: "项目 Stars",
 		value: totalStars === null ? "—" : compactNumber(totalStars),
-		detail: "Personal + Decohererk/DecoTV",
+		detail: verifiedOrgRepository ? "Personal + Decohererk/DecoTV" : "Personal only; DecoTV stats unavailable",
 	},
 	{
 		label: "关注者",
@@ -228,14 +228,14 @@ const profile = {
 	avatar: profileData?.avatar_url || githubProfile.avatar,
 	url: profileData?.html_url || githubProfile.url,
 };
-const associatedOrganization = verifiedOrgRepository ? {
+const associatedOrganization = {
 	name: "Decohererk",
 	url: "https://github.com/Decohererk",
-	repositoryUrl: verifiedOrgRepository.html_url,
-	repositoryName: verifiedOrgRepository.full_name,
-	stars: verifiedOrgRepository.stargazers_count,
-	forks: verifiedOrgRepository.forks_count,
-} : null;
+	repositoryUrl: "https://github.com/Decohererk/DecoTV",
+	repositoryName: "Decohererk/DecoTV",
+	stars: verifiedOrgRepository?.stargazers_count ?? null,
+	forks: verifiedOrgRepository?.forks_count ?? null,
+};
 const pageDescription =
 	"GitHub 个人开发者主页：公开项目、仓库 Stars、近期公开活动与 Ovio-inspired 动效展示，包含 Minimal、Craft、Retro、Toy 四种交互风格。";
 ---
