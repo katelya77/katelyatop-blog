@@ -1,5 +1,6 @@
 ---
 import GitHubWorldShowcase from "@components/features/github-showcase/GitHubWorldShowcase.svelte";
+import { fetchPublicContributionCalendar } from "../../scripts/github-public-contributions.mjs";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import {
 	featuredGitHubRepositories,
@@ -71,10 +72,12 @@ function compactNumber(value: number): string {
 	}).format(value);
 }
 
-const [profileData, repositoryPayload, eventsData] = await Promise.all([
+const [profileData, repositoryPayload, orgRepositoryPayload, eventsData, contributionCalendar] = await Promise.all([
 	fetchGitHubJson<GitHubProfileApi>("/users/katelya77"),
 	fetchGitHubJson<GitHubRepositoryApi[]>("/users/katelya77/repos?per_page=100&sort=updated"),
+	fetchGitHubJson<GitHubRepositoryApi[]>("/orgs/Decohererk/repos?per_page=100&sort=updated"),
 	fetchGitHubJson<GitHubEventApi[]>("/users/katelya77/events/public?per_page=100"),
+	fetchPublicContributionCalendar(),
 ]);
 
 // Only public, non-fork, non-archived repositories are eligible for the showcase.
@@ -83,17 +86,33 @@ const [profileData, repositoryPayload, eventsData] = await Promise.all([
 const publicRepositories = Array.isArray(repositoryPayload)
 	? repositoryPayload.filter((repo) => repo && repo.private === false && !repo.fork && !repo.archived)
 	: null;
+const publicOrgRepositories = Array.isArray(orgRepositoryPayload)
+	? orgRepositoryPayload.filter((repo) => repo && repo.private === false && !repo.fork && !repo.archived)
+	: null;
+const allPublicProjects = [
+	...(publicRepositories ?? []),
+	...(publicOrgRepositories ?? []),
+];
 const repositoryByName = new Map<string, GitHubRepositoryApi>(
-	(publicRepositories ?? []).map((repo) => [repo.name.toLowerCase(), repo] as const),
+	allPublicProjects.map((repo) => [repo.full_name.toLowerCase(), repo] as const),
 );
 const featuredRepositories = featuredGitHubRepositories
-	.filter((item) => !publicRepositories || repositoryByName.has(item.name.toLowerCase()))
+	.filter((item) => {
+		const owner = item.owner || "katelya77";
+		// Keep curated projects visible when an API is temporarily unavailable,
+		// but do not invent live metrics or an organization's ownership.
+		return owner === "Decohererk"
+			? !publicOrgRepositories || repositoryByName.has((owner + "/" + item.name).toLowerCase())
+			: !publicRepositories || repositoryByName.has((owner + "/" + item.name).toLowerCase());
+	})
 	.map((item) => {
-		const live = repositoryByName.get(item.name.toLowerCase());
+		const owner = item.owner || "katelya77";
+		const fullName = owner + "/" + item.name;
+		const live = repositoryByName.get(fullName.toLowerCase());
 		return {
 			...item,
-			fullName: "katelya77/" + item.name,
-			url: live?.html_url || "https://github.com/katelya77/" + item.name,
+			fullName,
+			url: live?.html_url || "https://github.com/" + fullName,
 			stars: live?.stargazers_count ?? null,
 			forks: live?.forks_count ?? null,
 			language: live?.language ?? null,
@@ -102,9 +121,9 @@ const featuredRepositories = featuredGitHubRepositories
 		};
 	});
 
-const featuredNames = new Set(featuredRepositories.map((repo) => repo.name.toLowerCase()));
-const additionalRepositories = (publicRepositories ?? [])
-	.filter((repo) => !featuredNames.has(repo.name.toLowerCase()))
+const featuredNames = new Set(featuredRepositories.map((repo) => repo.fullName.toLowerCase()));
+const additionalRepositories = allPublicProjects
+	.filter((repo) => !featuredNames.has(repo.full_name.toLowerCase()))
 	.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))
 	.slice(0, 8)
 	.map((repo) => ({
@@ -116,19 +135,21 @@ const additionalRepositories = (publicRepositories ?? [])
 		updatedAt: formatDate(repo.updated_at),
 	}));
 
-const totalStars = publicRepositories
-	? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0)
-	: null;
+const totalStars = publicRepositories && publicOrgRepositories
+	? allPublicProjects.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0)
+	: publicRepositories
+		? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0)
+		: null;
 const stats = [
 	{
-		label: "公开仓库",
+		label: "个人仓库",
 		value: profileData?.public_repos ?? publicRepositories?.length ?? "—",
 		detail: "Public repositories",
 	},
 	{
 		label: "项目 Stars",
 		value: totalStars === null ? "—" : compactNumber(totalStars),
-		detail: "Active public non-fork repositories",
+		detail: "Personal + Decohererk (when available)",
 	},
 	{
 		label: "关注者",
@@ -184,10 +205,12 @@ for (const event of eventsData ?? []) {
 	eventCounts.set(key, (eventCounts.get(key) ?? 0) + 1);
 }
 
+const contributionSource = contributionCalendar ? "contributions" : "events";
+const calendarByDate = new Map((contributionCalendar ?? []).map((day) => [day.date, day]));
 const today = new Date();
 today.setUTCHours(0, 0, 0, 0);
 const activityStart = new Date(today);
-activityStart.setUTCDate(activityStart.getUTCDate() - 90);
+activityStart.setUTCDate(activityStart.getUTCDate() - (contributionCalendar ? 364 : 90));
 activityStart.setUTCDate(activityStart.getUTCDate() - activityStart.getUTCDay());
 const activityDayCount = Math.floor((today.getTime() - activityStart.getTime()) / 86_400_000) + 1;
 const oldestEventTime =
@@ -203,10 +226,11 @@ const activityDays = Array.from({ length: activityDayCount }, (_, index) => {
 	const date = new Date(activityStart);
 	date.setUTCDate(activityStart.getUTCDate() + index);
 	const key = date.toISOString().slice(0, 10);
-	const known = eventsData !== null && date.getTime() >= sampleCutoff;
-	const count = known ? (eventCounts.get(key) ?? 0) : null;
-	const level =
-		count === null ? "unknown" : count === 0 ? "0" : count === 1 ? "1" : count <= 3 ? "2" : "3";
+	const calendar = calendarByDate.get(key);
+	const known = Boolean(calendar) || (!contributionCalendar && eventsData !== null && date.getTime() >= sampleCutoff);
+	const count = calendar ? calendar.count : known && !contributionCalendar ? (eventCounts.get(key) ?? 0) : null;
+	const level = calendar?.level
+		?? (count === null ? "unknown" : count === 0 ? "0" : count === 1 ? "1" : count <= 3 ? "2" : "3");
 	return { date: key, count, level };
 });
 const activityWeeks = Array.from(
@@ -236,6 +260,15 @@ const pageDescription =
 			additionalRepositories={additionalRepositories}
 			recentActivity={recentActivity}
 			activityWeeks={activityWeeks}
+			contributionSource={contributionSource}
+			organization={{
+				login: "Decohererk",
+				name: "Decohererk · DecoTV",
+				url: "https://github.com/Decohererk",
+				avatar: "https://avatars.githubusercontent.com/u/230862196?v=4",
+				repositoryCount: publicOrgRepositories?.length ?? null,
+				projectUrl: "https://github.com/Decohererk/DecoTV",
+			}}
 			filterTabs={filterTabs}
 		/>
 	</div>
