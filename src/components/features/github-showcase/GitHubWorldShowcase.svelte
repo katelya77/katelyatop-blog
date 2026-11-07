@@ -73,7 +73,33 @@
 	let world = $state<WorldId>("minimal");
 	let category = $state("all");
 	let activeDay = $state<ActivityDay | null>(null);
+	let selectedDay = $state<ActivityDay | null>(null);
 	let focusedDayIndex = $state(0);
+	let displayedDay = $derived(activeDay ?? selectedDay);
+
+	// Public Events is a recent, capped sample; unknown days must stay distinct from zero.
+	const visibleDays = activityWeeks.flat();
+	const observedDays = visibleDays.filter((day) => day.count !== null);
+	const observedEvents = observedDays.reduce((sum, day) => sum + (day.count ?? 0), 0);
+	const activeDays = observedDays.filter((day) => (day.count ?? 0) > 0).length;
+	const monthMarkers = activityWeeks
+		.map((week, index) => ({
+			index,
+			month: week[0]?.date.slice(0, 7) ?? "",
+			label: week[0]?.date.slice(5, 7) ?? "",
+		}))
+		.filter((item, index, all) => index === 0 || item.month !== all[index - 1]?.month);
+	const rankedRepositories = [...featuredRepositories, ...additionalRepositories]
+		.filter((repository) => typeof repository.stars === "number")
+		.sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
+		.slice(0, 5)
+		.map((repository) => ({
+			name: "title" in repository ? repository.title : repository.name,
+			url: repository.url,
+			stars: repository.stars ?? 0,
+		}));
+	const highestStars = Math.max(1, ...rankedRepositories.map((repository) => repository.stars));
+	const technologies = [...new Set(featuredRepositories.flatMap((repository) => repository.techStack))].slice(0, 14);
 
 	let worldIndex = $derived(Math.max(0, worlds.findIndex((item) => item.id === world)));
 	let currentWorld = $derived(worlds[worldIndex]);
@@ -150,6 +176,11 @@
 				</a>
 				<a class="gh-secondary-link" href="/projects/">浏览项目总览</a>
 			</div>
+			<nav class="gh-quick-nav" aria-label="GitHub 页面章节导航">
+				<a href="#github-activity">01 / 活动图谱 ↗</a>
+				<a href="#github-projects">02 / 精选作品 ↗</a>
+				<a href="#github-impact">03 / 开源速览 ↗</a>
+			</nav>
 		</div>
 
 		<article class="gh-developer-card" aria-label="Developer identity card">
@@ -237,22 +268,32 @@
 			{/each}
 		</section>
 
-		<section class="gh-panel gh-activity-panel">
+		<section id="github-activity" class="gh-panel gh-activity-panel">
 			<div class="gh-section-heading">
 				<div>
 					<span class="gh-kicker">ACTIVITY / PUBLIC SIGNALS</span>
 					<h2>近期公开活动</h2>
-					<p>把近期公开事件转化为一张可探索的活动图谱。</p>
+					<p>让公开事件在时间轴上留下痕迹，轻触方格查看每天的数据。</p>
 				</div>
-				<span class="gh-data-pill">LAST 90 DAYS · API SAMPLE</span>
+				<span class="gh-data-pill">90 DAYS · PUBLIC EVENTS SAMPLE</span>
 			</div>
 
+			<div class="gh-activity-kpis" aria-label="公开事件样本概览">
+				<div><strong>{observedEvents}</strong><span>样本事件</span></div>
+				<div><strong>{activeDays}</strong><span>有事件的日期</span></div>
+				<div><strong>{observedDays.length} / {visibleDays.length}</strong><span>可观察日期</span></div>
+			</div>
 			<div class="gh-activity-layout">
 				<div class="gh-activity-labels" aria-hidden="true">
-					<span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+					<span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
 				</div>
 				<div class="gh-activity-scroll">
-					<div class="gh-activity-grid" role="grid" aria-label="最近公开事件的日期分布">
+					<div class="gh-activity-months" style={"--activity-week-count: " + activityWeeks.length} aria-hidden="true">
+						{#each monthMarkers as marker (marker.month)}
+							<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
+						{/each}
+					</div>
+					<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label="最近公开事件的日期分布">
 						{#each activityWeeks as week, weekIndex (weekIndex)}
 							<div class="gh-activity-week" role="row">
 								{#each week as day, dayIndex (day.date)}
@@ -264,9 +305,9 @@
 										data-activity-index={index}
 										title={daySummary(day)}
 										aria-label={daySummary(day)}
-										aria-pressed={activeDay?.date === day.date}
+										aria-pressed={selectedDay?.date === day.date}
 										tabindex={focusedDayIndex === index ? 0 : -1}
-										style={"--cell-delay: " + Math.min(index, 90) * 2 + "ms; --cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
+										style={"--cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
 										onpointerenter={() => (activeDay = day)}
 										onpointerleave={() => (activeDay = null)}
 										onfocus={() => {
@@ -274,7 +315,7 @@
 											activeDay = day;
 										}}
 										onblur={() => (activeDay = null)}
-										onclick={() => (activeDay = day)}
+										onclick={() => (selectedDay = selectedDay?.date === day.date ? null : day)}
 										onkeydown={(event) => handleActivityKeydown(event, index)}
 									></button>
 								{/each}
@@ -286,18 +327,18 @@
 			<div class="gh-activity-bottom">
 				<p class="gh-activity-readout" aria-live="polite">
 					<span class="gh-readout-mark"></span>
-					{daySummary(activeDay)}
+					{daySummary(displayedDay)}
 				</p>
 				<div class="gh-activity-legend" aria-label="活动强度图例">
-					<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="unknown"></i><span>多 / 未覆盖</span>
+					<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><span>多</span><i data-level="unknown"></i><span>未覆盖</span>
 				</div>
 			</div>
 			<p class="gh-footnote">
-				数据说明：这里展示 GitHub Public Events API 返回的公开事件样本，不等同于官方全年 Contributions 统计，也不包含私有仓库活动。API 最多读取最近 100 条事件；未覆盖日期会标记为未知，不会伪装成零贡献。
+				数据口径：GitHub Public Events API 的最近 100 条公开事件样本，不是官方 Contributions 贡献日历；公开事件通常仅保留最近 30 天。虚线格代表样本未覆盖，不能理解为当天零贡献。点选方格可固定日期。
 			</p>
 		</section>
 
-		<section class="gh-repositories">
+		<section id="github-projects" class="gh-repositories">
 			<div class="gh-section-heading gh-repo-heading">
 				<div>
 					<span class="gh-kicker">SELECTED WORKS / PUBLIC REPOSITORIES</span>
@@ -385,6 +426,37 @@
 				</div>
 			</section>
 		{/if}
+
+		<section id="github-impact" class="gh-insights-grid" aria-label="公开项目与技术速览">
+			<div class="gh-panel gh-insight-panel">
+				<div class="gh-section-heading">
+					<div><span class="gh-kicker">OPEN SOURCE / PROJECT SIGNALS</span><h2>仓库热度速览</h2><p>仅统计可获取 Stars 数据的公开非 Fork 仓库。</p></div>
+				</div>
+				{#if rankedRepositories.length > 0}
+					<div class="gh-rank-list">
+						{#each rankedRepositories as repository, index (repository.url)}
+							<a class="gh-rank-item" href={repository.url} target="_blank" rel="noopener noreferrer">
+								<div class="gh-rank-top"><span>{String(index + 1).padStart(2, "0")} <strong>{repository.name}</strong></span><b>★ {compactNumber(repository.stars)}</b></div>
+								<div class="gh-rank-track"><span style={"width: " + Math.max(3, repository.stars / highestStars * 100) + "%"}></span></div>
+							</a>
+						{/each}
+					</div>
+				{:else}
+					<p class="gh-empty-state">公开仓库数据尚不可用。</p>
+				{/if}
+			</div>
+			<div class="gh-panel gh-insight-panel">
+				<div class="gh-section-heading">
+					<div><span class="gh-kicker">STACK / BUILDING BLOCKS</span><h2>技术拼图</h2><p>来自本站精选项目的技术标签，而非编造的语言占比。</p></div>
+				</div>
+				<div class="gh-stack-cloud">
+					{#each technologies as technology, index (technology)}
+						<span class:gh-stack-primary={index < 5}>{technology}</span>
+					{/each}
+				</div>
+				<a class="gh-insight-link" href="#github-projects">探索技术对应的实际项目 ↗</a>
+			</div>
+		</section>
 
 		<section class="gh-panel gh-events-panel">
 			<div class="gh-section-heading">
@@ -1410,6 +1482,129 @@
 	.gh-credit a {
 		color: var(--gh-accent);
 		text-decoration: none;
+	}
+
+
+	/* A proportional, accessible heatmap instead of 10px cells stranded in a large panel. */
+	.gh-quick-nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.55rem 0.9rem;
+		margin-top: 1.25rem;
+	}
+	.gh-quick-nav a {
+		color: var(--gh-accent-deep);
+		font-size: 0.68rem;
+		font-weight: 750;
+		text-decoration: none;
+	}
+	.gh-quick-nav a:hover { text-decoration: underline; text-underline-offset: 3px; }
+	.gh-activity-kpis {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.6rem;
+		margin: 0.1rem 0 1.1rem;
+	}
+	.gh-activity-kpis > div {
+		display: flex;
+		flex-direction: column;
+		gap: 0.12rem;
+		padding: 0.75rem 0.8rem;
+		border: 1px solid var(--gh-line);
+		border-radius: 0.7rem;
+		background: color-mix(in srgb, var(--gh-stage) 24%, var(--gh-surface));
+	}
+	.gh-activity-kpis strong {
+		color: var(--gh-ink);
+		font-size: clamp(1rem, 2.3vw, 1.45rem);
+		font-variant-numeric: tabular-nums;
+	}
+	.gh-activity-kpis span { color: var(--gh-muted); font-size: 0.64rem; }
+	.gh-activity-layout { gap: 0.6rem; }
+	.gh-activity-labels {
+		flex: 0 0 1.15rem;
+		grid-template-rows: repeat(7, minmax(0, 1fr));
+		gap: clamp(3px, 0.6vw, 7px);
+		padding-top: 1.45rem;
+		padding-bottom: 0.5rem;
+		font-size: 0.58rem;
+		line-height: normal;
+	}
+	.gh-activity-labels span { display: grid; place-items: center; }
+	.gh-activity-scroll {
+		flex: 1 1 0;
+		min-width: 0;
+		padding: 0;
+	}
+	.gh-activity-months,
+	.gh-activity-grid {
+		display: grid;
+		grid-template-columns: repeat(var(--activity-week-count), minmax(0, 1fr));
+		gap: clamp(3px, 0.6vw, 7px);
+		width: 100%;
+	}
+	.gh-activity-months {
+		min-height: 1.15rem;
+		margin-bottom: 0.3rem;
+		color: var(--gh-muted);
+		font-size: 0.61rem;
+		font-weight: 700;
+	}
+	.gh-activity-months span { white-space: nowrap; }
+	.gh-activity-week {
+		min-width: 0;
+		grid-template-rows: repeat(7, minmax(0, 1fr));
+		gap: clamp(3px, 0.6vw, 7px);
+	}
+	.gh-activity-cell {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1;
+		min-width: 0;
+		border-radius: clamp(2px, 0.45vw, 5px);
+		animation: none;
+	}
+	.gh-activity-cell[data-level="unknown"] {
+		background: color-mix(in srgb, var(--gh-muted) 4%, transparent);
+		border: 1px dashed color-mix(in srgb, var(--gh-muted) 35%, transparent);
+	}
+	.gh-activity-cell:hover,
+	.gh-activity-cell:focus-visible,
+	.gh-activity-cell[aria-pressed="true"] { transform: scale(1.12); }
+	.gh-activity-readout { min-height: 1.2rem; }
+	.gh-activity-legend { flex-wrap: wrap; }
+	.gh-insights-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1rem;
+		min-width: 0;
+	}
+	.gh-insight-panel { min-width: 0; }
+	.gh-rank-list { display: grid; gap: 0.85rem; }
+	.gh-rank-item { display: grid; gap: 0.35rem; color: var(--gh-ink); text-decoration: none; }
+	.gh-rank-top { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; font-size: 0.68rem; }
+	.gh-rank-top span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gh-muted); }
+	.gh-rank-top strong { color: var(--gh-ink); margin-left: 0.3rem; font-weight: 800; }
+	.gh-rank-top b { flex: 0 0 auto; color: var(--gh-accent); font-variant-numeric: tabular-nums; }
+	.gh-rank-track { height: 0.48rem; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--gh-muted) 13%, transparent); }
+	.gh-rank-track span { display: block; height: 100%; border-radius: inherit; background: var(--gh-accent); }
+	.gh-rank-item:hover .gh-rank-track span { opacity: 0.82; }
+	.gh-stack-cloud { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.5rem; min-height: 9rem; }
+	.gh-stack-cloud span { padding: 0.4rem 0.6rem; border: 1px solid var(--gh-line); border-radius: 0.55rem; color: var(--gh-ink-2); font-size: 0.7rem; background: var(--gh-surface); }
+	.gh-stack-cloud span.gh-stack-primary { background: color-mix(in srgb, var(--gh-accent) 12%, var(--gh-surface)); color: var(--gh-accent-deep); }
+	.gh-insight-link { display: inline-block; margin-top: 1rem; font-size: 0.72rem; font-weight: 800; color: var(--gh-accent); text-decoration: none; }
+	.gh-insight-link:hover { text-decoration: underline; }
+	/* Skip expensive offscreen panel layout until readers scroll there. */
+	.gh-more-panel, .gh-events-panel, .gh-insight-panel { content-visibility: auto; contain-intrinsic-size: auto 460px; }
+	@media (max-width: 760px) {
+		.gh-insights-grid { grid-template-columns: minmax(0, 1fr); }
+	}
+	@media (max-width: 460px) {
+		.gh-activity-kpis > div { padding: 0.55rem 0.45rem; }
+		.gh-activity-kpis span { font-size: 0.57rem; }
+		.gh-activity-layout { gap: 0.35rem; }
+		.gh-activity-labels { flex-basis: 0.9rem; }
+		.gh-activity-months, .gh-activity-grid, .gh-activity-week { gap: 3px; }
 	}
 
 	/* Ovio-inspired visual worlds: same semantic data, different material language. */

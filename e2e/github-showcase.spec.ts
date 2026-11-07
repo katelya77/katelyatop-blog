@@ -14,9 +14,25 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 		await expect(page.locator('[data-world-tab="' + world + '"]')).toHaveAttribute("aria-selected", "true");
 	}
 
+	await expect(page.locator(".gh-activity-kpis")).toBeVisible();
+	await expect(page.locator(".gh-insights-grid")).toBeVisible();
+	const heatmap = page.locator(".gh-activity-grid");
+	const heatmapGeometry = await heatmap.evaluate((element) => {
+		const firstCell = element.querySelector<HTMLElement>(".gh-activity-cell");
+		return {
+			width: element.getBoundingClientRect().width,
+			cellWidth: firstCell?.getBoundingClientRect().width ?? 0,
+			parentWidth: element.parentElement?.getBoundingClientRect().width ?? 1,
+		};
+	});
+	expect(heatmapGeometry.cellWidth).toBeGreaterThan(12);
+	expect(heatmapGeometry.width / heatmapGeometry.parentWidth).toBeGreaterThan(0.9);
+
 	const activityCell = page.locator(".gh-activity-cell").first();
 	await activityCell.hover();
 	await expect(page.locator(".gh-activity-readout")).not.toContainText("将鼠标移至方格");
+	await page.locator(".gh-activity-cell").last().click();
+	await expect(page.locator(".gh-activity-cell").last()).toHaveAttribute("aria-pressed", "true");
 
 	const toolsTab = page.locator('[data-filter-value="tools"]');
 	if (await toolsTab.count()) {

@@ -138,7 +138,7 @@ const stats = [
 	{
 		label: "公开动态",
 		value: eventsData === null ? "—" : eventsData.length,
-		detail: "Latest public events",
+		detail: "Sampled public events (up to 100)",
 	},
 ];
 
@@ -194,11 +194,16 @@ const oldestEventTime =
 	eventsData && eventsData.length >= 100
 		? Math.min(...eventsData.map((event) => Date.parse(event.created_at)).filter(Number.isFinite))
 		: null;
+// GitHub Public Events has a maximum 30-day window, even when fewer than
+// 100 entries are returned. Days outside that window are not known zeros.
+const ageLimit = new Date(today);
+ageLimit.setUTCDate(today.getUTCDate() - 29);
+const sampleCutoff = Math.max(ageLimit.getTime(), oldestEventTime ?? 0);
 const activityDays = Array.from({ length: activityDayCount }, (_, index) => {
 	const date = new Date(activityStart);
 	date.setUTCDate(activityStart.getUTCDate() + index);
 	const key = date.toISOString().slice(0, 10);
-	const known = eventsData !== null && (oldestEventTime === null || date.getTime() >= oldestEventTime);
+	const known = eventsData !== null && date.getTime() >= sampleCutoff;
 	const count = known ? (eventCounts.get(key) ?? 0) : null;
 	const level =
 		count === null ? "unknown" : count === 0 ? "0" : count === 1 ? "1" : count <= 3 ? "2" : "3";

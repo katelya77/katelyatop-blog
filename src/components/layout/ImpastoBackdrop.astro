@@ -16,6 +16,8 @@ import "../../styles/katelya-hero-depth.css";
 	type ArtLayerWindow = Window & {
 		__katelyaArtLayersPromise?: Promise<ArtLayerModules>;
 		__katelyaArtLayersFrame?: number;
+		__katelyaArtIdle?: number;
+		__katelyaArtDelay?: number;
 		__katelyaArtPageLoadBound?: boolean;
 	};
 
@@ -36,15 +38,34 @@ import "../../styles/katelya-hero-depth.css";
 		if (artWindow.__katelyaArtLayersFrame) {
 			cancelAnimationFrame(artWindow.__katelyaArtLayersFrame);
 		}
+		if (artWindow.__katelyaArtIdle && "cancelIdleCallback" in window) {
+			window.cancelIdleCallback(artWindow.__katelyaArtIdle);
+		}
+		if (artWindow.__katelyaArtDelay) {
+			window.clearTimeout(artWindow.__katelyaArtDelay);
+		}
 
+		// Paint the layout before compiling the decorative WebGL shader. The
+		// background CSS already supplies an instant, low-cost first impression.
 		artWindow.__katelyaArtLayersFrame = requestAnimationFrame(() => {
 			artWindow.__katelyaArtLayersFrame = 0;
-			void loadArtLayers().then(
-				({ initImpastoRenderer, initKatelyaHeroDepth }) => {
-					initImpastoRenderer();
-					initKatelyaHeroDepth();
-				},
-			);
+			const startArtLayers = () => {
+				artWindow.__katelyaArtIdle = 0;
+				artWindow.__katelyaArtDelay = 0;
+				void loadArtLayers().then(
+					({ initImpastoRenderer, initKatelyaHeroDepth }) => {
+						initImpastoRenderer();
+						initKatelyaHeroDepth();
+					},
+				);
+			};
+			if ("requestIdleCallback" in window) {
+				artWindow.__katelyaArtIdle = window.requestIdleCallback(startArtLayers, {
+					timeout: 1200,
+				});
+			} else {
+				artWindow.__katelyaArtDelay = artWindow.setTimeout(startArtLayers, 160);
+			}
 		});
 	}
 
