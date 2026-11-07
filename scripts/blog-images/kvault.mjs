@@ -42,7 +42,7 @@ export async function prepareBlogImage(filePath, { optimize = true } = {}) {
   }
   // Preserve GIF motion; converting multi-frame images to one WebP would silently
   // lose animation. All ordinary covers are resized to ≤1600px and stripped of EXIF.
-  const preserveAnimation = meta.format === "gif";
+  const preserveAnimation = meta.format === "gif" || (meta.pages ?? 1) > 1;
   const bytes = optimize && !preserveAnimation
     ? await sharp(original, { failOn: "error", limitInputPixels: 60_000_000 })
         .rotate().resize({ width: 1600, withoutEnlargement: true })
@@ -54,6 +54,22 @@ export async function prepareBlogImage(filePath, { optimize = true } = {}) {
   const filename = originalName + (outputMime === "image/webp" ? ".webp" : extension);
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   return { bytes, mime: outputMime, filename, sha256, width: meta.width, height: meta.height };
+}
+
+export async function checkKVaultReadiness({ baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch } = {}) {
+  const origin = validateKVaultOrigin(baseUrl);
+  const response = await fetchImpl(origin + "/api/v1/capabilities", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!response.ok) throw new Error("K-Vault capabilities unavailable: HTTP " + response.status);
+  const payload = await response.json();
+  const storages = payload?.data?.storages;
+  if (payload?.success !== true || !Array.isArray(storages) || !storages.includes("r2")) {
+    throw new Error("K-Vault R2 storage is not ready; check its R2 binding and default storage configuration");
+  }
+  return { origin, r2Ready: true };
 }
 
 export async function uploadBlogImage({
@@ -83,7 +99,7 @@ export async function uploadBlogImage({
     throw new Error("K-Vault upload response lacks a public download link");
   }
   const link = new URL(download);
-  if (link.origin !== origin || !link.pathname.startsWith("/file/") || link.username || link.password || link.hash) {
+  if (link.origin !== origin || !link.pathname.startsWith("/file/") || link.username || link.password || link.search || link.hash) {
     throw new Error("K-Vault returned an unexpected public link");
   }
   return { url: link.toString(), fileId: result.file?.id || "", deduplicated: Boolean(result.deduplicated) };
