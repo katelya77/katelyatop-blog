@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 const ARTIFACT_DIR = "artifacts/ui";
 
-test("cold boot never exposes the generated day or night fallback artwork", async ({
+test("cold boot shows full painterly artwork before JS without blocking page readability", async ({
 	page,
 }) => {
 	await mkdir(ARTIFACT_DIR, { recursive: true });
@@ -50,7 +50,7 @@ test("cold boot never exposes the generated day or night fallback artwork", asyn
 	expect(bootSurface.ready).toBe(false);
 	expect(bootSurface.opacity).toBe("1");
 	expect(bootSurface.visibility).toBe("visible");
-	expect(bootSurface.backgroundImage).not.toContain("impasto-day.svg");
+	expect(bootSurface.backgroundImage).toContain("impasto-day.svg");
 	expect(bootSurface.backgroundImage).not.toContain("impasto-night.svg");
 	await expect(page.locator("[data-impasto-canvas]")).toHaveCSS("opacity", "1");
 	await expect(page.locator(".impasto-static-fallback")).toHaveCSS(
