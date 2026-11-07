@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { markdownImage, uploadBlogImage, validateFolder, validateKVaultOrigin } from "../scripts/blog-images/kvault.mjs";
+import { checkKVaultReadiness, markdownImage, uploadBlogImage, validateFolder, validateKVaultOrigin } from "../scripts/blog-images/kvault.mjs";
 
 const image = {
   bytes: new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80]),
@@ -49,4 +49,18 @@ test("rejects a successful-looking response pointing at a non-owner host", async
     }),
     /unexpected public link/,
   );
+});
+
+test("capability smoke check requires a configured R2 backend before uploading", async () => {
+  const ready = await checkKVaultReadiness({
+    fetchImpl: async (url, options) => {
+      assert.equal(url, "https://pan.katelya.eu.org/api/v1/capabilities");
+      assert.equal(options.method, "GET");
+      return { ok: true, json: async () => ({ success: true, data: { storages: ["telegram", "r2"] } }) };
+    },
+  });
+  assert.equal(ready.r2Ready, true);
+  await assert.rejects(checkKVaultReadiness({
+    fetchImpl: async () => ({ ok: true, json: async () => ({ success: true, data: { storages: ["telegram"] } }) }),
+  }), /not ready/);
 });
