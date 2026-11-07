@@ -5,6 +5,9 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 	await expect(page.locator(".github-showcase-shell")).toHaveAttribute("data-hydrated", "true");
 
 	await expect(page.locator(".gh-id-name h2")).toContainText("Katelya");
+	await expect(page.locator(".gh-organization-brand")).toHaveAttribute("href", "https://github.com/Decohererk");
+	await expect(page.locator(".gh-organization-actions a")).toHaveAttribute("href", "https://github.com/Decohererk/DecoTV");
+	await expect(page.locator(".gh-activity-source")).toBeVisible();
 	await expect(page.locator(".gh-repo-card").first()).toBeVisible();
 	await expect(page.locator(".gh-section-heading h2").filter({ hasText: "近期公开活动" })).toBeVisible();
 
