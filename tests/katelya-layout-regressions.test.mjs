@@ -47,8 +47,8 @@ test("full page uses day-night painterly artwork and clips overflow", async () =
 		"public/assets/art/katelya-van-gogh-night.svg",
 	);
 
-	assert.match(theme, /impasto-day\.svg/);
-	assert.match(theme, /impasto-night\.svg/);
+	assert.match(theme, /van-gogh-lite-day\.svg/);
+	assert.match(theme, /van-gogh-lite-night\.svg/);
 	assert.match(theme, /overflow-x:\s*clip/);
 	assert.match(theme, /background-attachment:\s*scroll/);
 	assert.match(dayArtwork, /stroke-linecap="round"/);
