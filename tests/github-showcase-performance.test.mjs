@@ -30,6 +30,7 @@ test("decorative WebGL runs at a low idle cadence and initializes after first la
 	assert.match(renderer, /const TOUCH_IDLE_FPS = 1/);
 	assert.match(renderer, /const MAX_RENDER_PIXELS = 1_500_000/);
 	assert.match(renderer, /const TOUCH_MAX_RENDER_PIXELS = 750_000/);
+	assert.match(renderer, /return Math\.min\(pixelBudgetDpr, qualityDpr\)/);
 	assert.match(renderer, /const POINTER_FPS = 10/);
 	assert.match(backdrop, /requestIdleCallback\(startArtLayers/);
 	assert.match(backdrop, /timeout: 1200/);
