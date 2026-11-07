@@ -1,0 +1,47 @@
+name: K-Vault Blog Media Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      storage:
+        description: Select the configured backend to verify
+        required: true
+        type: choice
+        default: r2
+        options:
+          - r2
+          - telegram
+      upload_probe:
+        description: Upload one tiny public PNG and verify its K-Vault link
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Check configured storages and optionally upload a tiny image
+        env:
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
+          BLOG_MEDIA_STORAGE: ${{ inputs.storage }}
+          BLOG_MEDIA_FOLDER: blog/health
+          UPLOAD_PROBE: ${{ inputs.upload_probe }}
+        run: |
+          set -euo pipefail
+          if [ "$UPLOAD_PROBE" = "true" ]; then
+            node scripts/content-automation/media-doctor.mjs --smoke
+          else
+            node scripts/content-automation/media-doctor.mjs
+          fi
