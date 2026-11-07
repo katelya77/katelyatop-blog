@@ -38,6 +38,15 @@
 		updatedAt: string;
 	};
 
+	type AssociatedOrganization = {
+		name: string;
+		url: string;
+		repositoryUrl: string;
+		repositoryName: string;
+		stars: number;
+		forks: number;
+	};
+
 	type ActivityDay = { date: string; count: number | null; level: string };
 	type ActivityEvent = { label: string; repository: string; url: string; date: string };
 	type FilterTab = { value: string; label: string; count: number };
@@ -50,6 +59,7 @@
 		recentActivity: ActivityEvent[];
 		activityWeeks: ActivityDay[][];
 		filterTabs: FilterTab[];
+		associatedOrganization: AssociatedOrganization | null;
 	};
 
 	let {
@@ -60,6 +70,7 @@
 		recentActivity,
 		activityWeeks,
 		filterTabs,
+		associatedOrganization,
 	}: Props = $props();
 
 	const worlds: { id: WorldId; label: string; english: string; description: string }[] = [
@@ -216,6 +227,27 @@
 		</article>
 	</section>
 
+	{#if associatedOrganization}
+		<section class="gh-panel gh-org-panel" aria-label="开源协作组织">
+			<div class="gh-section-heading">
+				<div>
+					<span class="gh-kicker">ORGANIZATION / COLLABORATION</span>
+					<h2>组织与协作项目</h2>
+					<p>跨账户展示关联组织的公开仓库，独立于个人仓库统计获取。</p>
+				</div>
+				<a class="gh-inline-link" href={associatedOrganization.url} target="_blank" rel="noopener noreferrer">访问组织 ↗</a>
+			</div>
+			<a class="gh-org-feature" href={associatedOrganization.repositoryUrl} target="_blank" rel="noopener noreferrer">
+				<div class="gh-org-badge"><strong>{associatedOrganization.name}</strong><small>PUBLIC ORGANIZATION</small></div>
+				<div class="gh-org-details">
+					<strong>{associatedOrganization.repositoryName}</strong>
+					<span>跨平台开源影视聚合项目 · 查看源码与发行动态 ↗</span>
+				</div>
+				<div class="gh-org-metrics">★ {compactNumber(associatedOrganization.stars)} <span>⑂ {compactNumber(associatedOrganization.forks)}</span></div>
+			</a>
+		</section>
+	{/if}
+
 	<section class="gh-world-panel" aria-label="Ovio-inspired visual styles">
 		<div class="gh-world-copy">
 			<div>
@@ -273,9 +305,9 @@
 				<div>
 					<span class="gh-kicker">ACTIVITY / PUBLIC SIGNALS</span>
 					<h2>近期公开活动</h2>
-					<p>让公开事件在时间轴上留下痕迹，轻触方格查看每天的数据。</p>
+					<p>近期公开事件样本，非全年贡献记录。完整贡献请查看 GitHub 官方账户页。</p>
 				</div>
-				<span class="gh-data-pill">90 DAYS · PUBLIC EVENTS SAMPLE</span>
+				<a class="gh-data-pill gh-contrib-source" href="https://github.com/katelya77?tab=overview" target="_blank" rel="noopener noreferrer">查看官方全年 Contributions ↗</a>
 			</div>
 
 			<div class="gh-activity-kpis" aria-label="公开事件样本概览">
@@ -1486,6 +1518,18 @@
 
 
 	/* A proportional, accessible heatmap instead of 10px cells stranded in a large panel. */
+
+	.gh-org-feature { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.2rem; border: 1px solid var(--gh-line); border-radius: 0.8rem; padding: 1.05rem; color: var(--gh-ink); text-decoration: none; background: color-mix(in srgb, var(--gh-accent) 5%, var(--gh-surface)); }
+	.gh-org-feature:hover { border-color: var(--gh-accent); }
+	.gh-org-badge, .gh-org-details { display: flex; flex-direction: column; gap: 0.22rem; }
+	.gh-org-badge strong { font-size: 0.94rem; }
+	.gh-org-badge small { font-size: 0.55rem; letter-spacing: 0.08em; color: var(--gh-muted); }
+	.gh-org-details { flex: 1 1 13rem; min-width: 0; }
+	.gh-org-details strong { font-size: 0.78rem; overflow-wrap: anywhere; }
+	.gh-org-details span { color: var(--gh-muted); font-size: 0.68rem; }
+	.gh-org-metrics { display: flex; gap: 0.7rem; white-space: nowrap; color: var(--gh-accent); font-weight: 800; font-size: 0.83rem; }
+	.gh-contrib-source { display: inline-flex; align-items: center; color: var(--gh-accent); text-decoration: none; font-size: 0.62rem; }
+	.gh-contrib-source:hover { text-decoration: underline; }
 	.gh-quick-nav {
 		display: flex;
 		flex-wrap: wrap;
@@ -1535,6 +1579,7 @@
 		flex: 1 1 0;
 		min-width: 0;
 		padding: 0;
+		overflow-y: hidden;
 	}
 	.gh-activity-months,
 	.gh-activity-grid {
@@ -1559,6 +1604,7 @@
 	.gh-activity-cell {
 		width: 100%;
 		height: auto;
+		max-height: 26px;
 		aspect-ratio: 1;
 		min-width: 0;
 		border-radius: clamp(2px, 0.45vw, 5px);
