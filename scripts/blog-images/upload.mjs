@@ -2,14 +2,23 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { checkKVaultReadiness, markdownImage, prepareBlogImage, uploadBlogImage, validateFolder } from "./kvault.mjs";
 
-function argumentsFrom(argv) {
-  const args = argv.slice(2);
-  const filePath = args.find((v) => !v.startsWith("--") && !args[args.indexOf(v) - 1]?.startsWith("--"));
-  const option = (name) => {
-    const pos = args.indexOf(name);
-    return pos >= 0 ? args[pos + 1] : undefined;
-  };
-  return { filePath: filePath || args[0], folder: option("--folder"), alt: option("--alt"), dryRun: args.includes("--dry-run") };
+export function argumentsFrom(argv) {
+  // Accept both "pnpm images:upload -- ./file.png" and direct node invocation.
+  const args = argv.slice(2).filter((value, index) => !(index === 0 && value === "--"));
+  let filePath;
+  let folder;
+  let alt;
+  let dryRun = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const value = args[index];
+    if (value === "--folder" || value === "--alt") {
+      if (!args[index + 1] || args[index + 1].startsWith("--")) throw new Error(value + " requires a value");
+      if (value === "--folder") folder = args[++index];
+      else alt = args[++index];
+    } else if (value === "--dry-run") dryRun = true;
+    else if (!value.startsWith("--") && !filePath) filePath = value;
+  }
+  return { filePath, folder, alt, dryRun };
 }
 
 export async function main(argv = process.argv) {
