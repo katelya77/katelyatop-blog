@@ -41,6 +41,7 @@
 	type ActivityDay = { date: string; count: number | null; level: string };
 	type ActivityEvent = { label: string; repository: string; url: string; date: string };
 	type FilterTab = { value: string; label: string; count: number };
+	type Organization = { login: string; name: string; avatar: string; url: string; repositoryCount: number | null; projectUrl: string };
 
 	type Props = {
 		profile: Profile;
@@ -50,6 +51,8 @@
 		recentActivity: ActivityEvent[];
 		activityWeeks: ActivityDay[][];
 		filterTabs: FilterTab[];
+		contributionSource: "contributions" | "events";
+		organization: Organization;
 	};
 
 	let {
@@ -60,6 +63,8 @@
 		recentActivity,
 		activityWeeks,
 		filterTabs,
+		contributionSource,
+		organization,
 	}: Props = $props();
 
 	const worlds: { id: WorldId; label: string; english: string; description: string }[] = [
@@ -157,8 +162,8 @@
 
 	function daySummary(day: ActivityDay | null): string {
 		if (!day) return "将鼠标移至方格，查看当天公开事件样本";
-		if (day.count === null) return day.date + " · 当前 API 样本未覆盖";
-		return day.date + " · " + day.count + " 条公开事件";
+		if (day.count === null) return day.date + " · 尚无可核验公开数据";
+		return day.date + " · " + day.count + (contributionSource === "contributions" ? " 次贡献" : " 条公开事件样本");
 	}
 </script>
 
@@ -268,20 +273,32 @@
 			{/each}
 		</section>
 
+		<section class="gh-organization-panel" aria-label="我的开源组织">
+			<a class="gh-organization-brand" href={organization.url} target="_blank" rel="noopener noreferrer">
+				<img src={organization.avatar} alt="Decohererk GitHub 组织头像" width="52" height="52" loading="lazy" decoding="async" />
+				<span class="gh-organization-info"><small>ALSO BUILDING AT / ORGANIZATION</small><strong>{organization.name}</strong><span>@{organization.login} · 组织项目与开源协作</span></span>
+				<span class="gh-organization-arrow" aria-hidden="true">↗</span>
+			</a>
+			<div class="gh-organization-actions">
+				<span>{organization.repositoryCount === null ? "组织仓库数据暂不可用" : organization.repositoryCount + " 个公开、非 Fork 项目"}</span>
+				<a href={organization.projectUrl} target="_blank" rel="noopener noreferrer">查看 DecoTV 源码 ↗</a>
+			</div>
+		</section>
+
 		<section id="github-activity" class="gh-panel gh-activity-panel">
 			<div class="gh-section-heading">
 				<div>
 					<span class="gh-kicker">ACTIVITY / PUBLIC SIGNALS</span>
-					<h2>近期公开活动</h2>
-					<p>让公开事件在时间轴上留下痕迹，轻触方格查看每天的数据。</p>
+					<h2>{contributionSource === "contributions" ? "GitHub 年度贡献图" : "近期公开活动"}</h2>
+					<p>{contributionSource === "contributions" ? "直接读取 GitHub 公共贡献日历，按实际贡献次数绘制。" : "公开贡献日历暂不可用，以下仅展示近期 Public Events 样本。"}</p>
 				</div>
-				<span class="gh-data-pill">90 DAYS · PUBLIC EVENTS SAMPLE</span>
+				<a class="gh-data-pill gh-activity-source" href={profile.url + "?tab=overview"} target="_blank" rel="noopener noreferrer">{contributionSource === "contributions" ? "OFFICIAL CONTRIBUTIONS · ~1 YEAR ↗" : "PUBLIC EVENTS · SAMPLE ↗"}</a>
 			</div>
 
-			<div class="gh-activity-kpis" aria-label="公开事件样本概览">
-				<div><strong>{observedEvents}</strong><span>样本事件</span></div>
-				<div><strong>{activeDays}</strong><span>有事件的日期</span></div>
-				<div><strong>{observedDays.length} / {visibleDays.length}</strong><span>可观察日期</span></div>
+			<div class="gh-activity-kpis" aria-label="贡献图公开数据概览">
+				<div><strong>{observedEvents.toLocaleString("en-US")}</strong><span>{contributionSource === "contributions" ? "公开贡献次数" : "样本事件"}</span></div>
+				<div><strong>{activeDays}</strong><span>{contributionSource === "contributions" ? "活跃贡献日" : "有事件的日期"}</span></div>
+				<div><strong>{observedDays.length} / {visibleDays.length}</strong><span>已核验日期</span></div>
 			</div>
 			<div class="gh-activity-layout">
 				<div class="gh-activity-labels" aria-hidden="true">
@@ -293,7 +310,7 @@
 							<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
 						{/each}
 					</div>
-					<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label="最近公开事件的日期分布">
+					<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label={contributionSource === "contributions" ? "GitHub 最近一年的公开贡献日历" : "近期公开事件样本日历"}>
 						{#each activityWeeks as week, weekIndex (weekIndex)}
 							<div class="gh-activity-week" role="row">
 								{#each week as day, dayIndex (day.date)}
@@ -330,11 +347,15 @@
 					{daySummary(displayedDay)}
 				</p>
 				<div class="gh-activity-legend" aria-label="活动强度图例">
-					<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><span>多</span><i data-level="unknown"></i><span>未覆盖</span>
+					<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><span>多</span><i data-level="unknown"></i><span>未覆盖</span>
 				</div>
 			</div>
 			<p class="gh-footnote">
-				数据口径：GitHub Public Events API 的最近 100 条公开事件样本，不是官方 Contributions 贡献日历；公开事件通常仅保留最近 30 天。虚线格代表样本未覆盖，不能理解为当天零贡献。点选方格可固定日期。
+				{#if contributionSource === "contributions"}
+					数据口径：GitHub 公共贡献日历（构建时采集），包含符合 GitHub 规则的提交、Issue 和 Pull Request 等；是否显示私有贡献总量取决于个人隐私设置。左右滚动查看全年日期。
+				{:else}
+					数据口径：Public Events API 最近最多 100 条公开事件，非贡献次数；虚线格代表未覆盖而非零贡献。<a href={profile.url} target="_blank" rel="noopener noreferrer">在 GitHub 查看官方完整贡献图 ↗</a>
+				{/if}
 			</p>
 		</section>
 
@@ -1607,6 +1628,34 @@
 		.gh-activity-months, .gh-activity-grid, .gh-activity-week { gap: 3px; }
 	}
 
+
+	.gh-organization-panel { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.85rem 1.2rem; padding:1rem 1.3rem; border:1px solid var(--gh-line); border-radius:.95rem; background:linear-gradient(125deg,color-mix(in srgb,var(--gh-accent) 10%,var(--gh-surface)),var(--gh-surface) 72%); box-shadow:var(--gh-shadow); }
+	.gh-organization-brand { display:flex; align-items:center; gap:.8rem; min-width:0; color:var(--gh-ink); text-decoration:none; }
+	.gh-organization-brand img { width:52px; height:52px; border-radius:.8rem; object-fit:cover; }
+	.gh-organization-info { display:flex; flex-direction:column; gap:.14rem; min-width:0; }
+	.gh-organization-info small { font:600 .58rem var(--font-jetbrains-mono),monospace; color:var(--gh-accent); }
+	.gh-organization-info strong { font-size:1rem; color:var(--gh-ink); }
+	.gh-organization-info > span { font-size:.68rem; color:var(--gh-muted); }
+	.gh-organization-arrow { color:var(--gh-accent); font-weight:800; }
+	.gh-organization-actions { display:flex; align-items:flex-end; flex-direction:column; gap:.35rem; font-size:.66rem; color:var(--gh-muted); }
+	.gh-organization-actions a { color:var(--gh-accent); font-weight:750; font-size:.72rem; text-decoration:none; }
+	.gh-organization-actions a:hover,.gh-activity-source:hover { text-decoration:underline; text-underline-offset:3px; }
+	.gh-activity-source { text-decoration:none; }
+	.gh-activity-scroll { overflow-x:auto; overflow-y:hidden; overscroll-behavior-inline:contain; scrollbar-width:thin; max-height:none; }
+	.gh-activity-months,.gh-activity-grid { --activity-size:clamp(14px,1.05vw,16px); --activity-gap:4px; grid-template-columns:repeat(var(--activity-week-count),var(--activity-size)); gap:var(--activity-gap); width:max-content; min-width:0; }
+	.gh-activity-week,.gh-activity-labels { grid-template-rows:repeat(7,var(--activity-size,clamp(14px,1.05vw,16px))); gap:4px; }
+	.gh-activity-labels { padding-top:1.45rem; }
+	.gh-activity-grid .gh-activity-cell { width:100%; height:auto; aspect-ratio:1; border-radius:3px; }
+	.gh-activity-cell[data-level="4"],.gh-activity-legend i[data-level="4"] { background:color-mix(in srgb,var(--gh-accent) 85%,var(--gh-ink)); }
+	.github-showcase-shell[data-world="retro"] .gh-activity-cell[data-level="4"] { background:#b2ffae; box-shadow:0 0 6px #3de969; }
+	.github-showcase-shell[data-world="toy"] .gh-activity-cell[data-level="4"] { background:#cc2e3b; }
+	.gh-activity-legend i[data-level="4"] { border:0; }
+	@media (max-width:650px) {
+		.gh-organization-panel { align-items:flex-start; }
+		.gh-organization-actions { align-items:flex-start; padding-left:4.2rem; }
+		.gh-activity-kpis { gap:.3rem; }
+		.gh-activity-months,.gh-activity-grid { --activity-size:14px; --activity-gap:3px; }
+	}
 	/* Ovio-inspired visual worlds: same semantic data, different material language. */
 	.github-showcase-shell[data-world="craft"] .gh-world-panel,
 	.github-showcase-shell[data-world="craft"] .gh-panel {
