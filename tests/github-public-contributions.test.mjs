@@ -19,6 +19,13 @@ test("parses GitHub official daily counts rather than inferred public events", (
   assert.ok(result.every((day) => /^\d{4}-\d{2}-\d{2}$/.test(day.date)));
 });
 
+test("GitHub's No contributions tooltips are true zeros, not missing dates", () => {
+  const html = calendarFixture().replace(/0 contributions on/g, "No contributions on");
+  const days = parsePublicContributionHtml(html);
+  assert.equal(days.length, 366);
+  assert.equal(days[0].count, 0);
+});
+
 test("rejects a changed or partial contribution markup instead of inventing zeros", () => {
   assert.equal(parsePublicContributionHtml("<div>rate limited</div>"), null);
   assert.equal(parsePublicContributionHtml('<td data-date="2026-11-07" data-level="4"></td>'), null);
