@@ -147,8 +147,8 @@ test("public capability probe lists available Telegram and R2 without exposing a
 
 test("lightweight impressionist overlays have no SVG turbulence/blur filters", async () => {
   const background = await read("src/styles/impasto-backdrop.css");
-  assert.match(background, /van-gogh-lite-day\\.svg/);
-  assert.match(background, /van-gogh-lite-night\\.svg/);
+  assert.match(background, /van-gogh-lite-day\.svg/);
+  assert.match(background, /van-gogh-lite-night\.svg/);
   for (const theme of ["day", "night"]) {
     const svg = await read("public/assets/impasto/van-gogh-lite-" + theme + ".svg");
     assert.match(svg, /<path/);
