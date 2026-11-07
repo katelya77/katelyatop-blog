@@ -9,7 +9,8 @@ test("public event coverage does not treat days beyond GitHub's 30-day limit as 
 	assert.match(page, /ageLimit\.setUTCDate\(today\.getUTCDate\(\) - 29\)/);
 	assert.match(page, /sampleCutoff = Math\.max\(ageLimit\.getTime\(\), oldestEventTime \?\? 0\)/);
 	assert.match(page, /date\.getTime\(\) >= sampleCutoff/);
-	assert.match(page, /count = known \? \(eventCounts\.get\(key\) \?\? 0\) : null/);
+	assert.match(page, /const count = calendar \? calendar\.count : known && !contributionCalendar/);
+	assert.match(page, /fetchPublicContributionCalendar\(\)/);
 });
 
 test("GitHub activity heatmap uses proportional cells with explicit unknown dates", async () => {
@@ -18,7 +19,7 @@ test("GitHub activity heatmap uses proportional cells with explicit unknown date
 	assert.match(showcase, /\.gh-activity-cell \{[\s\S]*?aspect-ratio: 1;/);
 	assert.match(showcase, /aria-pressed=\{selectedDay\?\.date === day\.date\}/);
 	assert.match(showcase, /data-level="unknown"/);
-	assert.match(showcase, /样本未覆盖/);
+	assert.match(showcase, /未覆盖而非零贡献/);
 	assert.match(showcase, /仓库热度速览/);
 	assert.match(showcase, /技术拼图/);
 });
