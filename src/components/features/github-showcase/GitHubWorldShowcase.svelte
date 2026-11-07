@@ -43,8 +43,8 @@
 		url: string;
 		repositoryUrl: string;
 		repositoryName: string;
-		stars: number;
-		forks: number;
+		stars: number | null;
+		forks: number | null;
 	};
 
 	type ActivityDay = { date: string; count: number | null; level: string };
