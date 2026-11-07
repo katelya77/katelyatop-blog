@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { mediaPolicy, mirrorApprovedImage } from "../scripts/content-automation/media.mjs";
+import { mediaPolicy, mirrorApprovedImage, uploadKVaultImage, fetchKVaultCapabilities } from "../scripts/content-automation/media.mjs";
 
 const read = (path) => readFile(new URL("../" + path, import.meta.url), "utf8");
 
@@ -73,4 +73,86 @@ test("editorial workflow keeps credentials in GitHub Actions Secrets", async () 
   assert.match(workflow, /secrets\.KVAULT_API_TOKEN/);
   assert.match(workflow, /vars\.BLOG_MEDIA_APPROVED_HOSTS/);
   assert.match(runner, /await mirrorApprovedImage\(chooseOfficialImage/);
+});
+
+test("K-Vault upload honors explicit r2 or telegram, blog folder, and idempotency", async () => {
+  for (const storage of ["r2", "telegram"]) {
+    const env = {
+      BLOG_MEDIA_STORAGE: storage,
+      BLOG_MEDIA_FOLDER: "blog/2026",
+      KVAULT_API_TOKEN: "test-token",
+    };
+    const response = await uploadKVaultImage(Uint8Array.from([1, 2, 3, 4]), "image/webp", {
+      env,
+      fetchImpl: async (url, request) => {
+        assert.equal(String(url), "https://pan.katelya.eu.org/api/v1/upload");
+        assert.equal(request.method, "POST");
+        assert.equal(request.body.get("storage"), storage);
+        assert.equal(request.body.get("folderPath"), "blog/2026");
+        assert.equal(request.body.get("deduplicate"), "false");
+        assert.match(request.headers["Idempotency-Key"], new RegExp("^blog-" + storage + "-[a-f0-9]{64}$"));
+        return Response.json({
+          success: true,
+          file: { storage },
+          links: { download: "https://pan.katelya.eu.org/file/test-" + storage + ".webp" },
+        });
+      },
+    });
+    assert.equal(response, "https://pan.katelya.eu.org/file/test-" + storage + ".webp");
+  }
+});
+
+test("backend mismatch is a failure rather than silently storing elsewhere", async () => {
+  const env = { BLOG_MEDIA_STORAGE: "telegram", KVAULT_API_TOKEN: "test-token" };
+  await assert.rejects(
+    uploadKVaultImage(Uint8Array.from([1, 2]), "image/png", {
+      env,
+      fetchImpl: async () => Response.json({
+        success: true, file: { storage: "r2" }, links: { download: "/file/cross-backend.png" },
+      }),
+    }),
+    /unexpected storage backend/,
+  );
+});
+
+test("media configuration validates storage, path, and download origin", async () => {
+  for (const invalid of ["s3", "github", "auto", ""]) {
+    if (!invalid) continue;
+    await assert.rejects(uploadKVaultImage(Uint8Array.from([1]), "image/png", {
+      env: { KVAULT_API_TOKEN: "test-token", BLOG_MEDIA_STORAGE: invalid },
+      fetchImpl: async () => { throw new Error("unexpected network"); },
+    }), /r2 or telegram/);
+  }
+  await assert.rejects(uploadKVaultImage(Uint8Array.from([1]), "image/png", {
+    env: { KVAULT_API_TOKEN: "test-token", BLOG_MEDIA_FOLDER: "../private" },
+  }), /BLOG_MEDIA_FOLDER/);
+  await assert.rejects(uploadKVaultImage(Uint8Array.from([1]), "image/png", {
+    env: { KVAULT_API_TOKEN: "test-token" },
+    fetchImpl: async () => Response.json({ links: { download: "/s/password-share" } }),
+  }), /unexpected public file URL/);
+});
+
+test("public capability probe lists available Telegram and R2 without exposing an API token", async () => {
+  const probe = await fetchKVaultCapabilities({
+    env: { BLOG_MEDIA_STORAGE: "telegram" },
+    fetchImpl: async (url, options) => {
+      assert.equal(String(url), "https://pan.katelya.eu.org/api/v1/capabilities");
+      assert.equal(options.redirect, "manual");
+      assert.equal(options.headers?.Authorization, undefined);
+      return Response.json({ success: true, data: { storages: ["telegram", "r2", "github"] } });
+    },
+  });
+  assert.deepEqual(probe, { configuredStorages: ["telegram", "r2"], selected: "telegram" });
+});
+
+test("lightweight impressionist overlays have no SVG turbulence/blur filters", async () => {
+  const background = await read("src/styles/impasto-backdrop.css");
+  assert.match(background, /van-gogh-lite-day\\.svg/);
+  assert.match(background, /van-gogh-lite-night\\.svg/);
+  for (const theme of ["day", "night"]) {
+    const svg = await read("public/assets/impasto/van-gogh-lite-" + theme + ".svg");
+    assert.match(svg, /<path/);
+    assert.doesNotMatch(svg, /<filter|feTurbulence|feGaussianBlur|filter="url/);
+  }
+  assert.match(background, /pointer: coarse/);
 });
