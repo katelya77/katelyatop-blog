@@ -27,20 +27,20 @@ type QualityGovernorState = {
 	lastSwitchAt: number;
 };
 
-const THEME_BURST_MS = 220;
-const POINTER_BURST_MS = 650;
-const MAX_DPR = 1.4;
+const THEME_BURST_MS = 180;
+const POINTER_BURST_MS = 320;
+const MAX_DPR = 1.15;
 const MIN_DPR = 0.85;
-const MAX_RENDER_PIXELS = 3_200_000;
-const POINTER_FPS = 48;
-const THEME_FPS = 36;
-const IDLE_FPS = 14;
-const TOUCH_MAX_DPR = 1.0;
+const MAX_RENDER_PIXELS = 1_500_000;
+const POINTER_FPS = 10;
+const THEME_FPS = 10;
+const IDLE_FPS = 2;
+const TOUCH_MAX_DPR = 0.85;
 const TOUCH_MIN_DPR = 0.55;
-const TOUCH_MAX_RENDER_PIXELS = 1_150_000;
-const TOUCH_POINTER_FPS = 30;
-const TOUCH_THEME_FPS = 24;
-const TOUCH_IDLE_FPS = 10;
+const TOUCH_MAX_RENDER_PIXELS = 750_000;
+const TOUCH_POINTER_FPS = 7;
+const TOUCH_THEME_FPS = 7;
+const TOUCH_IDLE_FPS = 1;
 const QUALITY_SWITCH_COOLDOWN_MS = 8_000;
 const QUALITY_DOWNGRADE_THRESHOLD_MS = 20;
 const QUALITY_UPGRADE_THRESHOLD_MS = 11;
@@ -632,7 +632,7 @@ export function initImpastoRenderer(): void {
 		gl.uniform2f(uniforms.pointer, pointerX, pointerY);
 		gl.uniform1f(uniforms.time, (now - startedAt) / 1000);
 		gl.uniform1f(uniforms.dark, isDark ? 1 : 0);
-		gl.uniform1f(uniforms.motion, pointerActive ? 1 : themeActive ? 0.58 : 0.22);
+		gl.uniform1f(uniforms.motion, pointerActive ? 0.24 : themeActive ? 0.18 : 0.07);
 		gl.uniform1f(uniforms.microDetail, qualityMicroDetail(qualityState.level));
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		if (!firstFrameReady) markFirstFrameReady();
@@ -665,7 +665,8 @@ export function initImpastoRenderer(): void {
 		targetX = event.clientX / Math.max(window.innerWidth, 1);
 		targetY = event.clientY / Math.max(window.innerHeight, 1);
 		pointerActiveUntil = performance.now() + POINTER_BURST_MS;
-		clearSchedule();
+		// Keep the existing low-frequency draw scheduled: do not restart RAF on
+		// every pointer event, which would otherwise negate the FPS budget.
 		schedule();
 	};
 
