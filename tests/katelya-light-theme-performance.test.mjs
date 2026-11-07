@@ -92,7 +92,7 @@ test("theme switching uses one lightweight 180ms transition path", async () => {
 		/\.is-theme-transitioning[\s\S]*transition-duration:\s*var\(--katelya-theme-transition\)/,
 	);
 	assert.match(renderer, /katelya-theme-change/);
-	assert.match(renderer, /const THEME_BURST_MS = 220/);
+	assert.match(renderer, /const THEME_BURST_MS = 180/);
 });
 
 test("Impasto and hero-depth modules start after the first paint opportunity", async () => {
