@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { checkKVaultReadiness, markdownImage, uploadBlogImage, validateFolder, validateKVaultOrigin } from "../scripts/blog-images/kvault.mjs";
+import { argumentsFrom } from "../scripts/blog-images/upload.mjs";
 
 const image = {
   bytes: new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80]),
@@ -63,4 +64,12 @@ test("capability smoke check requires a configured R2 backend before uploading",
   await assert.rejects(checkKVaultReadiness({
     fetchImpl: async () => ({ ok: true, json: async () => ({ success: true, data: { storages: ["telegram"] } }) }),
   }), /not ready/);
+});
+
+test("CLI handles pnpm's -- separator and option order safely", () => {
+  assert.deepEqual(argumentsFrom(["node", "script", "--", "./cover.png", "--folder", "blog/2026", "--alt", "图片"]), {
+    filePath: "./cover.png", folder: "blog/2026", alt: "图片", dryRun: false,
+  });
+  assert.equal(argumentsFrom(["node", "script", "--folder", "blog/2026", "./cover.png"]).filePath, "./cover.png");
+  assert.throws(() => argumentsFrom(["node", "script", "--folder"]), /requires a value/);
 });
