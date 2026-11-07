@@ -290,7 +290,7 @@
 				<div class="gh-activity-scroll">
 					<div class="gh-activity-months" style={"--activity-week-count: " + activityWeeks.length} aria-hidden="true">
 						{#each monthMarkers as marker (marker.month)}
-							<span style={"grid-column: " + (marker.index + 1) + " / span 2"}>{marker.label}月</span>
+							<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
 						{/each}
 					</div>
 					<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label="最近公开事件的日期分布">
