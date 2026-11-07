@@ -4,23 +4,23 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("boot surface is neutral and generated SVG artwork is static-mode only", async () => {
+test("first paint uses the low-cost brushwork without the heavy generated SVG", async () => {
 	const backdrop = await read("src/styles/impasto-backdrop.css");
 	const defaultFallback =
 		backdrop.match(/\.impasto-static-fallback\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
 
 	assert.match(
 		defaultFallback,
-		/background-image:\s*var\(--impasto-boot-underpaint\)/,
+		/background-image:[\s\S]*var\(--impasto-brush-glaze\),[\s\S]*var\(--impasto-boot-underpaint\)/,
 	);
 	assert.doesNotMatch(defaultFallback, /impasto-(?:day|night)\.svg/);
 	assert.match(
 		backdrop,
-		/html\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*impasto-day\.svg[\s\S]*\}/,
+		/html\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*van-gogh-lite-day\.svg[\s\S]*\}/,
 	);
 	assert.match(
 		backdrop,
-		/html\.dark\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*impasto-night\.svg[\s\S]*\}/,
+		/html\.dark\.impasto-static \.impasto-static-fallback\s*\{[\s\S]*van-gogh-lite-night\.svg[\s\S]*\}/,
 	);
 });
 
