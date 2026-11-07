@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { markdownImage, prepareBlogImage, uploadBlogImage, validateFolder } from "./kvault.mjs";
+import { checkKVaultReadiness, markdownImage, prepareBlogImage, uploadBlogImage, validateFolder } from "./kvault.mjs";
 
 function argumentsFrom(argv) {
   const args = argv.slice(2);
@@ -13,6 +13,11 @@ function argumentsFrom(argv) {
 }
 
 export async function main(argv = process.argv) {
+  if (argv.includes("--check")) {
+    const status = await checkKVaultReadiness({ baseUrl: process.env.KVAULT_BASE_URL || "https://pan.katelya.eu.org" });
+    console.log("K-Vault R2 ready: " + status.origin);
+    return;
+  }
   const options = argumentsFrom(argv);
   if (!options.filePath || options.filePath.startsWith("--")) {
     throw new Error("Usage: pnpm images:upload -- ./cover.png [--folder blog/2026/11] [--alt caption] [--dry-run]");
