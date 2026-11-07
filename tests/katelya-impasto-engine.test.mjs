@@ -193,8 +193,8 @@ test("touch clients keep dynamic impasto while accessibility fallbacks stay inta
 	assert.match(renderer, /TOUCH_IDLE_FPS/);
 	assert.match(renderer, /\(pointer:\s*coarse\)/);
 
-	assert.match(backdrop, /impasto-day\.svg/);
-	assert.match(backdrop, /impasto-night\.svg/);
+	assert.match(backdrop, /van-gogh-lite-day\.svg/);
+	assert.match(backdrop, /van-gogh-lite-night\.svg/);
 	assert.match(backdrop, /\.impasto-backdrop::after/);
 	assert.match(
 		backdrop,

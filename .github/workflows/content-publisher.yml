@@ -97,6 +97,9 @@ jobs:
           # Uploading is opt-in; a positive license review and approved source
           # hosts are required before copying any image to our own K-Vault.
           BLOG_MEDIA_UPLOAD_ENABLED: ${{ vars.BLOG_MEDIA_UPLOAD_ENABLED }}
+          BLOG_MEDIA_STORAGE: ${{ vars.BLOG_MEDIA_STORAGE }}
+          BLOG_MEDIA_FOLDER: ${{ vars.BLOG_MEDIA_FOLDER }}
+          BLOG_MEDIA_DEDUPLICATE: ${{ vars.BLOG_MEDIA_DEDUPLICATE }}
           BLOG_MEDIA_APPROVED_HOSTS: ${{ vars.BLOG_MEDIA_APPROVED_HOSTS }}
           KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
           KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
