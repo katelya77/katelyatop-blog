@@ -133,6 +133,10 @@ export async function buildRefreshPlan({ changes, siteUrl, readFileAtRef }) {
 			}
 
 			if (affectsPublicSite(candidate.path)) {
+				if (candidate.path.startsWith("src/components/features/github-showcase/")) {
+					urlPaths.add("/github/");
+					reasons.add(`github-ui:${candidate.path}`);
+				}
 				const pagePath = staticPagePathFromSource(candidate.path);
 				if (pagePath) {
 					urlPaths.add(pagePath);
