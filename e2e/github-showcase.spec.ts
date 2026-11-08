@@ -83,3 +83,45 @@ test("GitHub showcase stays within phone and tablet viewports", async ({ page })
 		await expect(page.locator(".gh-repo-card").first()).toBeVisible();
 	}
 });
+
+test("GitHub contribution chart supports styled slider and click-safe mouse drag", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/github/", { waitUntil: "domcontentloaded" });
+	await expect(page.locator(".github-showcase-shell")).toHaveAttribute("data-hydrated", "true");
+	const chart = page.locator(".gh-activity-scroll");
+	const slider = page.getByRole("slider", { name: "拖动滑轨左右浏览全年 GitHub 贡献图" });
+	await expect(chart).toBeVisible();
+	await expect(slider).toBeVisible();
+	await expect(chart).toHaveCSS("scrollbar-width", "none");
+
+	await slider.focus();
+	await slider.press("End");
+	const endPosition = await chart.evaluate((element) => element.scrollLeft);
+	expect(endPosition).toBeGreaterThan(100);
+	await slider.press("Home");
+	expect(await chart.evaluate((element) => element.scrollLeft)).toBeLessThan(3);
+
+	const startDay = chart.locator(".gh-activity-cell").nth(11);
+	await startDay.scrollIntoViewIfNeeded();
+	const dayBox = await startDay.boundingBox();
+	expect(dayBox).not.toBeNull();
+	const x = dayBox!.x + dayBox!.width / 2;
+	const y = dayBox!.y + dayBox!.height / 2;
+	const beforeDrag = await chart.evaluate((element) => element.scrollLeft);
+	await page.mouse.move(x, y);
+	await page.mouse.down();
+	await page.mouse.move(x - 130, y, { steps: 8 });
+	await page.mouse.up();
+	const afterDrag = await chart.evaluate((element) => element.scrollLeft);
+	expect(afterDrag).toBeGreaterThan(beforeDrag + 60);
+	await expect(page.locator(".gh-activity-cell[aria-pressed='true']")).toHaveCount(0);
+
+	await chart.locator(".gh-activity-cell").first().click();
+	await expect(chart.locator(".gh-activity-cell").first()).toHaveAttribute("aria-pressed", "true");
+
+	for (const world of ["minimal", "craft", "retro", "toy"]) {
+		await page.locator('[data-world-tab="' + world + '"]').click();
+		await expect(slider).toBeVisible();
+	}
+});
+
