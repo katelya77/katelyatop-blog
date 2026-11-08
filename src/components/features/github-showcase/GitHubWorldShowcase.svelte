@@ -48,6 +48,16 @@
 	};
 
 	type ActivityDay = { date: string; count: number | null; level: string };
+	type ActivityPeriod = {
+		id: string;
+		label: string;
+		from: string;
+		to: string;
+		totalContributions: number;
+		activeDays: number;
+		totals: { commits: number; pullRequests: number; issues: number; reviews: number; repositories: number };
+		weeks: ActivityDay[][];
+	};
 	type ActivityEvent = { label: string; repository: string; url: string; date: string };
 	type FilterTab = { value: string; label: string; count: number };
 
@@ -57,7 +67,8 @@
 		featuredRepositories: FeaturedRepository[];
 		additionalRepositories: AdditionalRepository[];
 		recentActivity: ActivityEvent[];
-		activityWeeks: ActivityDay[][];
+		activityPeriods: ActivityPeriod[];
+		snapshotFetchedAt: string | null;
 		filterTabs: FilterTab[];
 		associatedOrganization: AssociatedOrganization | null;
 	};
@@ -68,7 +79,8 @@
 		featuredRepositories,
 		additionalRepositories,
 		recentActivity,
-		activityWeeks,
+		activityPeriods,
+		snapshotFetchedAt,
 		filterTabs,
 		associatedOrganization,
 	}: Props = $props();
@@ -85,21 +97,27 @@
 	let category = $state("all");
 	let activeDay = $state<ActivityDay | null>(null);
 	let selectedDay = $state<ActivityDay | null>(null);
+	let selectedPeriodId = $state("rolling");
+	let selectedPeriod = $derived(activityPeriods.find((period) => period.id === selectedPeriodId) ?? activityPeriods[0] ?? null);
+	let activityWeeks = $derived(selectedPeriod?.weeks ?? []);
 	let focusedDayIndex = $state(0);
 	let displayedDay = $derived(activeDay ?? selectedDay);
 
-	// Public Events is a recent, capped sample; unknown days must stay distinct from zero.
-	const visibleDays = activityWeeks.flat();
-	const observedDays = visibleDays.filter((day) => day.count !== null);
-	const observedEvents = observedDays.reduce((sum, day) => sum + (day.count ?? 0), 0);
-	const activeDays = observedDays.filter((day) => (day.count ?? 0) > 0).length;
-	const monthMarkers = activityWeeks
+	// Official GraphQL contributions are not GitHub's recent Public Events feed.
+	let visibleDays = $derived(activityWeeks.flat());
+	let monthMarkers = $derived(activityWeeks
 		.map((week, index) => ({
 			index,
 			month: week[0]?.date.slice(0, 7) ?? "",
 			label: week[0]?.date.slice(5, 7) ?? "",
 		}))
-		.filter((item, index, all) => index === 0 || item.month !== all[index - 1]?.month);
+		.filter((item, index, all) => index === 0 || item.month !== all[index - 1]?.month));
+	function selectPeriod(id: string) {
+		selectedPeriodId = id;
+		selectedDay = null;
+		activeDay = null;
+		focusedDayIndex = 0;
+	}
 	const rankedRepositories = [...featuredRepositories, ...additionalRepositories]
 		.filter((repository) => typeof repository.stars === "number")
 		.sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
@@ -167,9 +185,9 @@
 	}
 
 	function daySummary(day: ActivityDay | null): string {
-		if (!day) return "将鼠标移至方格，查看当天公开事件样本";
-		if (day.count === null) return day.date + " · 当前 API 样本未覆盖";
-		return day.date + " · " + day.count + " 条公开事件";
+		if (!day) return "将鼠标移至方格，查看当天 GitHub 贡献";
+		if (day.count === null) return day.date + " · 不在当前统计区间";
+		return day.date + " · " + day.count + " 项 GitHub 贡献";
 	}
 </script>
 
@@ -303,71 +321,77 @@
 		<section id="github-activity" class="gh-panel gh-activity-panel">
 			<div class="gh-section-heading">
 				<div>
-					<span class="gh-kicker">ACTIVITY / PUBLIC SIGNALS</span>
-					<h2>近期公开活动</h2>
-					<p>近期公开事件样本，非全年贡献记录。完整贡献请查看 GitHub 官方账户页。</p>
+					<span class="gh-kicker">ACTIVITY / OFFICIAL CONTRIBUTIONS</span>
+					<h2>GitHub 贡献日历</h2>
+					<p>官方 GraphQL 年度贡献数据，和最近 100 条公开事件的统计口径不同。</p>
 				</div>
-				<a class="gh-data-pill gh-contrib-source" href="https://github.com/katelya77?tab=overview" target="_blank" rel="noopener noreferrer">查看官方全年 Contributions ↗</a>
+				<a class="gh-data-pill gh-contrib-source" href={profile.url} target="_blank" rel="noopener noreferrer">GitHub 官方贡献记录 ↗</a>
 			</div>
-
-			<div class="gh-activity-kpis" aria-label="公开事件样本概览">
-				<div><strong>{observedEvents}</strong><span>样本事件</span></div>
-				<div><strong>{activeDays}</strong><span>有事件的日期</span></div>
-				<div><strong>{observedDays.length} / {visibleDays.length}</strong><span>可观察日期</span></div>
-			</div>
-			<div class="gh-activity-layout">
-				<div class="gh-activity-labels" aria-hidden="true">
-					<span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+			{#if selectedPeriod}
+				<div class="gh-year-tabs" aria-label="选择 GitHub 贡献年份">
+					{#each activityPeriods as period (period.id)}
+						<button type="button" class:active={period.id === selectedPeriod.id} aria-pressed={period.id === selectedPeriod.id} onclick={() => selectPeriod(period.id)}>{period.label}</button>
+					{/each}
 				</div>
-				<div class="gh-activity-scroll">
-					<div class="gh-activity-months" style={"--activity-week-count: " + activityWeeks.length} aria-hidden="true">
-						{#each monthMarkers as marker (marker.month)}
-							<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
-						{/each}
+				<div class="gh-activity-kpis" aria-label="GitHub 官方贡献统计">
+					<div><strong>{selectedPeriod.totalContributions.toLocaleString("en-US")}</strong><span>贡献总数</span></div>
+					<div><strong>{selectedPeriod.activeDays}</strong><span>有贡献的日期</span></div>
+					<div><strong>{selectedPeriod.totals.commits.toLocaleString("en-US")}</strong><span>Commits</span></div>
+					<div><strong>{selectedPeriod.totals.pullRequests.toLocaleString("en-US")}</strong><span>Pull Requests</span></div>
+					<div><strong>{selectedPeriod.totals.issues.toLocaleString("en-US")}</strong><span>Issues</span></div>
+				</div>
+				<div class="gh-contribution-extra">代码审查 {selectedPeriod.totals.reviews} 次 · 新建仓库 {selectedPeriod.totals.repositories} 个 · 统计区间 {selectedPeriod.from} 至 {selectedPeriod.to}</div>
+				<div class="gh-activity-layout">
+					<div class="gh-activity-labels" aria-hidden="true">
+						<span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
 					</div>
-					<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label="最近公开事件的日期分布">
-						{#each activityWeeks as week, weekIndex (weekIndex)}
-							<div class="gh-activity-week" role="row">
-								{#each week as day, dayIndex (day.date)}
-									{@const index = weekIndex * 7 + dayIndex}
-									<button
-										type="button"
-										class="gh-activity-cell"
-										data-level={day.level}
-										data-activity-index={index}
-										title={daySummary(day)}
-										aria-label={daySummary(day)}
-										aria-pressed={selectedDay?.date === day.date}
-										tabindex={focusedDayIndex === index ? 0 : -1}
-										style={"--cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
-										onpointerenter={() => (activeDay = day)}
-										onpointerleave={() => (activeDay = null)}
-										onfocus={() => {
-											focusedDayIndex = index;
-											activeDay = day;
-										}}
-										onblur={() => (activeDay = null)}
-										onclick={() => (selectedDay = selectedDay?.date === day.date ? null : day)}
-										onkeydown={(event) => handleActivityKeydown(event, index)}
-									></button>
-								{/each}
-							</div>
-						{/each}
+					<div class="gh-activity-scroll">
+						<div class="gh-activity-months" style={"--activity-week-count: " + activityWeeks.length} aria-hidden="true">
+							{#each monthMarkers as marker (marker.month)}
+								<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
+							{/each}
+						</div>
+						<div class="gh-activity-grid" style={"--activity-week-count: " + activityWeeks.length} role="grid" aria-label={selectedPeriod.label + " GitHub 逐日贡献热力图"}>
+							{#each activityWeeks as week, weekIndex (weekIndex)}
+								<div class="gh-activity-week" role="row">
+									{#each week as day, dayIndex (day.date)}
+										{@const index = weekIndex * 7 + dayIndex}
+										<button
+											type="button"
+											class="gh-activity-cell"
+											data-level={day.level}
+											data-activity-index={index}
+											title={daySummary(day)}
+											aria-label={daySummary(day)}
+											aria-pressed={selectedDay?.date === day.date}
+											tabindex={focusedDayIndex === index ? 0 : -1}
+											style={"--cell-tilt: " + (((index * 17) % 9) - 4) + "deg"}
+											onpointerenter={() => (activeDay = day)}
+											onpointerleave={() => (activeDay = null)}
+											onfocus={() => { focusedDayIndex = index; activeDay = day; }}
+											onblur={() => (activeDay = null)}
+											onclick={() => (selectedDay = selectedDay?.date === day.date ? null : day)}
+											onkeydown={(event) => handleActivityKeydown(event, index)}
+										></button>
+									{/each}
+								</div>
+							{/each}
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="gh-activity-bottom">
-				<p class="gh-activity-readout" aria-live="polite">
-					<span class="gh-readout-mark"></span>
-					{daySummary(displayedDay)}
+				<div class="gh-activity-bottom">
+					<p class="gh-activity-readout" aria-live="polite"><span class="gh-readout-mark"></span>{daySummary(displayedDay)}</p>
+					<div class="gh-activity-legend" aria-label="贡献强度图例">
+						<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><span>多</span><i data-level="unknown"></i><span>区间外</span>
+					</div>
+				</div>
+				<p class="gh-footnote">
+					数据口径：GitHub GraphQL contributionsCollection 官方贡献日历，包含 GitHub 按规则计入的 Commit、PR、Issue 等贡献；不等同于事件数。仅保存逐日总数与汇总统计，不公开私有仓库名称、内容或提交明细。
+					{#if snapshotFetchedAt}最后同步：{new Date(snapshotFetchedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}。{/if}
 				</p>
-				<div class="gh-activity-legend" aria-label="活动强度图例">
-					<span>少</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><span>多</span><i data-level="unknown"></i><span>未覆盖</span>
-				</div>
-			</div>
-			<p class="gh-footnote">
-				数据口径：GitHub Public Events API 的最近 100 条公开事件样本，不是官方 Contributions 贡献日历；公开事件通常仅保留最近 30 天。虚线格代表样本未覆盖，不能理解为当天零贡献。点选方格可固定日期。
-			</p>
+			{:else}
+				<p class="gh-empty-state gh-contributions-pending">官方贡献日历尚未同步。不会把有限的公开事件样本伪装为全年贡献；可先查看 GitHub 官方主页，等待下一次数据更新。</p>
+			{/if}
 		</section>
 
 		<section id="github-projects" class="gh-repositories">
@@ -518,7 +542,7 @@
 	<footer class="gh-credit">
 		<span>DESIGNED FOR KATELYA · INSPIRED BY OVIO</span>
 		<a href="https://github.com/JanaSundar/ovio" target="_blank" rel="noopener noreferrer">Ovio UI · MIT License ↗</a>
-		<span>DATA SOURCE: GITHUB PUBLIC API</span>
+		<span>DATA SOURCE: GITHUB GRAPHQL / PUBLIC EVENTS</span>
 	</footer>
 </div>
 
@@ -1923,5 +1947,27 @@
 			scroll-behavior: auto !important;
 			transition-duration: 0.01ms !important;
 		}
+	}
+
+	.gh-year-tabs { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 1rem; }
+	.gh-year-tabs button {
+		padding: 0.42rem 0.7rem; border: 1px solid var(--gh-line);
+		border-radius: 0.6rem; background: var(--gh-track);
+		color: var(--gh-ink-2); font-size: 0.72rem; font-weight: 700;
+		cursor: pointer; transition: background 160ms ease, color 160ms ease;
+	}
+	.gh-year-tabs button:hover, .gh-year-tabs button:focus-visible {
+		outline: 2px solid var(--gh-accent); outline-offset: 1px;
+	}
+	.gh-year-tabs button.active { background: var(--gh-accent); color: var(--gh-surface); }
+	.gh-contribution-extra { margin: -0.45rem 0 0.9rem; color: var(--gh-muted); font-size: 0.68rem; line-height: 1.6; }
+	.gh-activity-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+	.gh-activity-months, .gh-activity-grid { min-width: 820px; gap: 3px; }
+	.gh-activity-week { gap: 3px; }
+	.gh-activity-cell[data-level="4"], .gh-activity-legend i[data-level="4"] { background: var(--gh-accent-deep); }
+	@media (max-width: 640px) {
+		.gh-activity-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		.gh-year-tabs { gap: 0.35rem; }
+		.gh-year-tabs button { padding: 0.35rem 0.52rem; font-size: 0.66rem; }
 	}
 </style>

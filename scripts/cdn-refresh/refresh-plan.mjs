@@ -119,6 +119,12 @@ export async function buildRefreshPlan({ changes, siteUrl, readFileAtRef }) {
 				continue;
 			}
 
+			if (candidate.path === "src/data/github-contributions.json") {
+				urlPaths.add("/github/");
+				reasons.add("github:official-contribution-snapshot");
+				continue;
+			}
+
 			if (isPublicFile(candidate.path)) {
 				const publicPath = `/${candidate.path.slice("public/".length)}`;
 				if (!publicPath.startsWith("/_astro/")) urlPaths.add(publicPath);

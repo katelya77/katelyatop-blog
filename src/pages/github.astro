@@ -1,6 +1,7 @@
 ---
 import GitHubWorldShowcase from "@components/features/github-showcase/GitHubWorldShowcase.svelte";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import contributionSnapshot from "../data/github-contributions.json";
 import {
 	featuredGitHubRepositories,
 	githubProfile,
@@ -127,6 +128,21 @@ const additionalRepositories = (publicRepositories ?? [])
 const totalStars = publicRepositories
 	? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0) + (verifiedOrgRepository?.stargazers_count ?? 0)
 	: null;
+type OfficialActivityPeriod = {
+	id: string;
+	label: string;
+	from: string;
+	to: string;
+	totalContributions: number;
+	activeDays: number;
+	totals: { commits: number; pullRequests: number; issues: number; reviews: number; repositories: number };
+	weeks: Array<Array<{ date: string; count: number | null; level: string }>>;
+};
+const activityPeriods: OfficialActivityPeriod[] = contributionSnapshot.source === "github-graphql-contributionsCollection"
+	? contributionSnapshot.periods as OfficialActivityPeriod[]
+	: [];
+const rollingContributions = activityPeriods.find((period) => period.id === "rolling");
+
 const stats = [
 	{
 		label: "公开仓库",
@@ -144,9 +160,9 @@ const stats = [
 		detail: "GitHub followers",
 	},
 	{
-		label: "公开动态",
-		value: eventsData === null ? "—" : eventsData.length,
-		detail: "Sampled public events (up to 100)",
+		label: "年度贡献",
+		value: rollingContributions ? compactNumber(rollingContributions.totalContributions) : "—",
+		detail: "GitHub official contribution calendar · past year",
 	},
 ];
 
@@ -181,46 +197,8 @@ const recentActivity = (eventsData ?? [])
 		date: formatDate(event.created_at),
 	}));
 
-// GitHub's unauthenticated public Events API is a recent sample, not the
-// contribution calendar. When its first page is full, dates older than its
-// oldest returned event are explicitly unknown rather than rendered as zero.
-const eventCounts = new Map<string, number>();
-for (const event of eventsData ?? []) {
-	const date = new Date(event.created_at);
-	if (Number.isNaN(date.getTime())) continue;
-	const key = date.toISOString().slice(0, 10);
-	eventCounts.set(key, (eventCounts.get(key) ?? 0) + 1);
-}
-
-const today = new Date();
-today.setUTCHours(0, 0, 0, 0);
-const activityStart = new Date(today);
-activityStart.setUTCDate(activityStart.getUTCDate() - 90);
-activityStart.setUTCDate(activityStart.getUTCDate() - activityStart.getUTCDay());
-const activityDayCount = Math.floor((today.getTime() - activityStart.getTime()) / 86_400_000) + 1;
-const oldestEventTime =
-	eventsData && eventsData.length >= 100
-		? Math.min(...eventsData.map((event) => Date.parse(event.created_at)).filter(Number.isFinite))
-		: null;
-// GitHub Public Events has a maximum 30-day window, even when fewer than
-// 100 entries are returned. Days outside that window are not known zeros.
-const ageLimit = new Date(today);
-ageLimit.setUTCDate(today.getUTCDate() - 29);
-const sampleCutoff = Math.max(ageLimit.getTime(), oldestEventTime ?? 0);
-const activityDays = Array.from({ length: activityDayCount }, (_, index) => {
-	const date = new Date(activityStart);
-	date.setUTCDate(activityStart.getUTCDate() + index);
-	const key = date.toISOString().slice(0, 10);
-	const known = eventsData !== null && date.getTime() >= sampleCutoff;
-	const count = known ? (eventCounts.get(key) ?? 0) : null;
-	const level =
-		count === null ? "unknown" : count === 0 ? "0" : count === 1 ? "1" : count <= 3 ? "2" : "3";
-	return { date: key, count, level };
-});
-const activityWeeks = Array.from(
-	{ length: Math.ceil(activityDays.length / 7) },
-	(_, index) => activityDays.slice(index * 7, index * 7 + 7),
-);
+// The contribution calendar is a separately refreshed official GraphQL snapshot.
+// Public Events remains a recent activity feed, not a contribution count.
 
 const profile = {
 	...githubProfile,
@@ -236,7 +214,7 @@ const associatedOrganization = {
 	forks: verifiedOrgRepository?.forks_count ?? null,
 };
 const pageDescription =
-	"GitHub 个人开发者主页：公开项目、仓库 Stars、近期公开活动与 Ovio-inspired 动效展示，包含 Minimal、Craft、Retro、Toy 四种交互风格。";
+	"GitHub 个人开发者主页：公开项目、仓库 Stars、完整年度贡献日历、历史年份、近期公开活动与 Ovio-inspired 动效展示，包含 Minimal、Craft、Retro、Toy 四种交互风格。";
 ---
 
 <MainGridLayout title="GitHub" description={pageDescription}>
@@ -251,7 +229,8 @@ const pageDescription =
 			featuredRepositories={featuredRepositories}
 			additionalRepositories={additionalRepositories}
 			recentActivity={recentActivity}
-			activityWeeks={activityWeeks}
+			activityPeriods={activityPeriods}
+			snapshotFetchedAt={contributionSnapshot.fetchedAt}
 			filterTabs={filterTabs}
 			associatedOrganization={associatedOrganization}
 		/>

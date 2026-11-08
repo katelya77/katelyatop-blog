@@ -62,7 +62,7 @@ test("artist layer and organization data are integrated into live GitHub showcas
   assert.match(page, /verifiedOrgRepository/);
   assert.match(data, /owner: "Decohererk"/);
   assert.match(showcase, /组织与协作项目/);
-  assert.match(showcase, /查看官方全年 Contributions/);
+  assert.match(showcase, /GitHub 官方贡献记录/);
   assert.match(background, /impasto-glaze-drift 110s/);
   assert.match(background, /--impasto-brush-glaze-opacity: 0\.54/);
 });

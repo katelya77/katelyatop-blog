@@ -94,6 +94,16 @@ describe("CDN refresh plan", () => {
 		assert.ok(plan.urls.includes("https://blog.katelya.top/"));
 	});
 
+	it("refreshes GitHub showcase only when official contribution snapshot changes", async () => {
+		const plan = await buildRefreshPlan({
+			changes: [{ status: "M", path: "src/data/github-contributions.json" }],
+			siteUrl: "https://blog.katelya.top",
+			readFileAtRef: async () => "",
+		});
+		assert.deepEqual(plan.urls, ["https://blog.katelya.top/github/"]);
+		assert.deepEqual(plan.paths, []);
+	});
+
 	it("does nothing for docs and tests only changes", async () => {
 		const plan = await buildRefreshPlan({
 			changes: [

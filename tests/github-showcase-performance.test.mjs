@@ -4,21 +4,25 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL("../" + path, import.meta.url), "utf8");
 
-test("public event coverage does not treat days beyond GitHub's 30-day limit as zero", async () => {
+test("GitHub heatmap consumes the official GraphQL snapshot, not Public Events", async () => {
 	const page = await read("src/pages/github.astro");
-	assert.match(page, /ageLimit\.setUTCDate\(today\.getUTCDate\(\) - 29\)/);
-	assert.match(page, /sampleCutoff = Math\.max\(ageLimit\.getTime\(\), oldestEventTime \?\? 0\)/);
-	assert.match(page, /date\.getTime\(\) >= sampleCutoff/);
-	assert.match(page, /count = known \? \(eventCounts\.get\(key\) \?\? 0\) : null/);
+	assert.match(page, /import contributionSnapshot from "..\/data\/github-contributions.json"/);
+	assert.match(page, /contributionSnapshot\.source === "github-graphql-contributionsCollection"/);
+	assert.match(page, /activityPeriods=\{activityPeriods\}/);
+	assert.doesNotMatch(page, /const eventCounts = new Map/);
 });
 
-test("GitHub activity heatmap uses proportional cells with explicit unknown dates", async () => {
+test("GitHub annual heatmap exposes years and source-safe contribution numbers", async () => {
 	const showcase = await read("src/components/features/github-showcase/GitHubWorldShowcase.svelte");
+	assert.match(showcase, /GitHub 贡献日历/);
+	assert.match(showcase, /selectedPeriod\.totalContributions/);
+	assert.match(showcase, /selectPeriod\(period\.id\)/);
+	assert.match(showcase, /data-level=\{day\.level\}/);
 	assert.match(showcase, /grid-template-columns: repeat\(var\(--activity-week-count\), minmax\(0, 1fr\)\)/);
 	assert.match(showcase, /\.gh-activity-cell \{[\s\S]*?aspect-ratio: 1;/);
 	assert.match(showcase, /aria-pressed=\{selectedDay\?\.date === day\.date\}/);
 	assert.match(showcase, /data-level="unknown"/);
-	assert.match(showcase, /样本未覆盖/);
+	assert.match(showcase, /数据口径：GitHub GraphQL/);
 	assert.match(showcase, /仓库热度速览/);
 	assert.match(showcase, /技术拼图/);
 });
