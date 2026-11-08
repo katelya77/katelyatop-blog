@@ -37,6 +37,7 @@ jobs:
           GITHUB_CONTRIBUTIONS_LOGIN: katelya77
         run: node scripts/github-contributions/update.mjs
       - name: Commit a complete verified snapshot
+        id: publish
         shell: bash
         run: |
           set -euo pipefail
@@ -47,5 +48,22 @@ jobs:
             echo "No contribution data change."
             exit 0
           fi
+          base_sha="$(git rev-parse HEAD)"
           git commit -m "data: refresh official GitHub contribution calendar [skip ci]"
           git push origin HEAD:master
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # GitHub-generated tokens intentionally do not trigger subsequent Actions
+      # push workflows. Refresh the public CDN within this same workflow.
+      - name: Verify Pages deployment and refresh GitHub CDN route
+        if: steps.publish.outputs.head_sha != ''
+        env:
+          BASE_SHA: ${{ steps.publish.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.publish.outputs.head_sha }}
+          CF_ACCOUNT_ID: ${{ vars.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          DOGE_ACCESS_KEY: ${{ secrets.DOGE_ACCESS_KEY }}
+          DOGE_SECRET_KEY: ${{ secrets.DOGE_SECRET_KEY }}
+          CF_PAGES_PROJECT: katelyatop-blog
+          SITE_URL: https://blog.katelya.top
+        run: node scripts/cdn-refresh/run.mjs
