@@ -1,0 +1,103 @@
+name: One-time original architecture image upload
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/one-time-article-cover-20261108.yml"
+permissions:
+  contents: read
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Generate original 1200x630 PNG
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import struct,zlib,math
+          W,H=1200,630
+          raw=bytearray(W*H*3)
+          def rect(x0,y0,x1,y1,color,rad=0):
+           for y in range(max(y0,0),min(y1,H)):
+            for x in range(max(x0,0),min(x1,W)):
+             if rad:
+              dx=max(x0+rad-x,0,x-(x1-rad-1))
+              dy=max(y0+rad-y,0,y-(y1-rad-1))
+              if dx*dx+dy*dy>rad*rad:continue
+             k=(y*W+x)*3;raw[k:k+3]=bytes(color)
+          def line(x0,y0,x1,y1,color,thick=2):
+           n=int(max(abs(x1-x0),abs(y1-y0),1))
+           for j in range(n+1):
+            x=int(x0+(x1-x0)*j/n);y=int(y0+(y1-y0)*j/n)
+            rect(x-thick,y-thick,x+thick+1,y+thick+1,color)
+          def glyph(text,x,y,scale=5,color=(235,247,255)):
+           table={'A':['01110','10001','10001','11111','10001','10001','10001'],'B':['11110','10001','10001','11110','10001','10001','11110'],'C':['01111','10000','10000','10000','10000','10000','01111'],'D':['11110','10001','10001','10001','10001','10001','11110'],'E':['11111','10000','10000','11110','10000','10000','11111'],'F':['11111','10000','10000','11110','10000','10000','10000'],'G':['01111','10000','10000','10111','10001','10001','01111'],'I':['11111','00100','00100','00100','00100','00100','11111'],'K':['10001','10010','10100','11000','10100','10010','10001'],'L':['10000','10000','10000','10000','10000','10000','11111'],'M':['10001','11011','10101','10101','10001','10001','10001'],'N':['10001','11001','10101','10011','10001','10001','10001'],'O':['01110','10001','10001','10001','10001','10001','01110'],'P':['11110','10001','10001','11110','10000','10000','10000'],'R':['11110','10001','10001','11110','10100','10010','10001'],'S':['01111','10000','10000','01110','00001','00001','11110'],'T':['11111','00100','00100','00100','00100','00100','00100'],'U':['10001','10001','10001','10001','10001','10001','01110'],'V':['10001','10001','10001','10001','10001','01010','00100'],'2':['01110','10001','00001','00010','00100','01000','11111'],'-':['00000','00000','00000','11111','00000','00000','00000'],' ':['00000']*7}
+           for c in text.upper():
+            pat=table.get(c,table[' '])
+            for i,row in enumerate(pat):
+             for j,ch in enumerate(row):
+              if ch=='1':rect(x+j*scale,y+i*scale,x+(j+1)*scale-1,y+(i+1)*scale-1,color)
+            x+=6*scale
+          for y in range(H):
+           for x in range(W):
+            k=(y*W+x)*3
+            a=math.exp(-((x-220)**2+(y-90)**2)/280000);b=math.exp(-((x-1050)**2+(y-530)**2)/320000)
+            raw[k]=int(8+10*y/H+8*a+10*b)
+            raw[k+1]=int(23+10*x/W+24*a+6*b)
+            raw[k+2]=int(43+17*y/H+26*a+28*b)
+          for y in range(60,H,34):
+           for x in range(58,W,34):
+            if (x*y)%7:rect(x,y,x+2,y+2,(52,74,96))
+          rect(70,92,1130,538,(18,33,57),28)
+          rect(78,100,1122,530,(14,29,52),24)
+          rect(114,144,446,432,(24,59,75),20)
+          rect(121,151,439,425,(20,50,69),16)
+          rect(754,144,1086,432,(41,40,83),20)
+          rect(761,151,1079,425,(31,37,74),16)
+          rect(511,199,690,376,(29,51,89),34)
+          rect(519,207,682,368,(24,47,81),28)
+          line(444,288,520,288,(80,216,198),3)
+          line(683,288,756,288,(162,139,252),3)
+          for x,col in [(475,(81,224,201)),(724,(174,145,252))]:
+           rect(x-10,278,x+11,299,col,10)
+          rect(139,176,210,184,(63,215,192),3)
+          rect(778,176,851,184,(159,126,244),3)
+          glyph('API',166,257,8,(155,246,218))
+          glyph('R2',842,255,8,(201,187,254))
+          glyph('K-VAULT',461,478,7,(226,237,250))
+          glyph('CLOUDFLARE',473,157,3,(121,155,190))
+          glyph('BOT',551,274,5,(236,244,255))
+          glyph('STORAGE',810,358,4,(152,172,219))
+          glyph('TOKEN',172,358,4,(133,220,213))
+          def pngchunk(typ,data):
+           return struct.pack('>I',len(data))+typ+data+struct.pack('>I',zlib.crc32(typ+data)&0xffffffff)
+          rows=b''.join(b'\0'+bytes(raw[y*W*3:(y+1)*W*3]) for y in range(H))
+          png=b'\x89PNG\r\n\x1a\n'+pngchunk(b'IHDR',struct.pack('>2I5B',W,H,8,2,0,0,0))+pngchunk(b'IDAT',zlib.compress(rows,9))+pngchunk(b'IEND',b'')
+          open('article-cover.png','wb').write(png)
+          print('Created original architecture cover; bytes:',len(png))
+          PY
+      - name: Upload to K-Vault R2 using scoped token and verify
+        env:
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
+          BLOG_MEDIA_STORAGE: r2
+          BLOG_MEDIA_FOLDER: blog
+          BLOG_MEDIA_DEDUPLICATE: 'false'
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { uploadKVaultImage } from './scripts/content-automation/media.mjs';
+          const bytes = new Uint8Array(readFileSync('article-cover.png'));
+          const url = await uploadKVaultImage(bytes, 'image/png');
+          const response = await fetch(url, { headers: { Range: 'bytes=0-1023' }, redirect: 'manual' });
+          const mime = (response.headers.get('content-type') || '').split(';')[0];
+          if (!response.ok || mime !== 'image/png') throw new Error('R2 image public readback was not image/png');
+          await response.body?.cancel();
+          console.log('ORIGINAL_COVER_URL=' + url);
+          console.log('ORIGINAL_COVER_BYTES=' + bytes.length);
+          NODE
