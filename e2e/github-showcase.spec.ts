@@ -6,7 +6,7 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 
 	await expect(page.locator(".gh-id-name h2")).toContainText("Katelya");
 	await expect(page.locator(".gh-repo-card").first()).toBeVisible();
-	await expect(page.locator(".gh-section-heading h2").filter({ hasText: "近期公开活动" })).toBeVisible();
+	await expect(page.locator(".gh-section-heading h2").filter({ hasText: "GitHub 贡献日历" })).toBeVisible();
 
 	for (const world of ["craft", "retro", "toy", "minimal"]) {
 		await page.locator('[data-world-tab="' + world + '"]').click();
