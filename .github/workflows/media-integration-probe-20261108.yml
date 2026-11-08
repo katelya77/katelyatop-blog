@@ -12,7 +12,7 @@ permissions:
 jobs:
   smoke:
     name: Media upload probe (${{ matrix.storage }})
-    if: github.event.head_commit.message == 'test media integration probe v2'
+    if: github.event.head_commit.message == 'test media integration diagnostic v3'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
@@ -26,6 +26,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22"
+      - name: Diagnose public K-Vault endpoint (read-only)
+        run: |
+          curl --silent --show-error --max-time 15 --output /dev/null --write-out 'Capabilities: HTTP %{http_code}, content-type %{content_type}, redirect %{redirect_url}\\n' https://pan.katelya.eu.org/api/v1/capabilities
+          curl --silent --show-error --max-time 15 --output /dev/null --write-out 'Home: HTTP %{http_code}, content-type %{content_type}\\n' https://pan.katelya.eu.org/
       - name: Verify capabilities, upload a 1x1 PNG, and read public image
         env:
           KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
