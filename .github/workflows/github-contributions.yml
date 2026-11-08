@@ -49,7 +49,7 @@ jobs:
             exit 0
           fi
           base_sha="$(git rev-parse HEAD)"
-          git commit -m "data: refresh official GitHub contribution calendar [skip ci]"
+          git commit -m "data: refresh official GitHub contribution calendar"
           git push origin HEAD:master
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
           echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
