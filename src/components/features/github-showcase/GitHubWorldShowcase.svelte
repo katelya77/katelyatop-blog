@@ -1962,7 +1962,7 @@
 	.gh-year-tabs button.active { background: var(--gh-accent); color: var(--gh-surface); }
 	.gh-contribution-extra { margin: -0.45rem 0 0.9rem; color: var(--gh-muted); font-size: 0.68rem; line-height: 1.6; }
 	.gh-activity-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-	.gh-activity-months, .gh-activity-grid { min-width: 820px; gap: 3px; }
+	.gh-activity-months, .gh-activity-grid { min-width: 660px; gap: 3px; }
 	.gh-activity-week { gap: 3px; }
 	.gh-activity-cell[data-level="4"], .gh-activity-legend i[data-level="4"] { background: var(--gh-accent-deep); }
 	@media (max-width: 640px) {
