@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 
 	type WorldId = "minimal" | "craft" | "retro" | "toy";
 
@@ -97,6 +97,15 @@
 	let category = $state("all");
 	let activeDay = $state<ActivityDay | null>(null);
 	let selectedDay = $state<ActivityDay | null>(null);
+	let activityScroller: HTMLDivElement | undefined;
+	let canPan = $state(false);
+	let scrollProgress = $state(0);
+	let isPanning = $state(false);
+	let dragPointerId: number | null = null;
+	let dragOriginX = 0;
+	let dragOriginScrollLeft = 0;
+	let movedByDragging = false;
+
 	let selectedPeriodId = $state("rolling");
 	let selectedPeriod = $derived(activityPeriods.find((period) => period.id === selectedPeriodId) ?? activityPeriods[0] ?? null);
 	let activityWeeks = $derived(selectedPeriod?.weeks ?? []);
@@ -112,12 +121,16 @@
 			label: week[0]?.date.slice(5, 7) ?? "",
 		}))
 		.filter((item, index, all) => index === 0 || item.month !== all[index - 1]?.month));
-	function selectPeriod(id: string) {
+	async function selectPeriod(id: string) {
 		selectedPeriodId = id;
 		selectedDay = null;
 		activeDay = null;
 		focusedDayIndex = 0;
+		await tick();
+		if (activityScroller) activityScroller.scrollLeft = 0;
+		updateActivityScrollState();
 	}
+
 	const rankedRepositories = [...featuredRepositories, ...additionalRepositories]
 		.filter((repository) => typeof repository.stars === "number")
 		.sort((a, b) => (b.stars ?? 0) - (a.stars ?? 0))
@@ -134,6 +147,14 @@
 	let currentWorld = $derived(worlds[worldIndex]);
 	onMount(() => {
 		hydrated = true;
+		const observer = new ResizeObserver(updateActivityScrollState);
+		if (activityScroller) {
+			observer.observe(activityScroller);
+			const grid = activityScroller.querySelector(".gh-activity-grid");
+			if (grid) observer.observe(grid);
+		}
+		requestAnimationFrame(updateActivityScrollState);
+		return () => observer.disconnect();
 	});
 
 	let filteredRepositories = $derived(
@@ -148,6 +169,66 @@
 			notation: "compact",
 			maximumFractionDigits: 1,
 		}).format(value);
+	}
+
+	function updateActivityScrollState() {
+		if (!activityScroller) return;
+		const maxScroll = Math.max(0, activityScroller.scrollWidth - activityScroller.clientWidth);
+		canPan = maxScroll > 2;
+		scrollProgress = maxScroll > 0 ? Math.round((activityScroller.scrollLeft / maxScroll) * 1000) : 0;
+	}
+
+	function moveActivityToProgress(event: Event) {
+		if (!activityScroller) return;
+		const input = event.currentTarget as HTMLInputElement;
+		const maxScroll = Math.max(0, activityScroller.scrollWidth - activityScroller.clientWidth);
+		activityScroller.scrollLeft = maxScroll * (Number(input.value) / 1000);
+		updateActivityScrollState();
+	}
+
+	function beginActivityPan(event: PointerEvent) {
+		// Do not hijack touchscreen momentum scrolling, keyboard navigation, or right clicks.
+		if (event.pointerType !== "mouse" || event.button !== 0) return;
+		const element = event.currentTarget as HTMLDivElement;
+		if (element.scrollWidth - element.clientWidth <= 2) return;
+		dragPointerId = event.pointerId;
+		dragOriginX = event.clientX;
+		dragOriginScrollLeft = element.scrollLeft;
+		movedByDragging = false;
+	}
+
+	function moveActivityPan(event: PointerEvent) {
+		if (dragPointerId !== event.pointerId || !activityScroller) return;
+		const distance = event.clientX - dragOriginX;
+		if (!movedByDragging && Math.abs(distance) <= 6) return;
+		if (!movedByDragging) {
+			movedByDragging = true;
+			isPanning = true;
+			activeDay = null;
+			// Capture only after drag threshold; ordinary clicks must still reach the day button.
+			activityScroller.setPointerCapture(event.pointerId);
+		}
+		event.preventDefault();
+		activityScroller.scrollLeft = dragOriginScrollLeft - distance;
+		updateActivityScrollState();
+	}
+
+	function endActivityPan(event: PointerEvent) {
+		if (dragPointerId !== event.pointerId) return;
+		dragPointerId = null;
+		isPanning = false;
+		if (activityScroller?.hasPointerCapture(event.pointerId)) {
+			activityScroller.releasePointerCapture(event.pointerId);
+		}
+	}
+
+	function selectActivityDay(event: MouseEvent, day: ActivityDay) {
+		// A drag must never accidentally pin a heatmap day; keyboard clicks remain usable.
+		if (movedByDragging && event.detail !== 0) {
+			event.preventDefault();
+			return;
+		}
+		selectedDay = selectedDay?.date === day.date ? null : day;
 	}
 
 	function handleWorldKeydown(event: KeyboardEvent, index: number) {
@@ -345,7 +426,16 @@
 					<div class="gh-activity-labels" aria-hidden="true">
 						<span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
 					</div>
-					<div class="gh-activity-scroll">
+					<div
+						class="gh-activity-scroll"
+						class:is-panning={isPanning}
+						bind:this={activityScroller}
+						onscroll={updateActivityScrollState}
+						onpointerdown={beginActivityPan}
+						onpointermove={moveActivityPan}
+						onpointerup={endActivityPan}
+						onpointercancel={endActivityPan}
+					>
 						<div class="gh-activity-months" style={"--activity-week-count: " + activityWeeks.length} aria-hidden="true">
 							{#each monthMarkers as marker (marker.month)}
 								<span style={"grid-column: " + (marker.index + 1) + " / span 1"}>{marker.label}月</span>
@@ -370,7 +460,7 @@
 											onpointerleave={() => (activeDay = null)}
 											onfocus={() => { focusedDayIndex = index; activeDay = day; }}
 											onblur={() => (activeDay = null)}
-											onclick={() => (selectedDay = selectedDay?.date === day.date ? null : day)}
+											onclick={(event) => selectActivityDay(event, day)}
 											onkeydown={(event) => handleActivityKeydown(event, index)}
 										></button>
 									{/each}
@@ -378,6 +468,21 @@
 							{/each}
 						</div>
 					</div>
+				</div>
+				<div class="gh-activity-pan-control" hidden={!canPan} aria-label="GitHub 贡献图横向浏览">
+					<span class="gh-pan-decor" aria-hidden="true">←</span>
+					<input
+						class="gh-activity-pan-slider"
+						type="range"
+						min="0"
+						max="1000"
+						step="1"
+						value={scrollProgress}
+						oninput={moveActivityToProgress}
+						aria-label="拖动滑轨左右浏览全年 GitHub 贡献图"
+					/>
+					<span class="gh-pan-decor" aria-hidden="true">→</span>
+					<span class="gh-pan-help">按住图谱左右拖动 · 也可使用滑轨</span>
 				</div>
 				<div class="gh-activity-bottom">
 					<p class="gh-activity-readout" aria-live="polite"><span class="gh-readout-mark"></span>{daySummary(displayedDay)}</p>
@@ -1085,8 +1190,87 @@
 		min-width: 0;
 		max-width: 100%;
 		overflow-x: auto;
-		padding: 0.2rem 0 0.5rem;
-		scrollbar-width: thin;
+		overflow-y: hidden;
+		padding: 0.2rem 0 0.3rem;
+		cursor: grab;
+		user-select: none;
+		-webkit-user-select: none;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+	}
+	.gh-activity-scroll::-webkit-scrollbar { display: none; }
+	.gh-activity-scroll.is-panning, .gh-activity-scroll.is-panning .gh-activity-cell { cursor: grabbing; }
+	.gh-activity-pan-control[hidden] { display: none; }
+	.gh-activity-pan-control {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		padding: 0.5rem 0.75rem;
+		margin-top: 0.45rem;
+		border: 1px solid var(--gh-line);
+		border-radius: 0.75rem;
+		background: color-mix(in srgb, var(--gh-accent) 5%, var(--gh-surface));
+		color: var(--gh-ink-2);
+	}
+	.gh-pan-decor {
+		flex: 0 0 auto;
+		color: var(--gh-accent);
+		font-size: 0.78rem;
+		font-weight: 800;
+	}
+	.gh-pan-help {
+		flex: 0 1 auto;
+		color: var(--gh-muted);
+		font-size: 0.62rem;
+		white-space: nowrap;
+	}
+	.gh-activity-pan-slider {
+		-webkit-appearance: none;
+		appearance: none;
+		flex: 1 1 100px;
+		min-width: 54px;
+		height: 20px;
+		margin: 0;
+		border: 0;
+		background: transparent;
+		cursor: ew-resize;
+		accent-color: var(--gh-accent);
+	}
+	.gh-activity-pan-slider::-webkit-slider-runnable-track {
+		height: 6px;
+		border: 1px solid var(--gh-line);
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--gh-accent) 21%, var(--gh-track));
+	}
+	.gh-activity-pan-slider::-moz-range-track {
+		height: 6px;
+		border: 1px solid var(--gh-line);
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--gh-accent) 21%, var(--gh-track));
+	}
+	.gh-activity-pan-slider::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 36px;
+		height: 16px;
+		margin-top: -6px;
+		border: 3px solid var(--gh-surface);
+		border-radius: 999px;
+		background: var(--gh-accent);
+		box-shadow: 0 1px 7px color-mix(in srgb, var(--gh-accent) 28%, transparent);
+	}
+	.gh-activity-pan-slider::-moz-range-thumb {
+		width: 30px;
+		height: 10px;
+		border: 3px solid var(--gh-surface);
+		border-radius: 999px;
+		background: var(--gh-accent);
+		box-shadow: 0 1px 7px color-mix(in srgb, var(--gh-accent) 28%, transparent);
+	}
+	.gh-activity-pan-slider:focus-visible { outline: 2px solid var(--gh-accent); outline-offset: 2px; border-radius: 999px; }
+	@media (max-width: 760px) {
+		.gh-pan-help { display: none; }
+		.gh-activity-pan-control { padding: 0.45rem 0.6rem; }
 	}
 
 	.gh-activity-grid {
