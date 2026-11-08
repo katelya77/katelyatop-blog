@@ -1,0 +1,36 @@
+name: One-time K-Vault R2 and Telegram Blog Media Verification
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/media-integration-probe-20261108.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Media upload probe (${{ matrix.storage }})
+    if: github.event.head_commit.message == 'test: one-time K-Vault dual-storage media probe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        storage: [r2, telegram]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Verify capabilities, upload a 1x1 PNG, and read public image
+        env:
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
+          BLOG_MEDIA_STORAGE: ${{ matrix.storage }}
+          BLOG_MEDIA_FOLDER: blog/health
+          BLOG_MEDIA_DEDUPLICATE: "false"
+        run: node scripts/content-automation/media-doctor.mjs --smoke
