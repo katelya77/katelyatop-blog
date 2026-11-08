@@ -21,7 +21,8 @@ jobs:
           const j=await r.json();
           if(!r.ok||!j.success) throw new Error('Cloudflare deployment metadata query failed: HTTP '+r.status);
           const items=(j.result||[]).filter(x=>x.environment==='production').slice(0,8);
-          console.log('PRODUCTION_DEPLOYMENTS',JSON.stringify(items.map(x=>({sha:x.deployment_trigger?.metadata?.commit_hash,status:x.latest_stage?.status,created:x.created_on,environment:x.environment})))));
+          const records=items.map(x=>({sha:x.deployment_trigger?.metadata?.commit_hash,status:x.latest_stage?.status,created:x.created_on,environment:x.environment}));
+          console.log("PRODUCTION_DEPLOYMENTS",JSON.stringify(records));
           const page='https://blog.katelya.top/github/';
           const res=await fetch(page,{headers:{'User-Agent':'Katelya-GitHub-Page-Production-Check/1.0'},signal:AbortSignal.timeout(15000)});
           const html=await res.text();
