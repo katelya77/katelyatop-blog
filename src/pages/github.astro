@@ -128,8 +128,18 @@ const additionalRepositories = (publicRepositories ?? [])
 const totalStars = publicRepositories
 	? publicRepositories.reduce((total, repo) => total + Number(repo.stargazers_count || 0), 0) + (verifiedOrgRepository?.stargazers_count ?? 0)
 	: null;
-const activityPeriods = contributionSnapshot.source === "github-graphql-contributionsCollection"
-	? contributionSnapshot.periods
+type OfficialActivityPeriod = {
+	id: string;
+	label: string;
+	from: string;
+	to: string;
+	totalContributions: number;
+	activeDays: number;
+	totals: { commits: number; pullRequests: number; issues: number; reviews: number; repositories: number };
+	weeks: Array<Array<{ date: string; count: number | null; level: string }>>;
+};
+const activityPeriods: OfficialActivityPeriod[] = contributionSnapshot.source === "github-graphql-contributionsCollection"
+	? contributionSnapshot.periods as OfficialActivityPeriod[]
 	: [];
 const rollingContributions = activityPeriods.find((period) => period.id === "rolling");
 
@@ -220,6 +230,7 @@ const pageDescription =
 			additionalRepositories={additionalRepositories}
 			recentActivity={recentActivity}
 			activityPeriods={activityPeriods}
+			snapshotFetchedAt={contributionSnapshot.fetchedAt}
 			filterTabs={filterTabs}
 			associatedOrganization={associatedOrganization}
 		/>
