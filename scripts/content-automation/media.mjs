@@ -53,6 +53,12 @@ function publicFileUrl(download, endpoint) {
       !url.pathname.startsWith("/file/") || url.search || url.hash) {
     throw new Error("K-Vault returned an unexpected public file URL");
   }
+  // Older K-Vault Pages deployments expose R2 file IDs with a literal colon,
+  // while the upload v1 API percent-encodes it in links.download.
+  // Preserve the same origin and file ID; normalize only the known R2 prefix.
+  if (/^\/file\/r2%3a/i.test(url.pathname)) {
+    url.pathname = url.pathname.replace(/^\/file\/r2%3a/i, "/file/r2:");
+  }
   return url.toString();
 }
 
