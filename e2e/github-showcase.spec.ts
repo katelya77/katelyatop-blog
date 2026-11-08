@@ -101,7 +101,7 @@ test("GitHub contribution chart supports styled slider and click-safe mouse drag
 	await slider.press("Home");
 	expect(await chart.evaluate((element) => element.scrollLeft)).toBeLessThan(3);
 
-	const startDay = chart.locator(".gh-activity-cell").nth(11);
+	const startDay = chart.locator(".gh-activity-cell").nth(98);
 	await startDay.scrollIntoViewIfNeeded();
 	const dayBox = await startDay.boundingBox();
 	expect(dayBox).not.toBeNull();
