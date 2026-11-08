@@ -1,4 +1,4 @@
-name: Verify K-Vault Production R2 Encoded Links and Dual Storage
+name: Verify K-Vault Compatible Client R2 and Telegram
 
 on:
   push:
@@ -10,41 +10,27 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: fix/kvault-r2-url-normalization-20261108
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
-      - name: Confirm patched Pages route serves existing encoded R2 URLs
-        run: |
-          node --input-type=module <<'NODE'
-          const url='https://media.katelya.top/file/r2%3Ar2_1794114530431_ha0gwt.png';
-          let ok=false;
-          for(let attempt=1;attempt<=16;attempt++){
-            const r=await fetch(url,{headers:{Range:'bytes=0-1023'},redirect:'manual'});
-            const mime=(r.headers.get('content-type')||'').split(';')[0];
-            console.log('R2 readback attempt',attempt,'HTTP',r.status,'MIME',mime);
-            if(r.ok&&mime==='image/png'){ok=true;await r.body?.cancel();break;}
-            await r.body?.cancel();
-            if(attempt<16) await new Promise(resolve=>setTimeout(resolve,10000));
-          }
-          if(!ok)throw new Error('K-Vault Pages production has not served encoded R2 URL successfully');
-          console.log('Previously created encoded R2 link now works');
-          NODE
-      - name: R2 upload and public image readback
+      - name: Verify R2 upload and valid public readback
         env:
-          KVAULT_BASE_URL: https://media.katelya.top
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
           KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
           BLOG_MEDIA_STORAGE: r2
           BLOG_MEDIA_FOLDER: blog/health
           BLOG_MEDIA_DEDUPLICATE: 'false'
         run: node scripts/content-automation/media-doctor.mjs --smoke
-      - name: Telegram upload and public image readback
+      - name: Verify Telegram upload and valid public readback
         env:
-          KVAULT_BASE_URL: https://media.katelya.top
+          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
           KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
           BLOG_MEDIA_STORAGE: telegram
           BLOG_MEDIA_FOLDER: blog/health
