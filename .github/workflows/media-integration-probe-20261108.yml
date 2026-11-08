@@ -1,4 +1,4 @@
-name: One-time K-Vault R2 and Telegram Blog Media Verification
+name: One-time K-Vault Edge Diagnostics
 
 on:
   push:
@@ -10,31 +10,24 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
-    name: Media upload probe (${{ matrix.storage }})
-    if: github.event.head_commit.message == 'test media integration diagnostic v3'
+  diagnose:
+    if: github.event.head_commit.message == 'test media edge diagnostic v4'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    strategy:
-      fail-fast: false
-      matrix:
-        storage: [r2, telegram]
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-      - name: Diagnose public K-Vault endpoint (read-only)
+      - name: Check HTTP response without authentication
+        shell: bash
         run: |
-          curl --silent --show-error --max-time 15 --output /dev/null --write-out 'Capabilities: HTTP %{http_code}, content-type %{content_type}, redirect %{redirect_url}\\n' https://pan.katelya.eu.org/api/v1/capabilities
-          curl --silent --show-error --max-time 15 --output /dev/null --write-out 'Home: HTTP %{http_code}, content-type %{content_type}\\n' https://pan.katelya.eu.org/
-      - name: Verify capabilities, upload a 1x1 PNG, and read public image
-        env:
-          KVAULT_BASE_URL: ${{ vars.KVAULT_BASE_URL }}
-          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
-          BLOG_MEDIA_STORAGE: ${{ matrix.storage }}
-          BLOG_MEDIA_FOLDER: blog/health
-          BLOG_MEDIA_DEDUPLICATE: "false"
-        run: node scripts/content-automation/media-doctor.mjs --smoke
+          set -euo pipefail
+          curl --silent --show-error --max-time 15 --dump-header "$RUNNER_TEMP/headers" --output "$RUNNER_TEMP/body" https://pan.katelya.eu.org/api/v1/capabilities
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const headers = fs.readFileSync(process.env.RUNNER_TEMP + '/headers', 'utf8');
+          const body = fs.readFileSync(process.env.RUNNER_TEMP + '/body', 'utf8');
+          const title = /<title[^>]*>([^<]+)/i.exec(body)?.[1]?.trim().slice(0, 160) || '(not provided)';
+          for (const line of headers.split(/\r?\n/)) {
+            if (/^HTTP\/|^(server|cf-mitigated|cf-ray|content-type|x-blocked-by):/i.test(line.trim())) console.log(line.trim());
+          }
+          console.log('HTML title: ' + title);
+          console.log('Looks like Cloudflare challenge: ' + (/Just a moment|Attention Required|cf-chl|challenge-platform/i.test(body) ? 'yes' : 'not established'));
+          NODE
