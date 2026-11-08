@@ -102,6 +102,18 @@ test("K-Vault upload honors explicit r2 or telegram, blog folder, and idempotenc
   }
 });
 
+test("K-Vault encoded R2 download paths normalize to readable public links", async () => {
+  const result = await uploadKVaultImage(Uint8Array.from([1, 2, 3]), "image/png", {
+    env: { BLOG_MEDIA_STORAGE: "r2", KVAULT_BASE_URL: "https://media.katelya.top", KVAULT_API_TOKEN: "test-token" },
+    fetchImpl: async () => Response.json({
+      success: true,
+      file: { storage: "r2" },
+      links: { download: "https://media.katelya.top/file/r2%3Ar2_test.png" },
+    }),
+  });
+  assert.equal(result, "https://media.katelya.top/file/r2:r2_test.png");
+});
+
 test("backend mismatch is a failure rather than silently storing elsewhere", async () => {
   const env = { BLOG_MEDIA_STORAGE: "telegram", KVAULT_API_TOKEN: "test-token" };
   await assert.rejects(
