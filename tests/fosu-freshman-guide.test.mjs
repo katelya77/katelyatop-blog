@@ -77,6 +77,14 @@ describe("FOSU freshman guide series contract", () => {
 		}
 	});
 
+	it("keeps the freshman guide public but no longer pins it on the home feed", () => {
+		const overview = read(`${guideDir}/index.md`);
+		assert.match(overview, /^pinned:\s*false$/m);
+		assert.doesNotMatch(overview, /^priority:\s*1$/m);
+		assert.match(overview, /^draft:\s*false$/m);
+		assert.match(overview, /^permalink:\s*fosu\/2026-freshman-guide$/m);
+	});
+
 	it("uses standalone wiki links on the overview so Mizuki renders topic cards", () => {
 		const overview = read(`${guideDir}/index.md`);
 		for (const [fileName] of expectedPosts.slice(1)) {
