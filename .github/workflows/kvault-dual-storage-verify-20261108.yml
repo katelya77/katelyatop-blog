@@ -1,0 +1,33 @@
+name: Verify K-Vault New Domain R2 and Telegram
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/kvault-dual-storage-verify-20261108.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: New-domain upload / readback (${{ matrix.storage }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        storage: [r2, telegram]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Verify 1x1 PNG K-Vault upload and public readback
+        env:
+          KVAULT_BASE_URL: https://media.katelya.top
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
+          BLOG_MEDIA_STORAGE: ${{ matrix.storage }}
+          BLOG_MEDIA_FOLDER: blog/health
+          BLOG_MEDIA_DEDUPLICATE: 'false'
+        run: node scripts/content-automation/media-doctor.mjs --smoke
