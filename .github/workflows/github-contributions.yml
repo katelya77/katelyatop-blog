@@ -1,0 +1,51 @@
+name: Refresh official GitHub contribution calendar
+
+on:
+  schedule:
+    # Once per day, after GitHub has settled the previous UTC day.
+    - cron: "21 3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/github-contributions.yml"
+      - "scripts/github-contributions/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-contribution-snapshot
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Fetch and commit GitHub contributions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+          persist-credentials: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: Fetch the GitHub GraphQL contribution calendar
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_CONTRIBUTIONS_LOGIN: katelya77
+        run: node scripts/github-contributions/update.mjs
+      - name: Commit a complete verified snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Katelya GitHub Data Bot"
+          git config user.email "123220557+katelya77@users.noreply.github.com"
+          git add src/data/github-contributions.json
+          if git diff --cached --quiet; then
+            echo "No contribution data change."
+            exit 0
+          fi
+          git commit -m "data: refresh official GitHub contribution calendar [skip ci]"
+          git push origin HEAD:master
