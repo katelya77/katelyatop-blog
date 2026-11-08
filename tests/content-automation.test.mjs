@@ -332,3 +332,16 @@ describe("content publisher workflow contract", () => {
     assert.match(workflow, /cron: "37 15 \* \* \*"/);
   });
 });
+
+
+describe("publisher no-op path", () => {
+  it("skips redundant homepage network requests when today's article quota is already met", async () => {
+    const workflow = await readFile(new URL("../.github/workflows/content-publisher.yml", import.meta.url), "utf8");
+    const noOp = workflow.slice(workflow.indexOf("- name: Report already-satisfied daily publication target"));
+    assert.match(noOp, /if: steps\.generate\.outputs\.created_count == '0'/);
+    assert.match(noOp, /No new article required/);
+    assert.doesNotMatch(noOp.split("- name: Open failure issue")[0], /curl|fetch\(/);
+    assert.match(workflow, /Verify generated articles are publicly visible/);
+    assert.match(workflow, /Wait for Cloudflare Pages and refresh DogeCloud CDN/);
+  });
+});
