@@ -14,8 +14,13 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 		await expect(page.locator('[data-world-tab="' + world + '"]')).toHaveAttribute("aria-selected", "true");
 	}
 
-	await expect(page.locator(".gh-activity-kpis")).toBeVisible();
 	await expect(page.locator(".gh-insights-grid")).toBeVisible();
+	// Before the first scheduled GraphQL refresh, the page has an explicit pending state.
+	if (await page.locator(".gh-activity-kpis").count()) {
+		await expect(page.locator(".gh-activity-kpis")).toBeVisible();
+	} else {
+		await expect(page.locator(".gh-contributions-pending")).toBeVisible();
+	}
 	const heatmap = page.locator(".gh-activity-grid");
 	if (await heatmap.count()) {
 		const heatmapGeometry = await heatmap.evaluate((element) => {
@@ -28,7 +33,6 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 		});
 		expect(heatmapGeometry.cellWidth).toBeGreaterThan(12);
 		expect(heatmapGeometry.width / heatmapGeometry.parentWidth).toBeGreaterThan(0.9);
-		await expect(page.locator(".gh-activity-cell")).toHaveCount(heatmapGeometry.width > 0 ? await page.locator(".gh-activity-cell").count() : 0);
 		await page.locator(".gh-activity-cell").first().hover();
 		await expect(page.locator(".gh-activity-readout")).not.toContainText("将鼠标移至方格");
 		await page.locator(".gh-activity-cell").last().click();
