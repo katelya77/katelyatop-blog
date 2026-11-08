@@ -1,4 +1,4 @@
-name: Diagnose R2 URL Encoded Public Readback
+name: Verify K-Vault Production R2 Encoded Links and Dual Storage
 
 on:
   push:
@@ -10,29 +10,43 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
-      - name: Compare encoded and raw R2 URLs
+      - name: Confirm patched Pages route serves existing encoded R2 URLs
+        run: |
+          node --input-type=module <<'NODE'
+          const url='https://media.katelya.top/file/r2%3Ar2_1794114530431_ha0gwt.png';
+          let ok=false;
+          for(let attempt=1;attempt<=16;attempt++){
+            const r=await fetch(url,{headers:{Range:'bytes=0-1023'},redirect:'manual'});
+            const mime=(r.headers.get('content-type')||'').split(';')[0];
+            console.log('R2 readback attempt',attempt,'HTTP',r.status,'MIME',mime);
+            if(r.ok&&mime==='image/png'){ok=true;await r.body?.cancel();break;}
+            await r.body?.cancel();
+            if(attempt<16) await new Promise(resolve=>setTimeout(resolve,10000));
+          }
+          if(!ok)throw new Error('K-Vault Pages production has not served encoded R2 URL successfully');
+          console.log('Previously created encoded R2 link now works');
+          NODE
+      - name: R2 upload and public image readback
         env:
           KVAULT_BASE_URL: https://media.katelya.top
           KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
-        run: |
-          node --input-type=module <<'NODE'
-          const base='https://media.katelya.top';
-          const id='r2:r2_1794114530431_ha0gwt.png';
-          for (const name of ['encoded','literal']) {
-            const url=base+'/file/'+(name==='encoded'?encodeURIComponent(id):id);
-            const r=await fetch(url,{redirect:'manual',headers:{Range:'bytes=0-1023'}});
-            console.log(name,'status',r.status,'type',r.headers.get('content-type'));
-            if(!r.ok) console.log(name,'body',(await r.text()).slice(0,100)); else await r.body?.cancel();
-          }
-          const info=await fetch(base+'/api/v1/file/'+encodeURIComponent(id)+'/info',{headers:{Authorization:'Bearer '+process.env.KVAULT_API_TOKEN},redirect:'manual'});
-          console.log('metadata status',info.status);
-          if(info.ok) { const data=await info.json(); console.log('metadata exists',data.success===true,'storage',data?.file?.storage||data?.data?.file?.storage||'unknown'); } else await info.body?.cancel();
-          NODE
+          BLOG_MEDIA_STORAGE: r2
+          BLOG_MEDIA_FOLDER: blog/health
+          BLOG_MEDIA_DEDUPLICATE: 'false'
+        run: node scripts/content-automation/media-doctor.mjs --smoke
+      - name: Telegram upload and public image readback
+        env:
+          KVAULT_BASE_URL: https://media.katelya.top
+          KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
+          BLOG_MEDIA_STORAGE: telegram
+          BLOG_MEDIA_FOLDER: blog/health
+          BLOG_MEDIA_DEDUPLICATE: 'false'
+        run: node scripts/content-automation/media-doctor.mjs --smoke
