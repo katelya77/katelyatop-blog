@@ -145,6 +145,21 @@ test("public capability probe lists available Telegram and R2 without exposing a
   assert.deepEqual(probe, { configuredStorages: ["telegram", "r2"], selected: "telegram" });
 });
 
+test("capability preflight distinguishes Cloudflare challenges from API outages", async () => {
+  await assert.rejects(fetchKVaultCapabilities({
+    env: { BLOG_MEDIA_STORAGE: "r2" },
+    fetchImpl: async () => new Response("<html>challenge</html>", {
+      status: 403,
+      headers: { "cf-mitigated": "challenge" },
+    }),
+  }), /Cloudflare challenge blocked K-Vault API access/);
+
+  await assert.rejects(fetchKVaultCapabilities({
+    env: { BLOG_MEDIA_STORAGE: "telegram" },
+    fetchImpl: async () => new Response("Service Unavailable", { status: 503 }),
+  }), /K-Vault capabilities endpoint returned HTTP 503/);
+});
+
 test("lightweight impressionist overlays have no SVG turbulence/blur filters", async () => {
   const background = await read("src/styles/impasto-backdrop.css");
   assert.match(background, /van-gogh-lite-day\.svg/);
