@@ -104,6 +104,17 @@ describe("CDN refresh plan", () => {
 		assert.deepEqual(plan.paths, []);
 	});
 
+	it("refreshes GitHub route when its showcase component is updated", async () => {
+		const plan = await buildRefreshPlan({
+			changes: [{ status: "M", path: "src/components/features/github-showcase/GitHubWorldShowcase.svelte" }],
+			siteUrl: "https://blog.katelya.top",
+			readFileAtRef: async () => "",
+		});
+		assert.ok(plan.urls.includes("https://blog.katelya.top/github/"));
+		assert.ok(plan.urls.includes("https://blog.katelya.top/"));
+		assert.ok(plan.reasons.some((reason) => reason.startsWith("github-ui:")));
+	});
+
 	it("does nothing for docs and tests only changes", async () => {
 		const plan = await buildRefreshPlan({
 			changes: [
