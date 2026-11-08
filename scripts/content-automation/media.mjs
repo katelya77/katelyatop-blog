@@ -64,7 +64,12 @@ export async function fetchKVaultCapabilities({ env = process.env, fetchImpl = f
     redirect: "manual",
     signal: AbortSignal.timeout(12000),
   });
-  if (!response.ok || response.status >= 300) throw new Error("K-Vault capabilities endpoint is unavailable");
+  if (!response.ok || response.status >= 300) {
+    if (response.status === 403 && response.headers.get("cf-mitigated") === "challenge") {
+      throw new Error("Cloudflare challenge blocked K-Vault API access; inspect Security Events for pan.katelya.eu.org");
+    }
+    throw new Error("K-Vault capabilities endpoint returned HTTP " + response.status);
+  }
   const payload = await response.json();
   const configured = payload?.data?.storages;
   if (payload?.success !== true || !Array.isArray(configured)) {
