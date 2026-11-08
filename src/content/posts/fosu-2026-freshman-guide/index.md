@@ -6,8 +6,7 @@ description: 面向2026级佛山大学新生整理的入学专题指南，从报
 category: 佛大新生指南
 tags: [佛山大学, 2026新生, 新生指南, 大学生活]
 draft: false
-pinned: true
-priority: 1
+pinned: false
 comment: true
 series: 2026级佛山大学新生指南
 seriesOrder: 0
