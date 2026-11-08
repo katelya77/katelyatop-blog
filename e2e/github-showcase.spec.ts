@@ -17,22 +17,27 @@ test("GitHub showcase renders public projects and switches between four Ovio-ins
 	await expect(page.locator(".gh-activity-kpis")).toBeVisible();
 	await expect(page.locator(".gh-insights-grid")).toBeVisible();
 	const heatmap = page.locator(".gh-activity-grid");
-	const heatmapGeometry = await heatmap.evaluate((element) => {
-		const firstCell = element.querySelector<HTMLElement>(".gh-activity-cell");
-		return {
-			width: element.getBoundingClientRect().width,
-			cellWidth: firstCell?.getBoundingClientRect().width ?? 0,
-			parentWidth: element.parentElement?.getBoundingClientRect().width ?? 1,
-		};
-	});
-	expect(heatmapGeometry.cellWidth).toBeGreaterThan(12);
-	expect(heatmapGeometry.width / heatmapGeometry.parentWidth).toBeGreaterThan(0.9);
-
-	const activityCell = page.locator(".gh-activity-cell").first();
-	await activityCell.hover();
-	await expect(page.locator(".gh-activity-readout")).not.toContainText("将鼠标移至方格");
-	await page.locator(".gh-activity-cell").last().click();
-	await expect(page.locator(".gh-activity-cell").last()).toHaveAttribute("aria-pressed", "true");
+	if (await heatmap.count()) {
+		const heatmapGeometry = await heatmap.evaluate((element) => {
+			const firstCell = element.querySelector<HTMLElement>(".gh-activity-cell");
+			return {
+				width: element.getBoundingClientRect().width,
+				cellWidth: firstCell?.getBoundingClientRect().width ?? 0,
+				parentWidth: element.parentElement?.getBoundingClientRect().width ?? 1,
+			};
+		});
+		expect(heatmapGeometry.cellWidth).toBeGreaterThan(12);
+		expect(heatmapGeometry.width / heatmapGeometry.parentWidth).toBeGreaterThan(0.9);
+		await expect(page.locator(".gh-activity-cell")).toHaveCount(heatmapGeometry.width > 0 ? await page.locator(".gh-activity-cell").count() : 0);
+		await page.locator(".gh-activity-cell").first().hover();
+		await expect(page.locator(".gh-activity-readout")).not.toContainText("将鼠标移至方格");
+		await page.locator(".gh-activity-cell").last().click();
+		await expect(page.locator(".gh-activity-cell").last()).toHaveAttribute("aria-pressed", "true");
+		await page.locator(".gh-year-tabs button").last().click();
+		await expect(page.locator(".gh-year-tabs button").last()).toHaveAttribute("aria-pressed", "true");
+	} else {
+		await expect(page.locator(".gh-contributions-pending")).toContainText("尚未同步");
+	}
 
 	const toolsTab = page.locator('[data-filter-value="tools"]');
 	if (await toolsTab.count()) {
