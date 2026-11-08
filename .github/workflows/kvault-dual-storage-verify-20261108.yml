@@ -1,4 +1,4 @@
-name: Verify K-Vault New Domain R2 and Telegram
+name: Diagnose K-Vault R2 Public File Readback
 
 on:
   push:
@@ -10,24 +10,34 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
-    name: New-domain upload / readback (${{ matrix.storage }})
+  check:
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    strategy:
-      fail-fast: false
-      matrix:
-        storage: [r2, telegram]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
-      - name: Verify 1x1 PNG K-Vault upload and public readback
+      - name: Diagnose successful R2 upload public readback
         env:
           KVAULT_BASE_URL: https://media.katelya.top
           KVAULT_API_TOKEN: ${{ secrets.KVAULT_API_TOKEN }}
-          BLOG_MEDIA_STORAGE: ${{ matrix.storage }}
+          BLOG_MEDIA_STORAGE: r2
           BLOG_MEDIA_FOLDER: blog/health
           BLOG_MEDIA_DEDUPLICATE: 'false'
-        run: node scripts/content-automation/media-doctor.mjs --smoke
+        run: |
+          node --input-type=module <<'NODE'
+          import { fetchKVaultCapabilities, uploadKVaultImage } from './scripts/content-automation/media.mjs';
+          const c = await fetchKVaultCapabilities();
+          console.log('Configured storage:', c.configuredStorages.join(','));
+          const bytes = Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/K5kAAAAASUVORK5CYII=', 'base64'));
+          const link = await uploadKVaultImage(bytes, 'image/png');
+          console.log('Public URL path:', new URL(link).pathname);
+          for (const mode of ['range', 'plain']) {
+            const headers = mode === 'range' ? { Range: 'bytes=0-1023' } : {};
+            const response = await fetch(link, { redirect: 'manual', headers, signal: AbortSignal.timeout(15000) });
+            console.log(mode, 'status=', response.status, 'mime=', response.headers.get('content-type'), 'cf-mitigated=', response.headers.get('cf-mitigated'), 'location=', response.headers.get('location'));
+            if (!response.ok) console.log(mode, 'public error=', (await response.text()).slice(0, 140).replace(/\s+/g, ' '));
+            else await response.body?.cancel();
+          }
+          NODE
