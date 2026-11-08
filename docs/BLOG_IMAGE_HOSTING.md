@@ -73,6 +73,16 @@ node scripts/content-automation/media-doctor.mjs
 - 未授权来源、后端返回错存储、异常直链或上传失败都会停止本次发布，**不会静默回退到第三方图床**。
 - 浏览器前端不会携带 Token，跨域 CORS 不需向博客开启。旧文章不做强制迁移。
 
+## Cloudflare 挑战拦截的排查
+
+GitHub Actions Runner 是非浏览器客户端。若 `pan.katelya.eu.org` 对其返回 HTTP 403、`cf-mitigated: challenge`，即使浏览器中能够正常登录 K-Vault，也无法直接完成机器上传。此时 **不是 Token 权限错误**；不要为了修复该问题扩大 API Token 权限、关闭整个站点 WAF 或禁用上传鉴权。
+
+1. 在 Cloudflare 的 `katelya.eu.org` 对应 zone 的 **Security → Events** 里，根据请求时间、主机 `pan.katelya.eu.org`、URI `/api/v1/capabilities` 或 Ray ID 查找挑战事件，先确认触发的规则和服务。
+2. 如果由 WAF Managed Rules / Super Bot Fight Mode 的误判触发，再按事件确定是否需要**最小范围 Skip**；只匹配 `pan.katelya.eu.org` 和所需 API 请求，例如 `GET /api/v1/capabilities`、`POST /api/v1/upload`，仅跳过对应的挑战机制，并保留其他安全策略。不要跳过整个站点的全部保护。
+3. **Cloudflare 免费版 Bot Fight Mode 不支持通过自定义 Skip 规则排除**。如果事件来自 Bot Fight Mode，需要先评估对机器 API 的专用访问方案或调整 Bot Fight Mode；不能假称 Skip 规则可以解决。
+4. 调整后先手动运行 `media-smoke.yml` 的 `upload_probe=false` 检查，确认能力端点真正返回 200 JSON 且列出目标后端，再为 R2 和 Telegram 分别运行 `upload_probe=true` 的 1×1 PNG 上传与回读测试。
+5. `BLOG_MEDIA_UPLOAD_ENABLED` 在全部测试通过之前保持 `false`。如无授权的第三方图片源，`BLOG_MEDIA_APPROVED_HOSTS` 可以完全不创建；缺省值即空白名单。
+
 ## 七、部署/CDN 与维护
 
 博客 HTML / 静态资源继续通过 Cloudflare Pages 发布、多吉云刷新；图片 URL 的实际网络路径是独立的 `pan.katelya.eu.org/file/...`，**不会因为博客对多吉云刷新缓存而自动刷新图床域名**。图片更改应生成新 URL，旧链接尽量不删除。K-Vault 和 Telegram/R2 的数据需要独立备份；重要原图离线保存。
