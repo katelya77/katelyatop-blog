@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "login": "katelya77",
   "source": "github-graphql-contributionsCollection",
-  "fetchedAt": "2026-11-19T11:46:40.890Z",
+  "fetchedAt": "2026-11-20T11:48:13.804Z",
   "periods": [
     {
       "id": "rolling",
       "label": "过去一年",
-      "from": "2025-11-20",
-      "to": "2026-11-19",
-      "totalContributions": 3211,
-      "activeDays": 246,
+      "from": "2025-11-21",
+      "to": "2026-11-20",
+      "totalContributions": 3215,
+      "activeDays": 247,
       "totals": {
-        "commits": 783,
+        "commits": 787,
         "pullRequests": 100,
         "issues": 3,
         "reviews": 0,
@@ -42,8 +42,8 @@
           },
           {
             "date": "2025-11-20",
-            "count": 0,
-            "level": "0"
+            "count": null,
+            "level": "unknown"
           },
           {
             "date": "2025-11-21",
@@ -1966,13 +1966,13 @@
           },
           {
             "date": "2026-11-19",
-            "count": 1,
+            "count": 4,
             "level": "1"
           },
           {
             "date": "2026-11-20",
-            "count": null,
-            "level": "unknown"
+            "count": 1,
+            "level": "1"
           },
           {
             "date": "2026-11-21",
@@ -1986,11 +1986,11 @@
       "id": "2026",
       "label": "2026年",
       "from": "2026-01-01",
-      "to": "2026-11-19",
-      "totalContributions": 3067,
-      "activeDays": 221,
+      "to": "2026-11-20",
+      "totalContributions": 3071,
+      "activeDays": 222,
       "totals": {
-        "commits": 681,
+        "commits": 685,
         "pullRequests": 99,
         "issues": 1,
         "reviews": 0,
@@ -3722,13 +3722,13 @@
           },
           {
             "date": "2026-11-19",
-            "count": 1,
+            "count": 4,
             "level": "1"
           },
           {
             "date": "2026-11-20",
-            "count": null,
-            "level": "unknown"
+            "count": 1,
+            "level": "1"
           },
           {
             "date": "2026-11-21",
