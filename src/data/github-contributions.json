@@ -2,60 +2,23 @@
   "schemaVersion": 1,
   "login": "katelya77",
   "source": "github-graphql-contributionsCollection",
-  "fetchedAt": "2026-11-21T11:13:29.472Z",
+  "fetchedAt": "2026-11-22T11:33:24.148Z",
   "periods": [
     {
       "id": "rolling",
       "label": "过去一年",
-      "from": "2025-11-22",
-      "to": "2026-11-21",
-      "totalContributions": 3218,
+      "from": "2025-11-23",
+      "to": "2026-11-22",
+      "totalContributions": 3220,
       "activeDays": 248,
       "totals": {
-        "commits": 790,
+        "commits": 792,
         "pullRequests": 100,
         "issues": 3,
         "reviews": 0,
         "repositories": 7
       },
       "weeks": [
-        [
-          {
-            "date": "2025-11-16",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-17",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-18",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-19",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-20",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-21",
-            "count": null,
-            "level": "unknown"
-          },
-          {
-            "date": "2025-11-22",
-            "count": 1,
-            "level": "1"
-          }
-        ],
         [
           {
             "date": "2025-11-23",
@@ -1976,8 +1939,45 @@
           },
           {
             "date": "2026-11-21",
+            "count": 3,
+            "level": "1"
+          }
+        ],
+        [
+          {
+            "date": "2026-11-22",
             "count": 1,
             "level": "1"
+          },
+          {
+            "date": "2026-11-23",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-24",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-25",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-26",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-27",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-28",
+            "count": null,
+            "level": "unknown"
           }
         ]
       ]
@@ -1986,11 +1986,11 @@
       "id": "2026",
       "label": "2026年",
       "from": "2026-01-01",
-      "to": "2026-11-21",
-      "totalContributions": 3074,
-      "activeDays": 223,
+      "to": "2026-11-22",
+      "totalContributions": 3077,
+      "activeDays": 224,
       "totals": {
-        "commits": 688,
+        "commits": 691,
         "pullRequests": 99,
         "issues": 1,
         "reviews": 0,
@@ -3732,8 +3732,45 @@
           },
           {
             "date": "2026-11-21",
+            "count": 3,
+            "level": "1"
+          }
+        ],
+        [
+          {
+            "date": "2026-11-22",
             "count": 1,
             "level": "1"
+          },
+          {
+            "date": "2026-11-23",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-24",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-25",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-26",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-27",
+            "count": null,
+            "level": "unknown"
+          },
+          {
+            "date": "2026-11-28",
+            "count": null,
+            "level": "unknown"
           }
         ]
       ]
