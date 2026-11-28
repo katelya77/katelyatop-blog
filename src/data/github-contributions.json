@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "login": "katelya77",
   "source": "github-graphql-contributionsCollection",
-  "fetchedAt": "2026-11-27T12:34:09.352Z",
+  "fetchedAt": "2026-11-28T11:54:08.975Z",
   "periods": [
     {
       "id": "rolling",
       "label": "过去一年",
-      "from": "2025-11-28",
-      "to": "2026-11-27",
-      "totalContributions": 3239,
+      "from": "2025-11-29",
+      "to": "2026-11-28",
+      "totalContributions": 3243,
       "activeDays": 250,
       "totals": {
-        "commits": 795,
-        "pullRequests": 100,
+        "commits": 798,
+        "pullRequests": 99,
         "issues": 2,
         "reviews": 0,
         "repositories": 7
@@ -47,8 +47,8 @@
           },
           {
             "date": "2025-11-28",
-            "count": 2,
-            "level": "1"
+            "count": null,
+            "level": "unknown"
           },
           {
             "date": "2025-11-29",
@@ -1971,13 +1971,13 @@
           },
           {
             "date": "2026-11-27",
-            "count": 1,
+            "count": 6,
             "level": "1"
           },
           {
             "date": "2026-11-28",
-            "count": null,
-            "level": "unknown"
+            "count": 1,
+            "level": "1"
           }
         ]
       ]
@@ -1986,11 +1986,11 @@
       "id": "2026",
       "label": "2026年",
       "from": "2026-01-01",
-      "to": "2026-11-27",
-      "totalContributions": 3113,
-      "activeDays": 229,
+      "to": "2026-11-28",
+      "totalContributions": 3119,
+      "activeDays": 230,
       "totals": {
-        "commits": 710,
+        "commits": 714,
         "pullRequests": 99,
         "issues": 1,
         "reviews": 0,
@@ -3764,13 +3764,13 @@
           },
           {
             "date": "2026-11-27",
-            "count": 1,
+            "count": 6,
             "level": "1"
           },
           {
             "date": "2026-11-28",
-            "count": null,
-            "level": "unknown"
+            "count": 1,
+            "level": "1"
           }
         ]
       ]
